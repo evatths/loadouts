@@ -29,6 +29,8 @@ import { instructionsCommand } from "./commands/instructions.js";
 import { infoCommand } from "./commands/info.js";
 import { diffCommand } from "./commands/diff.js";
 import { editCommand } from "./commands/edit.js";
+import { addToCommand } from "./commands/add-to.js";
+import { removeFromCommand } from "./commands/remove-from.js";
 import { kindsCommand } from "./commands/kinds.js";
 import { docsCommand } from "./commands/docs.js";
 import { sanitizeCommand } from "./commands/sanitize.js";
@@ -59,6 +61,8 @@ const COMMAND_GROUPS: Array<{ title: string; commands: Command[] }> = [
       initCommand,
       installCommand,
       createCommand,
+      addToCommand,
+      removeFromCommand,
       editCommand,
       removeCommand,
       listCommand,

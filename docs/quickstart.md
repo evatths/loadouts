@@ -37,6 +37,7 @@ If you're starting fresh with no existing agent configs:
 ```bash
 loadouts init                      # Creates .loadouts/ with a base loadout
 loadouts rule add coding-standards # Create a rule file
+loadouts add-to base rules/coding-standards.md
 loadouts sync                      # Render to tool directories
 ```
 

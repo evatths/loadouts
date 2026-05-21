@@ -3,7 +3,7 @@
 This guide covers creating rules, skills, and instructions. The typical workflow:
 
 1. **Create** an artifact (`loadouts rule add`, `loadouts skill add`, etc.)
-2. **Include** it in a loadout definition (`loadouts/<name>.yaml`)
+2. **Include** it in a loadout (`loadouts add-to <loadout> <artifact>`)
 3. **Sync** to render outputs (`loadouts sync`)
 4. **Verify** with `loadouts status` or `loadouts info`
 
@@ -35,7 +35,11 @@ Use errors.Join() for error wrapping.
 loadouts rule add api-standards -d "REST API conventions" -p "**/*_handler.go"
 ```
 
-After creating, add `rules/api-standards.md` to your loadout's `include` list.
+After creating, add it to a loadout:
+
+```bash
+loadouts add-to backend rules/api-standards.md
+```
 
 **Import existing:**
 ```bash
@@ -86,7 +90,11 @@ Invoke this skill when debugging Python errors...
 loadouts skill add deploy -d "Deployment procedures"
 ```
 
-After creating, add `skills/deploy` to your loadout's `include` list.
+After creating, add it to a loadout:
+
+```bash
+loadouts add-to backend skills/deploy
+```
 
 ---
 
@@ -131,6 +139,10 @@ include:
 ```
 
 **Per-include tool targeting:**
+```bash
+loadouts add-to backend rules/cursor-only.md --tools cursor
+```
+
 ```yaml
 include:
   - rules/general.md                    # All tools

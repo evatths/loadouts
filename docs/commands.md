@@ -86,6 +86,21 @@ loadouts create api --extends base # Extend another loadout
 loadouts create test -d "Testing"  # With description
 ```
 
+### `loadouts add-to <loadout> <artifacts...>`
+Add existing artifacts to a loadout include list.
+```bash
+loadouts add-to backend rules/api.md
+loadouts add-to backend skills/debugger
+loadouts add-to backend rules/cursor.md --tools cursor
+```
+
+### `loadouts remove-from <loadout> <artifacts...>`
+Remove artifacts from a loadout include list without deleting the artifact files.
+```bash
+loadouts remove-from backend rules/api.md
+loadouts remove-from backend skills/debugger
+```
+
 ### `loadouts edit <name>`
 Open a loadout definition in `$EDITOR`.
 ```bash
