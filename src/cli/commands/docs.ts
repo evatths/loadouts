@@ -23,6 +23,7 @@ const TOPICS: Record<string, string> = {
   quickstart: "Get started in 60 seconds",
   concepts: "Loadouts, artifacts, scopes, tools",
   commands: "Full command reference",
+  runtime: "OpenCode-first runtime activation architecture",
   authoring: "Creating rules, skills, instructions",
   compatibility: "Tool paths and frontmatter compatibility",
   workflows: "Team setup, git, CI/CD",
@@ -96,7 +97,7 @@ function displayDocs(content: string, usePager: boolean): void {
 
 export const docsCommand = new Command("docs")
   .description("Display documentation")
-  .argument("[topic]", "Documentation topic (quickstart, concepts, commands, authoring, compatibility, workflows, troubleshooting)")
+  .argument("[topic]", "Documentation topic (quickstart, concepts, commands, runtime, authoring, compatibility, workflows, troubleshooting)")
   .option("--list", "List available topics")
   .option("--raw", "Print raw markdown without pager")
   .action(async (topic: string | undefined, options: { list?: boolean; raw?: boolean }) => {

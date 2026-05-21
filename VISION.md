@@ -40,7 +40,7 @@ Loadouts has three core operations.
 | **Render** | Materialize artifacts into tool-specific filesystem locations |
 | **Inject** | Provide artifacts to a live tool session through SDKs or plugins |
 
-Today, Loadouts primarily supports resolve and render. Runtime injection is a future capability that should build on the same resolver rather than duplicating configuration logic.
+Today, Loadouts supports resolve, render, and the first runtime injection foundation. The runtime foundation compiles resolved loadouts into a deterministic `RuntimeBundle` through `loadouts runtime`, but live host-tool session adapters are still integration work.
 
 ## Activation Modes
 
@@ -54,6 +54,13 @@ Loadouts should distinguish two activation modes.
 Filesystem activation is the canonical, reliable baseline. It applies before or between sessions and works wherever a tool reads files from known locations.
 
 Runtime activation is session-local by default. Activating a loadout inside a tool should not mutate `.loadouts/.state.json` or rendered filesystem outputs. A future explicit "persist this runtime loadout" action may bridge runtime and filesystem state, but it is not part of the first runtime activation milestone.
+
+Current implementation status:
+
+- `loadouts runtime [names...]` compiles loadouts without mutating filesystem activation state.
+- `--json` emits the resolver-backed `RuntimeBundle` for adapters and plugins.
+- `--system-block` emits a model-ready text block for tools that support prompt/system injection.
+- Runtime capability flags are explicit per tool, so filesystem-first tools are not presented as native runtime integrations.
 
 ## Artifact Scope
 
@@ -258,22 +265,24 @@ Non-goals:
 
 ### Month 4-6: Runtime Activation Foundations
 
+Status: partially implemented. Core runtime bundle compilation and inspection are in place; live host-tool adapters remain next work.
+
 Goals:
 
-- Introduce an internal injection API parallel to the existing render pipeline.
+- Introduce an internal injection API parallel to the existing render pipeline. **Done:** `src/core/runtime.ts` compiles deterministic `RuntimeBundle` objects for `instruction`, `rule`, and `skill` artifacts.
 - Build a Pi runtime integration first.
-- Build or prototype OpenCode runtime integration second.
-- Run a Cursor research spike and document feasible integration levels.
+- Build or prototype OpenCode runtime integration second. **Started:** `docs/examples/opencode-runtime-plugin.ts` documents an OpenCode-first CLI bridge scaffold using `loadouts runtime --json`.
+- Run a Cursor research spike and document feasible integration levels. **Partially done:** runtime capability flags mark Cursor as filesystem-activation only for v1.
 - Keep Claude Code on a research/prototype track focused on what can be done honestly.
-- Report runtime capability levels clearly per tool.
+- Report runtime capability levels clearly per tool. **Done in core bundle:** OpenCode and Codex are `experimental-runtime`, Pi is `native-runtime`, Claude Code and Cursor are `filesystem-activation`.
 
 Runtime v1 success criteria:
 
 - Runtime loadout state is session-local.
-- Instructions and rules are injected through the closest native tool surface.
-- Skills use native tool discovery where supported and path discovery otherwise.
-- Users can see exactly which runtime capabilities are active.
-- Filesystem activation remains reliable and unchanged.
+- Instructions and rules are injected through the closest native tool surface. **Core support exists; tool adapters still need to apply it.**
+- Skills use native tool discovery where supported and path discovery otherwise. **Runtime v1 currently emits path-discovery refs only.**
+- Users can see exactly which runtime capabilities are active. **Done via `RuntimeBundle.capabilities` and `loadouts runtime` output.**
+- Filesystem activation remains reliable and unchanged. **Maintained:** runtime compile does not write rendered outputs or `.loadouts/.state.json`.
 
 Non-goals:
 

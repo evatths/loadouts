@@ -46,6 +46,18 @@ loadouts info              # Active loadout(s)
 loadouts info backend      # Specific loadout
 ```
 
+### `loadouts runtime [names...]`
+Compile a runtime bundle for inspection (no filesystem activation). Defaults to the root `default` loadout (or `base`).
+```bash
+loadouts runtime                     # Compile default loadout
+loadouts runtime base backend        # Compile multiple loadouts
+loadouts runtime base --tool cursor  # Target a different tool
+loadouts runtime base --json         # Output RuntimeBundle JSON only
+loadouts runtime base --system-block # Output renderRuntimeSystemBlock(bundle) only
+```
+
+See `docs/runtime.md` for architecture, OpenCode-first integration flow, and per-tool capability flags.
+
 ### `loadouts diff [name]`
 Preview what would change if a loadout were applied.
 ```bash
@@ -195,6 +207,8 @@ Most state commands (`activate`, `deactivate`, `sync`, `status`, `clear`, `list`
 | `-l, --local` | Project scope only |
 | `-g, --global` | Global scope only |
 | `-a, --all` | Both scopes |
+
+`runtime` supports `-l/--local` and `-g/--global` only (no `--all`).
 
 When omitted, commands auto-detect scope based on context. Use `--dry-run` to preview behavior before destructive operations.
 

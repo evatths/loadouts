@@ -53,6 +53,7 @@ loadouts check                     # Validate configuration
 loadouts docs quickstart       # Get started in 60 seconds
 loadouts docs concepts         # Loadouts, artifacts, scopes, tools
 loadouts docs commands         # Full command reference
+loadouts docs runtime          # Runtime activation architecture and capabilities
 loadouts docs authoring        # Creating rules, skills, instructions
 loadouts docs compatibility    # Tool paths, frontmatter aliases, limits
 loadouts docs workflows        # Team setup, git, CI/CD

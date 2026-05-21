@@ -10,8 +10,7 @@
  * - Consistent change indicators (+, ~, -, ✓)
  */
 
-import { discoverLoadoutRoots, getGlobalRoot, collectRootsWithSources } from "../../core/discovery.js";
-import { resolveLoadout, getInstructionItem } from "../../core/resolve.js";
+import { loadResolvedLoadouts } from "../../core/resolve.js";
 import { parseRootConfig } from "../../core/config.js";
 import { planRender, applyMultiPlan, removeManaged } from "../../core/render.js";
 import { loadState, clearState } from "../../core/manifest.js";
@@ -23,7 +22,7 @@ import {
   renderDryRunSummary,
   type ChangeType,
 } from "../../lib/artifact-table.js";
-import type { CommandContext, ResolvedLoadout, RenderPlan, LoadoutRoot, Tool } from "../../core/types.js";
+import type { CommandContext, ResolvedLoadout, RenderPlan, Tool } from "../../core/types.js";
 
 export interface ApplyOptions {
   dryRun?: boolean;
@@ -43,43 +42,14 @@ async function resolveMultipleLoadouts(
   names: string[],
   ctx: CommandContext
 ): Promise<Array<{ loadout: ResolvedLoadout; plan: RenderPlan }>> {
-  // Get roots based on scope, including sources and bundled
-  let roots: LoadoutRoot[];
-  if (ctx.scope === "global") {
-    const globalRoot = getGlobalRoot();
-    if (!globalRoot) throw new Error("No global loadout found at ~/.config/loadouts");
-    // Global scope: global root + any sources it declares + bundled
-    const collected = collectRootsWithSources(globalRoot, false, true);
-    roots = collected.roots;
-  } else {
-    const discovered = await discoverLoadoutRoots(ctx.projectRoot);
-    if (discovered.length === 0) {
-      throw new Error("No .loadouts/ directory found. Run 'loadouts init' first.");
-    }
-    // Project scope: project root + sources + global + bundled
-    const collected = collectRootsWithSources(discovered[0], true, true);
-    roots = collected.roots;
-  }
-
-  const rootConfig = parseRootConfig(ctx.configPath);
+  const { loadouts } = await loadResolvedLoadouts(ctx, names, { includeBundled: true });
   const results: Array<{ loadout: ResolvedLoadout; plan: RenderPlan }> = [];
 
-  for (const name of names) {
-    const loadout = resolveLoadout(name, roots, rootConfig);
-
-    // Auto-inject AGENTS.md if not already in includes
-    const alreadyHasInstruction = loadout.items.some(
-      (i) => i.relativePath === "AGENTS.md"
-    );
-    if (!alreadyHasInstruction) {
-      const instructionItem = getInstructionItem(ctx.configPath, loadout.tools);
-      if (instructionItem) loadout.items.push(instructionItem);
-    }
-
+  for (const loadout of loadouts) {
     const plan = await planRender(loadout, ctx.projectRoot, ctx.scope, ctx.configPath);
 
     if (plan.errors.length > 0) {
-      log.error(`Errors planning "${name}":`);
+      log.error(`Errors planning "${loadout.name}":`);
       list(plan.errors);
       process.exit(1);
     }

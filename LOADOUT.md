@@ -310,6 +310,20 @@ The output shows a table with:
 - **lazy** — Tokens loaded on-demand (skills only)
 - **tool columns** — Which tools receive each artifact (✓)
 
+#### `loadouts runtime [names...]`
+
+Compile loadouts into the runtime JSON surface used by the runtime compiler. This command is compile/inspect only: it does not activate loadouts, write rendered outputs, or mutate `.loadouts/.state.json`.
+
+```bash
+loadouts runtime                      # Compile default loadout (or base)
+loadouts runtime base backend         # Compile multiple loadouts
+loadouts runtime --tool opencode      # Target tool (default: opencode)
+loadouts runtime base --json          # Print RuntimeBundle JSON only
+loadouts runtime base --system-block  # Print renderRuntimeSystemBlock(bundle)
+```
+
+Runtime v1 capabilities currently focus on model injection for instructions/rules plus skill path discovery metadata. Native skill hot-swap is intentionally disabled. This is the forward path for OpenCode plugin integration without relying on filesystem activation.
+
 #### `loadouts activate <names...>`
 
 Add loadout(s) to the active set and render outputs.

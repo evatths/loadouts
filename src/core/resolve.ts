@@ -130,6 +130,78 @@ export interface LoadResult {
   sourceWarnings: string[];
 }
 
+export interface LoadManyResult {
+  loadouts: ResolvedLoadout[];
+  rootConfig: RootConfig;
+  loadoutNames: string[];
+  roots: LoadoutRoot[];
+  sourceWarnings: string[];
+}
+
+export interface LoadResolvedLoadoutsOptions {
+  includeBundled?: boolean;
+}
+
+async function collectContextRoots(
+  ctx: CommandContext,
+  includeBundled: boolean
+): Promise<{ roots: LoadoutRoot[]; sourceWarnings: string[] }> {
+  let roots: LoadoutRoot[];
+  let sourceWarnings: string[] = [];
+
+  if (ctx.scope === "global") {
+    const globalRoot = getGlobalRoot();
+    if (!globalRoot) {
+      throw new Error("No global loadout found at ~/.config/loadouts");
+    }
+    const collected = collectRootsWithSources(globalRoot, false, includeBundled);
+    roots = collected.roots;
+    sourceWarnings = collected.warnings;
+  } else {
+    const discovered = await discoverLoadoutRoots(ctx.projectRoot);
+    if (discovered.length === 0) {
+      throw new Error("No .loadouts/ directory found. Run 'loadouts init' first.");
+    }
+    const primaryRoot = discovered[0];
+    const collected = collectRootsWithSources(primaryRoot, true, includeBundled);
+    roots = collected.roots;
+    sourceWarnings = collected.warnings;
+  }
+
+  return { roots, sourceWarnings };
+}
+
+export async function loadResolvedLoadouts(
+  ctx: CommandContext,
+  names?: string[],
+  options: LoadResolvedLoadoutsOptions = {}
+): Promise<LoadManyResult> {
+  const includeBundled = options.includeBundled ?? false;
+  const { roots, sourceWarnings } = await collectContextRoots(ctx, includeBundled);
+
+  const rootConfig = parseRootConfig(ctx.configPath);
+  const loadoutNames = names && names.length > 0
+    ? names
+    : [rootConfig.default || "base"];
+
+  const loadouts: ResolvedLoadout[] = [];
+  for (const loadoutName of loadoutNames) {
+    const loadout = resolveLoadout(loadoutName, roots, rootConfig);
+
+    const alreadyHasInstruction = loadout.items.some(
+      (i) => i.relativePath === "AGENTS.md"
+    );
+    if (!alreadyHasInstruction) {
+      const instructionItem = getInstructionItem(ctx.configPath, loadout.tools);
+      if (instructionItem) loadout.items.push(instructionItem);
+    }
+
+    loadouts.push(loadout);
+  }
+
+  return { loadouts, rootConfig, loadoutNames, roots, sourceWarnings };
+}
+
 /**
  * Discover roots, parse root config, resolve the loadout, and attach the
  * instruction item if present. Throws on any failure — callers decide whether
@@ -145,42 +217,12 @@ export async function loadResolvedLoadout(
   ctx: CommandContext,
   name?: string
 ): Promise<LoadResult> {
-  let roots: LoadoutRoot[];
-  let sourceWarnings: string[] = [];
-
-  if (ctx.scope === "global") {
-    const globalRoot = getGlobalRoot();
-    if (!globalRoot) {
-      throw new Error("No global loadout found at ~/.config/loadouts");
-    }
-    // Global scope: just the global root, plus any sources it declares
-    const collected = collectRootsWithSources(globalRoot, false);
-    roots = collected.roots;
-    sourceWarnings = collected.warnings;
-  } else {
-    // Project scope: start with the nearest .loadouts/, collect sources
-    const discovered = await discoverLoadoutRoots(ctx.projectRoot);
-    if (discovered.length === 0) {
-      throw new Error("No .loadouts/ directory found. Run 'loadouts init' first.");
-    }
-    const primaryRoot = discovered[0];
-    const collected = collectRootsWithSources(primaryRoot, true);
-    roots = collected.roots;
-    sourceWarnings = collected.warnings;
-  }
-
-  const rootConfig = parseRootConfig(ctx.configPath);
-  const loadoutName = name || rootConfig.default || "base";
-  const loadout = resolveLoadout(loadoutName, roots, rootConfig);
-
-  // Auto-inject AGENTS.md only when not already in the loadout's include list.
-  const alreadyHasInstruction = loadout.items.some(
-    (i) => i.relativePath === "AGENTS.md"
-  );
-  if (!alreadyHasInstruction) {
-    const instructionItem = getInstructionItem(ctx.configPath, loadout.tools);
-    if (instructionItem) loadout.items.push(instructionItem);
-  }
-
-  return { loadout, rootConfig, loadoutName, roots, sourceWarnings };
+  const result = await loadResolvedLoadouts(ctx, name ? [name] : undefined);
+  return {
+    loadout: result.loadouts[0],
+    rootConfig: result.rootConfig,
+    loadoutName: result.loadoutNames[0],
+    roots: result.roots,
+    sourceWarnings: result.sourceWarnings,
+  };
 }
