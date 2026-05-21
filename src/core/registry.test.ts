@@ -65,7 +65,7 @@ describe("Registry.resolveMapping", () => {
     const m = reg.resolveMapping("cursor", "rule");
     expect(m).toBeDefined();
     expect(m!.path).toBe("{base}/rules/{stem}.mdc");
-    expect(m!.transform).toBe("cursor-frontmatter");
+    expect(m!.transform).toBe("cursor-rule-frontmatter");
   });
 
   it("returns undefined when tool doesn't support kind", () => {

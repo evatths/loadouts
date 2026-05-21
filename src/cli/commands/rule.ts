@@ -118,7 +118,7 @@ ruleCommand
       frontmatter.alwaysApply = true;
     }
 
-    // Sanitize for cross-tool compatibility
+    // Canonicalize generated frontmatter before writing the source artifact.
     frontmatter = sanitizeRuleFrontmatter(frontmatter, name);
 
     const body = `\n# ${name}\n\nAdd your rule content here.\n`;
@@ -137,6 +137,9 @@ ruleCommand
     if (options.edit !== false) {
       log.dim(`  ${rulePath}`);
       await openInEditor(rulePath, { cwd: rootPath });
+      if (sanitizeRuleFile(rulePath)) {
+        log.dim("  Canonicalized rule frontmatter");
+      }
     } else {
       // For agents/scripts: show clear path and instructions
       console.log();
@@ -253,10 +256,12 @@ ruleCommand
       process.exit(1);
     }
 
-    await openInEditor(rulePath, {
-      cwd: rootPath,
-      onSuccess: () => log.success(`Edited rule: ${name}`),
-    });
+    await openInEditor(rulePath, { cwd: rootPath });
+
+    if (sanitizeRuleFile(rulePath)) {
+      log.dim("  Canonicalized rule frontmatter");
+    }
+    log.success(`Edited rule: ${name}`);
   });
 
 // loadout rule remove <name>
@@ -344,9 +349,9 @@ ruleCommand
     // Copy the file
     copyFile(sourcePath, destPath);
 
-    // Sanitize the imported rule for cross-tool compatibility
+    // Canonicalize known native frontmatter aliases on import.
     if (sanitizeRuleFile(destPath)) {
-      log.dim("  Sanitized frontmatter for cross-tool compatibility");
+      log.dim("  Canonicalized rule frontmatter");
     }
 
     // Add to loadout definition

@@ -8,8 +8,13 @@ import { readFile, writeFile, fileExists, isDirectory, listFiles } from "../lib/
 import {
   RootConfigSchema,
   LoadoutDefinitionSchema,
-  RuleFrontmatterSchema,
+  FrontmatterSchema,
+  SkillFrontmatterSchema,
+  CanonicalRuleFrontmatterSchema,
   type RuleFrontmatter,
+  type CanonicalRuleFrontmatter,
+  type SkillFrontmatter,
+  type Frontmatter,
 } from "./schema.js";
 import type {
   RootConfig,
@@ -19,6 +24,60 @@ import type {
 
 const ROOT_CONFIG_FILE = "loadouts.yaml";
 const LOADOUTS_DIR = "loadouts";
+const RULES_DIR = "rules";
+const SKILLS_DIR = "skills";
+
+export interface FrontmatterSanitizationResult<T extends Frontmatter> {
+  frontmatter: T;
+  changes: string[];
+}
+
+export interface FileSanitizationResult {
+  modified: boolean;
+  changes: string[];
+}
+
+export type RawFrontmatter = Record<string, unknown>;
+
+/**
+ * Parse markdown frontmatter without schema validation.
+ */
+export function parseMarkdownFrontmatter(content: string): {
+  frontmatter: RawFrontmatter;
+  body: string;
+} {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+
+  if (!match) {
+    return { frontmatter: {}, body: content };
+  }
+
+  const [, frontmatterStr, body] = match;
+  const parsed = yaml.parse(frontmatterStr);
+  const frontmatter =
+    parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+
+  return { frontmatter, body };
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((v) => stableStringify(v)).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).sort(
+      ([a], [b]) => a.localeCompare(b)
+    );
+    return `{${entries
+      .map(([k, v]) => `${JSON.stringify(k)}:${stableStringify(v)}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+}
 
 /**
  * Parse the root config from a .loadouts/ directory.
@@ -93,27 +152,32 @@ export function findLoadoutDefinition(
  * Returns the frontmatter object and the body content.
  */
 export function parseFrontmatter(content: string): {
-  frontmatter: RuleFrontmatter;
+  frontmatter: Frontmatter;
   body: string;
 } {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-
-  if (!match) {
-    return { frontmatter: {}, body: content };
-  }
-
-  const [, frontmatterStr, body] = match;
-  const parsed = yaml.parse(frontmatterStr) || {};
-  const frontmatter = RuleFrontmatterSchema.parse(parsed);
+  const { frontmatter: parsed, body } = parseMarkdownFrontmatter(content);
+  const frontmatter = FrontmatterSchema.parse(parsed);
 
   return { frontmatter, body };
 }
 
 /**
- * Serialize frontmatter and body back to markdown.
+ * Parse skill frontmatter from a SKILL.md file.
  */
-export function serializeFrontmatter(
-  frontmatter: RuleFrontmatter,
+export function parseSkillFrontmatter(content: string): {
+  frontmatter: SkillFrontmatter;
+  body: string;
+} {
+  const { frontmatter: parsed, body } = parseMarkdownFrontmatter(content);
+  const frontmatter = SkillFrontmatterSchema.parse(parsed);
+  return { frontmatter, body };
+}
+
+/**
+ * Serialize markdown frontmatter without schema constraints.
+ */
+export function serializeMarkdownFrontmatter(
+  frontmatter: RawFrontmatter,
   body: string
 ): string {
   if (Object.keys(frontmatter).length === 0) {
@@ -125,39 +189,92 @@ export function serializeFrontmatter(
 }
 
 /**
- * Sanitize rule frontmatter for maximum cross-tool compatibility.
- * 
- * Required fields for portability:
- * - `description` - Cursor "Apply Intelligently" routing
- * - `paths` - Claude Code file scoping
- * - `globs` - Cursor/OpenCode file scoping
- * 
- * If paths/globs are set, ensures both are present and equal.
- * If description is missing and we have a rule name, generates one.
+ * Serialize frontmatter and body back to markdown.
+ */
+export function serializeFrontmatter(
+  frontmatter: Frontmatter,
+  body: string
+): string {
+  return serializeMarkdownFrontmatter(frontmatter, body);
+}
+
+/**
+ * Sanitize rule frontmatter for canonical v1 portability.
  */
 export function sanitizeRuleFrontmatter(
   frontmatter: RuleFrontmatter,
   ruleName?: string
-): RuleFrontmatter {
-  const result = { ...frontmatter };
+): CanonicalRuleFrontmatter {
+  return sanitizeRuleFrontmatterWithSummary(frontmatter, ruleName).frontmatter;
+}
 
-  // Mirror paths <-> globs for Cursor/OpenCode compatibility
-  if (result.paths && !result.globs) {
-    result.globs = result.paths;
-  } else if (result.globs && !result.paths) {
-    result.paths = result.globs;
+/**
+ * Sanitize rule frontmatter and return a concise change summary.
+ */
+export function sanitizeRuleFrontmatterWithSummary(
+  frontmatter: RuleFrontmatter,
+  ruleName?: string
+): FrontmatterSanitizationResult<CanonicalRuleFrontmatter> {
+  const result = { ...frontmatter };
+  const changes: string[] = [];
+  const explicitAlwaysApply = result.alwaysApply;
+
+  const hadGlobsAlias = "globs" in result;
+  const pathsBeforeAliasHandling = result.paths;
+  const globsBeforeAliasHandling = result.globs;
+
+  if (
+    Array.isArray(pathsBeforeAliasHandling)
+    && Array.isArray(globsBeforeAliasHandling)
+    && stableStringify(pathsBeforeAliasHandling) !== stableStringify(globsBeforeAliasHandling)
+  ) {
+    changes.push("~ conflicting alias ignored: globs (kept paths)");
   }
 
-  // Ensure description exists for Cursor "Apply Intelligently" mode
+  if (result.globs && !result.paths) {
+    result.paths = result.globs;
+    changes.push("~ globs -> paths");
+  }
+
+  if (hadGlobsAlias) {
+    delete result.globs;
+    if (!changes.includes("~ globs -> paths")) {
+      changes.push("~ removed alias: globs");
+    }
+  }
+
+  if ("alwaysApply" in result) {
+    delete result.alwaysApply;
+    changes.push("~ alwaysApply -> activation");
+  }
+
+  let canonicalActivation: "always" | "scoped";
+  if (typeof explicitAlwaysApply === "boolean") {
+    canonicalActivation = explicitAlwaysApply || result.paths === undefined
+      ? "always"
+      : "scoped";
+  } else if (result.activation === "always" || result.activation === "scoped") {
+    canonicalActivation = result.activation;
+  } else {
+    canonicalActivation = result.paths === undefined ? "always" : "scoped";
+  }
+  if (result.activation !== canonicalActivation) {
+    result.activation = canonicalActivation;
+    changes.push(`~ activation -> ${canonicalActivation}`);
+  }
+
   if (!result.description && ruleName) {
-    // Generate a description from the rule name
     const humanName = ruleName
       .replace(/[-_]/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
     result.description = `${humanName} guidelines`;
+    changes.push("~ added description");
   }
 
-  return result;
+  return {
+    frontmatter: CanonicalRuleFrontmatterSchema.parse(result),
+    changes,
+  };
 }
 
 /**
@@ -165,12 +282,17 @@ export function sanitizeRuleFrontmatter(
  * Returns true if the file would be modified by sanitization.
  */
 export function ruleNeedsSanitization(filePath: string): boolean {
+  return ruleSanitizationChanges(filePath).length > 0;
+}
+
+/**
+ * Return a concise list of rule-frontmatter sanitization changes.
+ */
+export function ruleSanitizationChanges(filePath: string): string[] {
   const content = readFile(filePath);
   const { frontmatter } = parseFrontmatter(content);
   const ruleName = path.basename(filePath, ".md");
-  const sanitized = sanitizeRuleFrontmatter(frontmatter, ruleName);
-  
-  return JSON.stringify(frontmatter) !== JSON.stringify(sanitized);
+  return sanitizeRuleFrontmatterWithSummary(frontmatter, ruleName).changes;
 }
 
 /**
@@ -178,32 +300,41 @@ export function ruleNeedsSanitization(filePath: string): boolean {
  * Returns true if the file was modified.
  */
 export function sanitizeRuleFile(filePath: string): boolean {
+  return sanitizeRuleFileWithSummary(filePath).modified;
+}
+
+/**
+ * Sanitize a rule file in place and return change details.
+ */
+export function sanitizeRuleFileWithSummary(filePath: string): FileSanitizationResult {
   const content = readFile(filePath);
   const { frontmatter, body } = parseFrontmatter(content);
   const ruleName = path.basename(filePath, ".md");
-  
-  const sanitized = sanitizeRuleFrontmatter(frontmatter, ruleName);
-  
+  const { frontmatter: sanitized, changes } = sanitizeRuleFrontmatterWithSummary(
+    frontmatter,
+    ruleName
+  );
+
   // Check if anything changed
-  const originalStr = JSON.stringify(frontmatter);
-  const sanitizedStr = JSON.stringify(sanitized);
-  
+  const originalStr = stableStringify(frontmatter);
+  const sanitizedStr = stableStringify(sanitized);
+
   if (originalStr === sanitizedStr) {
-    return false;
+    return { modified: false, changes: [] };
   }
-  
+
   const newContent = serializeFrontmatter(sanitized, body);
   writeFile(filePath, newContent);
-  return true;
+  return { modified: true, changes };
 }
 
 /**
  * Find all rules that need sanitization in a loadout root.
  */
 export function findUnsanitizedRules(loadoutRoot: string): string[] {
-  const rulesDir = path.join(loadoutRoot, "rules");
+  const rulesDir = path.join(loadoutRoot, RULES_DIR);
   if (!isDirectory(rulesDir)) return [];
-  
+
   const unsanitized: string[] = [];
   for (const file of listFiles(rulesDir)) {
     if (!file.endsWith(".md")) continue;
@@ -212,5 +343,143 @@ export function findUnsanitizedRules(loadoutRoot: string): string[] {
       unsanitized.push(file.replace(/\.md$/, ""));
     }
   }
+  return unsanitized;
+}
+
+/**
+ * Sanitize skill frontmatter for canonical v1 portability.
+ */
+export function sanitizeSkillFrontmatter(
+  frontmatter: SkillFrontmatter,
+  skillName?: string,
+): SkillFrontmatter {
+  return sanitizeSkillFrontmatterWithSummary(frontmatter, skillName).frontmatter;
+}
+
+/**
+ * Sanitize skill frontmatter and return a concise change summary.
+ */
+export function sanitizeSkillFrontmatterWithSummary(
+  frontmatter: SkillFrontmatter,
+  skillName?: string,
+): FrontmatterSanitizationResult<SkillFrontmatter> {
+  const result = { ...frontmatter };
+  const changes: string[] = [];
+
+  if (!result.name && skillName) {
+    result.name = skillName;
+    changes.push("~ added name");
+  }
+
+  if (!result.description) {
+    result.description = skillName
+      ? `${skillName} skill for AI coding agents`
+      : "Skill for AI coding agents";
+    changes.push("~ added description");
+  }
+
+  const disableModelInvocation = result["disable-model-invocation"];
+  const canonicalModelInvocable = result["model-invocable"];
+
+  if (typeof disableModelInvocation === "boolean") {
+    const aliasModelInvocable = !disableModelInvocation;
+    if (typeof canonicalModelInvocable === "boolean") {
+      if (canonicalModelInvocable !== aliasModelInvocable) {
+        changes.push(
+          "~ conflicting alias ignored: disable-model-invocation (kept model-invocable)"
+        );
+      }
+    } else {
+      result["model-invocable"] = aliasModelInvocable;
+      changes.push(
+        `~ disable-model-invocation -> model-invocable: ${aliasModelInvocable}`
+      );
+    }
+    delete result["disable-model-invocation"];
+    changes.push("~ removed alias: disable-model-invocation");
+  }
+
+  if (typeof result["user-invocable"] !== "boolean") {
+    result["user-invocable"] = true;
+    changes.push("~ user-invocable -> true");
+  }
+
+  if (typeof result["model-invocable"] !== "boolean") {
+    result["model-invocable"] = true;
+    changes.push("~ model-invocable -> true");
+  }
+
+  return { frontmatter: result, changes };
+}
+
+/**
+ * Check if a skill file needs sanitization.
+ */
+export function skillNeedsSanitization(filePath: string): boolean {
+  return skillSanitizationChanges(filePath).length > 0;
+}
+
+/**
+ * Return a concise list of skill-frontmatter sanitization changes.
+ */
+export function skillSanitizationChanges(filePath: string): string[] {
+  const content = readFile(filePath);
+  const { frontmatter } = parseSkillFrontmatter(content);
+  const skillName = path.basename(path.dirname(filePath));
+  return sanitizeSkillFrontmatterWithSummary(frontmatter, skillName).changes;
+}
+
+/**
+ * Sanitize a skill file in place.
+ * Returns true if the file was modified.
+ */
+export function sanitizeSkillFile(filePath: string): boolean {
+  return sanitizeSkillFileWithSummary(filePath).modified;
+}
+
+/**
+ * Sanitize a skill file in place and return change details.
+ */
+export function sanitizeSkillFileWithSummary(filePath: string): FileSanitizationResult {
+  const content = readFile(filePath);
+  const { frontmatter, body } = parseSkillFrontmatter(content);
+  const skillName = path.basename(path.dirname(filePath));
+  const { frontmatter: sanitized, changes } = sanitizeSkillFrontmatterWithSummary(
+    frontmatter,
+    skillName
+  );
+
+  const originalStr = stableStringify(frontmatter);
+  const sanitizedStr = stableStringify(sanitized);
+
+  if (originalStr === sanitizedStr) {
+    return { modified: false, changes: [] };
+  }
+
+  const newContent = serializeFrontmatter(sanitized, body);
+  writeFile(filePath, newContent);
+  return { modified: true, changes };
+}
+
+/**
+ * Find all skills that need sanitization in a loadout root.
+ */
+export function findUnsanitizedSkills(loadoutRoot: string): string[] {
+  const skillsDir = path.join(loadoutRoot, SKILLS_DIR);
+  if (!isDirectory(skillsDir)) return [];
+
+  const unsanitized: string[] = [];
+  for (const entry of listFiles(skillsDir)) {
+    const skillDir = path.join(skillsDir, entry);
+    if (!isDirectory(skillDir)) continue;
+
+    const skillMdPath = path.join(skillDir, "SKILL.md");
+    if (!fileExists(skillMdPath)) continue;
+
+    if (skillNeedsSanitization(skillMdPath)) {
+      unsanitized.push(entry);
+    }
+  }
+
   return unsanitized;
 }

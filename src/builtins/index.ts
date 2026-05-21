@@ -6,8 +6,11 @@
  * privileged code path.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../core/config.js";
 import type { PluginAPI } from "../core/plugin.js";
+import {
+  parseMarkdownFrontmatter,
+  serializeMarkdownFrontmatter,
+} from "../core/config.js";
 import { ruleKind } from "./kinds/rule.js";
 import { skillKind } from "./kinds/skill.js";
 import { instructionKind } from "./kinds/instruction.js";
@@ -33,15 +36,34 @@ export const BUILTIN_TOOL_NAMES = [
 
 export type BuiltInToolName = (typeof BUILTIN_TOOL_NAMES)[number];
 
-/**
- * Mirror Cursor's `paths` ↔ `globs` frontmatter keys so authors can use
- * either convention. Registered as the "cursor-frontmatter" transform.
- */
-function mirrorPathsAndGlobs(raw: string): string {
-  const { frontmatter, body } = parseFrontmatter(raw);
-  if (frontmatter.paths && !frontmatter.globs) frontmatter.globs = frontmatter.paths;
-  if (frontmatter.globs && !frontmatter.paths) frontmatter.paths = frontmatter.globs;
-  return serializeFrontmatter(frontmatter, body);
+function translateRuleFrontmatter(raw: string): string {
+  const { frontmatter, body } = parseMarkdownFrontmatter(raw);
+
+  const paths = Array.isArray(frontmatter.paths) ? frontmatter.paths : undefined;
+  if (paths && !Array.isArray(frontmatter.globs)) {
+    frontmatter.globs = paths;
+  }
+
+  if (typeof frontmatter.activation === "string" && frontmatter.alwaysApply === undefined) {
+    if (frontmatter.activation === "always") frontmatter.alwaysApply = true;
+    if (frontmatter.activation === "scoped") frontmatter.alwaysApply = false;
+  }
+
+  return serializeMarkdownFrontmatter(frontmatter, body);
+}
+
+function translateOpenCodeSkillFrontmatter(raw: string): string {
+  const { frontmatter, body } = parseMarkdownFrontmatter(raw);
+
+  const modelInvocable = frontmatter["model-invocable"];
+  if (
+    typeof modelInvocable === "boolean" &&
+    frontmatter["disable-model-invocation"] === undefined
+  ) {
+    frontmatter["disable-model-invocation"] = !modelInvocable;
+  }
+
+  return serializeMarkdownFrontmatter(frontmatter, body);
 }
 
 /** Register all built-ins into the given PluginAPI. */
@@ -57,7 +79,9 @@ export function registerBuiltins(api: PluginAPI): void {
   api.registerKind(opencodePluginKind);
 
   // Named transforms — referenced by name in tool target specs.
-  api.registerTransform("cursor-frontmatter", mirrorPathsAndGlobs);
+  api.registerTransform("cursor-rule-frontmatter", translateRuleFrontmatter);
+  api.registerTransform("opencode-rule-frontmatter", translateRuleFrontmatter);
+  api.registerTransform("opencode-skill-frontmatter", translateOpenCodeSkillFrontmatter);
 
   // Tools
   api.registerTool(claudeCodeTool);

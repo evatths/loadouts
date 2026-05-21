@@ -10,10 +10,10 @@ export const cursorTool: ToolSpec = {
   },
   supports: ["rule", "skill", "instruction"],
   targets: {
-    // Cursor requires .mdc extension and expects paths/globs mirrored.
+    // Cursor rules render canonical paths/activation with native aliases.
     rule: {
       path: "{base}/rules/{stem}.mdc",
-      transform: "cursor-frontmatter",
+      transform: "cursor-rule-frontmatter",
     },
     skill: { path: "{base}/skills/{name}" },
     instruction: {

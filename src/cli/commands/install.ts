@@ -30,7 +30,11 @@ import {
   isDirectory,
   listFiles,
 } from "../../lib/fs.js";
-import { parseLoadoutDefinition, sanitizeRuleFile } from "../../core/config.js";
+import {
+  parseLoadoutDefinition,
+  sanitizeRuleFile,
+  sanitizeSkillFile,
+} from "../../core/config.js";
 import { loadState } from "../../core/manifest.js";
 import { registry } from "../../core/registry.js";
 import { resolveContexts, SCOPE_FLAGS, type ScopeFlags } from "../../core/scope.js";
@@ -270,11 +274,15 @@ async function importArtifact(
     if (kind?.layout === "dir") {
       // Copy directory
       copyDir(artifact.sourcePath, destPath);
+
+      if (artifact.kind === "skill") {
+        sanitizeSkillFile(path.join(destPath, "SKILL.md"));
+      }
     } else {
       // Copy file
       copyFile(artifact.sourcePath, destPath);
 
-      // Sanitize rules for cross-tool compatibility
+      // Canonicalize known native frontmatter aliases on import.
       if (artifact.kind === "rule") {
         sanitizeRuleFile(destPath);
       }

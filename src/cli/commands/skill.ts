@@ -28,7 +28,13 @@ import {
   copyDir,
   listFiles,
 } from "../../lib/fs.js";
-import { parseLoadoutDefinition } from "../../core/config.js";
+import {
+  parseLoadoutDefinition,
+  parseSkillFrontmatter,
+  sanitizeSkillFile,
+  sanitizeSkillFrontmatter,
+  serializeFrontmatter,
+} from "../../core/config.js";
 import { inProject, hasGlobal } from "../../core/scope.js";
 import { log, heading } from "../../lib/output.js";
 import { openInEditor } from "../../lib/editor.js";
@@ -113,13 +119,15 @@ skillCommand
     ensureDir(skillPath);
     ensureDir(path.join(skillPath, "references"));
 
-    const description =
-      options.description || `${name} skill for AI coding agents`;
+    const frontmatter = sanitizeSkillFrontmatter(
+      {
+        name,
+        description: options.description,
+      },
+      name
+    );
 
-    const content = `---
-name: ${name}
-description: ${description}
----
+    const content = serializeFrontmatter(frontmatter, `
 
 # ${name}
 
@@ -134,7 +142,7 @@ Provide specific instructions for the AI agent.
 ## Examples
 
 Include examples if helpful.
-`;
+`);
 
     writeFile(skillMdPath, content);
 
@@ -149,6 +157,9 @@ Include examples if helpful.
     if (options.edit !== false) {
       log.dim(`  ${skillPath}/`);
       await openInEditor(skillMdPath, { cwd: rootPath });
+      if (sanitizeSkillFile(skillMdPath)) {
+        log.dim("  Canonicalized skill frontmatter");
+      }
     } else {
       // For agents/scripts: show clear path and instructions
       console.log();
@@ -225,9 +236,10 @@ skillCommand
         try {
           if (fileExists(skillMdPath)) {
             const content = readFile(skillMdPath);
-            // Extract description from frontmatter
-            const match = content.match(/description:\s*(.+)/);
-            const desc = match ? match[1].trim() : "";
+            const { frontmatter } = parseSkillFrontmatter(content);
+            const desc = typeof frontmatter.description === "string"
+              ? frontmatter.description
+              : "";
 
             console.log(`  ${name}`);
             if (desc) {
@@ -275,10 +287,12 @@ skillCommand
       process.exit(1);
     }
 
-    await openInEditor(skillMdPath, {
-      cwd: rootPath,
-      onSuccess: () => log.success(`Edited skill: ${name}`),
-    });
+    await openInEditor(skillMdPath, { cwd: rootPath });
+
+    if (sanitizeSkillFile(skillMdPath)) {
+      log.dim("  Canonicalized skill frontmatter");
+    }
+    log.success(`Edited skill: ${name}`);
   });
 
 // loadout skill remove <name>
@@ -432,6 +446,11 @@ skillCommand
 
     // Copy the directory
     copyDir(sourcePath, destPath);
+
+    const importedSkillMdPath = path.join(destPath, "SKILL.md");
+    if (sanitizeSkillFile(importedSkillMdPath)) {
+      log.dim("  Canonicalized skill frontmatter");
+    }
 
     // Add to loadout definition
     const loadoutPath = path.join(rootPath, "loadouts", `${options.loadout}.yaml`);

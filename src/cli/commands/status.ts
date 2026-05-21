@@ -23,7 +23,7 @@ import chalk from "chalk";
 import { loadState, detectDrift, type DriftResult } from "../../core/manifest.js";
 import { loadResolvedLoadout } from "../../core/resolve.js";
 import { planRender } from "../../core/render.js";
-import { findUnsanitizedRules } from "../../core/config.js";
+import { findUnsanitizedRules, findUnsanitizedSkills } from "../../core/config.js";
 import { resolveContexts, SCOPE_FLAGS, type ScopeFlags } from "../../core/scope.js";
 import { log, heading } from "../../lib/output.js";
 import {
@@ -517,15 +517,20 @@ function renderShadowedSummary(groups: LoadoutStatusGroup[]): void {
 }
 
 /**
- * Check for unsanitized rules and warn.
+ * Check for non-canonical artifact frontmatter and warn.
  */
-function checkUnsanitizedRules(ctx: CommandContext): void {
-  const unsanitized = findUnsanitizedRules(ctx.configPath);
-  if (unsanitized.length === 0) return;
+function checkNonCanonicalFrontmatter(ctx: CommandContext): void {
+  const unsanitizedRules = findUnsanitizedRules(ctx.configPath);
+  const unsanitizedSkills = findUnsanitizedSkills(ctx.configPath);
+  const total = unsanitizedRules.length + unsanitizedSkills.length;
+  if (total === 0) return;
 
-  log.warn(`${unsanitized.length} rule(s) need sanitization for cross-tool compatibility:`);
-  for (const name of unsanitized) {
-    log.dim(`  ${name}`);
+  log.warn(`${total} artifact(s) have non-canonical frontmatter:`);
+  for (const name of unsanitizedRules) {
+    log.dim(`  rule: ${name}`);
+  }
+  for (const name of unsanitizedSkills) {
+    log.dim(`  skill: ${name}`);
   }
   log.dim("Run 'loadouts sanitize' to fix.");
   console.log();
@@ -541,8 +546,8 @@ export async function executeStatus(
   const groups: LoadoutStatusGroup[] = [];
 
   for (const ctx of contexts) {
-    // Check for unsanitized rules first
-    checkUnsanitizedRules(ctx);
+    // Check for non-canonical rule/skill frontmatter first
+    checkNonCanonicalFrontmatter(ctx);
 
     const contextGroups = await loadStatusGroupsForContext(ctx, showReferences);
     groups.push(...contextGroups);

@@ -14,6 +14,8 @@ export const ToolSchema = z.string().min(1);
 export const ArtifactKindSchema = z.string().min(1);
 
 export const OutputModeSchema = z.enum(["symlink", "copy", "generate"]);
+export const ActivationSchema = z.enum(["always", "scoped"]);
+export type Activation = z.infer<typeof ActivationSchema>;
 
 // Source reference — path to another .loadouts/ directory
 export const SourceRefSchema = z.string();
@@ -88,8 +90,44 @@ export const LegacyAppliedStateSchema = z.object({
 export const RuleFrontmatterSchema = z.object({
   description: z.string().optional(),
   paths: z.array(z.string()).optional(),
+  activation: z.string().optional(),
   globs: z.array(z.string()).optional(),
   alwaysApply: z.boolean().optional(),
-});
+}).passthrough();
 
 export type RuleFrontmatter = z.infer<typeof RuleFrontmatterSchema>;
+
+export const CanonicalRuleFrontmatterSchema = RuleFrontmatterSchema.extend({
+  activation: ActivationSchema,
+}).omit({
+  globs: true,
+  alwaysApply: true,
+});
+
+export type CanonicalRuleFrontmatter = z.infer<typeof CanonicalRuleFrontmatterSchema>;
+
+// Skill frontmatter
+export const SkillFrontmatterSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().optional(),
+  "user-invocable": z.boolean().optional(),
+  "model-invocable": z.boolean().optional(),
+  "disable-model-invocation": z.boolean().optional(),
+}).passthrough();
+
+export type SkillFrontmatter = z.infer<typeof SkillFrontmatterSchema>;
+
+// Generic markdown frontmatter used by parse/serialize helpers.
+export const FrontmatterSchema = z.object({
+  description: z.string().optional(),
+  paths: z.array(z.string()).optional(),
+  activation: z.string().optional(),
+  globs: z.array(z.string()).optional(),
+  alwaysApply: z.boolean().optional(),
+  name: z.string().optional(),
+  "user-invocable": z.boolean().optional(),
+  "model-invocable": z.boolean().optional(),
+  "disable-model-invocation": z.boolean().optional(),
+}).passthrough();
+
+export type Frontmatter = z.infer<typeof FrontmatterSchema>;

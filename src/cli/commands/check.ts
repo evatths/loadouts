@@ -20,6 +20,8 @@ import {
   parseRootConfig,
   listLoadouts,
   parseLoadoutDefinition,
+  findUnsanitizedRules,
+  findUnsanitizedSkills,
 } from "../../core/config.js";
 import { resolveLoadout, getInstructionItem } from "../../core/resolve.js";
 import { planRender } from "../../core/render.js";
@@ -60,6 +62,23 @@ async function checkRoot(
 
   // Check each loadout definition
   const loadoutNames = listLoadouts(root.path);
+
+  const unsanitizedRules = findUnsanitizedRules(root.path);
+  const unsanitizedSkills = findUnsanitizedSkills(root.path);
+  if (unsanitizedRules.length > 0 || unsanitizedSkills.length > 0) {
+    const total = unsanitizedRules.length + unsanitizedSkills.length;
+    log.warn(`  ${total} artifact(s) have non-canonical frontmatter`);
+    if (verbose) {
+      for (const name of unsanitizedRules) {
+        log.dim(`    rule: ${name}`);
+      }
+      for (const name of unsanitizedSkills) {
+        log.dim(`    skill: ${name}`);
+      }
+    }
+    log.dim("    Run 'loadouts sanitize' to fix.");
+    hasWarnings = true;
+  }
 
   for (const name of loadoutNames) {
     const defPath = path.join(root.path, "loadouts", `${name}.yaml`);

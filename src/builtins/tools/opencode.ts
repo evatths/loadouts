@@ -16,8 +16,14 @@ export const opencodeTool: ToolSpec = {
     "opencode-plugin",
   ],
   targets: {
-    rule: { path: "{base}/rules/{stem}.md" },
-    skill: { path: "{base}/skills/{name}" },
+    rule: {
+      path: "{base}/rules/{stem}.md",
+      transform: "opencode-rule-frontmatter",
+    },
+    skill: {
+      path: "{base}/skills/{name}",
+      transform: "opencode-skill-frontmatter",
+    },
     instruction: {
       path: { project: "AGENTS.md", global: "{home}/AGENTS.md" },
     },
