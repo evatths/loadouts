@@ -6,6 +6,7 @@
  */
 
 import { Command } from "commander";
+import * as fs from "node:fs";
 import * as path from "node:path";
 import * as readline from "node:readline";
 import * as yaml from "yaml";
@@ -48,12 +49,13 @@ import type { CommandContext } from "../../core/types.js";
 // Types
 // ---------------------------------------------------------------------------
 
-interface InstallOptions extends ScopeFlags {
+export interface InstallOptions extends ScopeFlags {
   rules?: boolean;
   skills?: boolean;
   instructions?: boolean;
   kinds?: string;
   from?: string;
+  source?: string;
   to?: string;       // target loadout (undefined means auto-detect)
   interactive?: boolean;
   yes?: boolean;
@@ -76,6 +78,103 @@ function createPrompt(): readline.Interface {
     input: process.stdin,
     output: process.stdout,
   });
+}
+
+function isPathWithin(parentPath: string, childPath: string): boolean {
+  const rel = path.relative(parentPath, childPath);
+  return rel === "" || (!!rel && !rel.startsWith("..") && !path.isAbsolute(rel));
+}
+
+function resolvePhysicalPath(filePath: string): string {
+  try {
+    return fs.realpathSync(filePath);
+  } catch {
+    return path.resolve(filePath);
+  }
+}
+
+function resolveInstallSource(cwd: string, source: string | undefined): string | undefined {
+  if (!source) return undefined;
+
+  const sourcePath = path.isAbsolute(source) ? source : path.resolve(cwd, source);
+  if (!fileExists(sourcePath)) {
+    throw new Error(`Source path not found: ${sourcePath}`);
+  }
+
+  const stat = fs.statSync(sourcePath);
+  if (!stat.isFile() && !stat.isDirectory()) {
+    throw new Error(`Source path must be a file or directory: ${sourcePath}`);
+  }
+
+  return sourcePath;
+}
+
+function getSourceScanRoot(sourcePath: string): string {
+  return isDirectory(sourcePath) ? sourcePath : path.dirname(sourcePath);
+}
+
+function addRelativeToolBaseRoots(sourcePath: string, basePath: string, roots: Set<string>): void {
+  if (path.isAbsolute(basePath) || /{[^}]+}/.test(basePath)) return;
+
+  const baseParts = basePath.split(/[\\/]+/).filter(Boolean);
+  if (baseParts.length === 0) return;
+
+  const resolvedSource = path.resolve(sourcePath);
+  const sourceParts = resolvedSource.split(path.sep);
+
+  for (let i = 0; i <= sourceParts.length - baseParts.length; i += 1) {
+    const matches = baseParts.every((part, offset) => sourceParts[i + offset] === part);
+    if (!matches) continue;
+
+    const root = sourceParts.slice(0, i).join(path.sep) || path.parse(resolvedSource).root;
+    roots.add(root);
+  }
+}
+
+function getSourceScanRoots(sourcePath: string): string[] {
+  const roots = new Set<string>([getSourceScanRoot(sourcePath)]);
+
+  for (const toolName of registry.allToolNames()) {
+    const tool = registry.getTool(toolName);
+    if (!tool) continue;
+
+    addRelativeToolBaseRoots(sourcePath, tool.basePath.project, roots);
+    addRelativeToolBaseRoots(sourcePath, tool.basePath.global, roots);
+  }
+
+  return [...roots];
+}
+
+function mergeDiscoveryResults(results: DiscoveryResult[]): DiscoveryResult {
+  const artifacts: DiscoveredArtifact[] = [];
+  const seen = new Set<string>();
+  const warnings = results.flatMap((result) => result.warnings);
+
+  for (const result of results) {
+    for (const artifact of result.artifacts) {
+      const key = `${artifact.kind}:${artifact.sourcePath}:${artifact.destPath}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      artifacts.push(artifact);
+    }
+  }
+
+  const conflicts = new Map<string, DiscoveredArtifact[]>();
+  const byDest = new Map<string, DiscoveredArtifact[]>();
+  for (const artifact of artifacts) {
+    const key = `${artifact.kind}:${artifact.destPath}`;
+    const existing = byDest.get(key) ?? [];
+    existing.push(artifact);
+    byDest.set(key, existing);
+  }
+
+  for (const [key, items] of byDest) {
+    if (items.length > 1) {
+      conflicts.set(key, items);
+    }
+  }
+
+  return { artifacts, conflicts, warnings };
 }
 
 async function askQuestion(rl: readline.Interface, question: string): Promise<string> {
@@ -448,6 +547,11 @@ export async function runInstall(
 ): Promise<InstallResult> {
   const projectRoot = ctx.projectRoot;
   const loadoutPath = ctx.configPath;
+  const sourcePath = options.source ? path.resolve(options.source) : undefined;
+
+  if (sourcePath && isPathWithin(resolvePhysicalPath(loadoutPath), resolvePhysicalPath(sourcePath))) {
+    throw new Error("Refusing to import from the target .loadouts directory.");
+  }
 
   // Build filter options
   const kinds: ImportableKind[] | undefined = (() => {
@@ -467,16 +571,23 @@ export async function runInstall(
 
   const tools = options.from?.split(",").map((t) => t.trim());
 
+  const scanRoots = sourcePath ? getSourceScanRoots(sourcePath) : [projectRoot];
+
   // Discover artifacts
-  const result = discoverImportableArtifacts(projectRoot, {
-    scope: ctx.scope,
-    tools,
-    kinds,
-    loadoutPath,
-  });
+  const result = mergeDiscoveryResults(
+    scanRoots.map((scanRoot) => discoverImportableArtifacts(scanRoot, {
+      scope: ctx.scope,
+      tools,
+      kinds,
+      sourcePath,
+      loadoutPath,
+    }))
+  );
 
   if (result.artifacts.length === 0) {
-    log.dim("No existing configurations found to import.");
+    log.dim(sourcePath
+      ? `No importable configurations found in ${sourcePath}.`
+      : "No existing configurations found to import.");
     return { imported: 0, skipped: 0, failed: 0 };
   }
 
@@ -643,7 +754,7 @@ export async function runInstall(
     displayImportTable(
       artifactsToImport.map((a) => ({ artifact: a, success: true })),
       targetLoadout,
-      options.keep ?? false
+      true
     );
     return { imported: artifactsToImport.length, skipped: 0, failed: 0 };
   }
@@ -666,7 +777,7 @@ export async function runInstall(
     await addToLoadout(successfulArtifacts, loadoutPath, targetLoadout);
 
     // Rebuild per-target .gitignore files for all artifacts after import
-    rebuildAllGitignores(loadoutPath, projectRoot, "project");
+    rebuildAllGitignores(loadoutPath, projectRoot, ctx.scope);
   }
 
   // Display results
@@ -690,6 +801,7 @@ export async function runInstall(
 
 export const installCommand = new Command("install")
   .description("Import existing tool configurations into loadout")
+  .argument("[source]", "Optional file or directory to import from")
   .option(...SCOPE_FLAGS.local)
   .option(...SCOPE_FLAGS.global)
   .option(...SCOPE_FLAGS.all)
@@ -703,18 +815,28 @@ export const installCommand = new Command("install")
   .option("--dry-run", "Preview changes without applying")
   .option("--keep", "Keep original files after import")
   .option("--to <loadout>", "Target loadout to add artifacts to (default: auto-detect from active)")
-  .action(async (options: InstallOptions) => {
+  .action(async (source: string | undefined, options: InstallOptions) => {
     const cwd = process.cwd();
+    let resolvedSource: string | undefined;
+
+    try {
+      resolvedSource = resolveInstallSource(cwd, source);
+    } catch (err) {
+      log.error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+
+    const installOptions: InstallOptions = { ...options, source: resolvedSource };
 
     let contexts: CommandContext[] = [];
 
     try {
-      ({ contexts } = await resolveContexts(options, cwd));
+      ({ contexts } = await resolveContexts(installOptions, cwd));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const canAutoInitProject =
-        !options.global &&
-        !options.all &&
+        !installOptions.global &&
+        !installOptions.all &&
         message.includes("No loadout found");
 
       if (!canAutoInitProject) {
@@ -725,7 +847,7 @@ export const installCommand = new Command("install")
       console.log();
       log.warn("No project .loadouts/ found.");
 
-      if (!options.yes) {
+      if (!installOptions.yes) {
         const rl = readline.createInterface({
           input: process.stdin,
           output: process.stdout,
@@ -747,7 +869,7 @@ export const installCommand = new Command("install")
       }
 
       console.log();
-      if (options.dryRun) {
+      if (installOptions.dryRun) {
         log.info("Would initialize .loadouts/ (dry-run)");
         const configPath = path.join(cwd, ".loadouts");
         contexts = [
@@ -771,16 +893,28 @@ export const installCommand = new Command("install")
       }
     }
 
+    if (resolvedSource && contexts.length > 1) {
+      if (installOptions.all) {
+        log.error("Installing from a source path targets one scope at a time. Use -l or -g.");
+        process.exit(1);
+      }
+
+      const projectContext = contexts.find((ctx) => ctx.scope === "project");
+      contexts = projectContext ? [projectContext] : [contexts[0]];
+      log.dim("Using project scope for source install. Use -g to target global instead.");
+    }
+
     const multipleScopes = contexts.length > 1;
     let hasFailures = false;
 
     for (const ctx of contexts) {
       console.log();
       const scopeLabel = ctx.scope === "global" ? " [global]" : " [project]";
-      log.info(`Scanning for existing configurations${multipleScopes ? scopeLabel : ""}...`);
+      const sourceLabel = resolvedSource ? ` in ${resolvedSource}` : "";
+      log.info(`Scanning for existing configurations${sourceLabel}${multipleScopes ? scopeLabel : ""}...`);
 
       try {
-        const result = await runInstall(ctx, options);
+        const result = await runInstall(ctx, installOptions);
         if (result.failed > 0) {
           hasFailures = true;
         }

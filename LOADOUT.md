@@ -30,6 +30,7 @@ loadouts activate backend          # Activate it
 ```bash
 loadouts init                      # Initialize .loadouts/ (auto-detects existing configs)
 loadouts install                   # Or run separately to import existing configs
+loadouts install ./agent-pack      # Or import from a source directory
 loadouts sync                      # Apply unified config
 ```
 
@@ -37,10 +38,12 @@ loadouts sync                      # Apply unified config
 
 ## Importing Existing Configuration
 
-If you already have rules, skills, or instruction files scattered across tool directories, `loadouts install` discovers and imports them all at once:
+If you already have rules, skills, or instruction files scattered across tool directories, `loadouts install` discovers and imports them all at once. You can also pass a file or directory to import from one specific source.
 
 ```bash
 loadouts install                   # Discover and import all existing configs
+loadouts install ./agent-pack      # Import from a source directory
+loadouts install ./rule.mdc        # Import a single artifact
 loadouts install --dry-run         # Preview what would be imported
 loadouts install -i                # Interactive selection mode
 loadouts install --rules           # Only import rules
@@ -54,6 +57,8 @@ loadouts install --keep            # Keep original files after import
 - Rules from `.claude/rules/`, `.cursor/rules/`, `.opencode/rules/`
 - Skills from `.claude/skills/`, `.cursor/skills/`, `.opencode/skills/`, `.agents/skills/`, `.pi/skills/`
 - Instruction files (`AGENTS.md`, `CLAUDE.md`) at project root
+
+**Source installs:** When a path is provided, Loadouts imports from that specific source. Source directories may contain canonical `rules/`, `skills/`, and `instructions/` folders, direct skill directories with `SKILL.md`, single rule files, or registry-mapped tool artifacts such as `.opencode/plugins/*.ts`.
 
 **Conflict resolution:** When the same artifact exists in multiple tool directories, `loadouts install` detects the conflict and lets you choose which version to import (or import both with renamed destinations).
 
@@ -375,12 +380,14 @@ loadouts init --force      # Overwrite existing
 
 Creates the directory structure, a `base` loadout, and applies it automatically. If existing tool configurations are detected, offers to import them.
 
-#### `loadouts install`
+#### `loadouts install [source]`
 
-Discover and import existing tool configurations into loadout.
+Discover and import existing tool configurations into loadout. When `source` is provided, import from that file or directory instead of scanning the current tool config directories.
 
 ```bash
 loadouts install                   # Discover all, prompt before importing
+loadouts install ./agent-pack      # Import from a source directory
+loadouts install ./rule.mdc        # Import a single artifact
 loadouts install --dry-run         # Preview what would be imported
 loadouts install -i                # Interactive selection mode
 loadouts install -y                # Auto-confirm (import all, resolve conflicts automatically)
@@ -391,7 +398,7 @@ loadouts install --keep            # Keep original files (don't delete after imp
 loadouts install --to staging      # Add to a specific loadout instead of base
 ```
 
-Scans all known tool directories (`.claude/`, `.cursor/`, `.opencode/`, `.agents/`, `.pi/`) for rules, skills, and instruction files. Detects naming conflicts when the same artifact exists in multiple locations.
+Without a source path, scans all known tool directories (`.claude/`, `.cursor/`, `.opencode/`, `.agents/`, `.pi/`) for rules, skills, and instruction files. Detects naming conflicts when the same artifact exists in multiple locations.
 
 #### `loadouts create <name>`
 

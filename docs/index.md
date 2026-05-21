@@ -27,6 +27,7 @@ loadouts docs quickstart           # Step-by-step setup guide
 # Setup
 loadouts init                      # Initialize .loadouts/
 loadouts install                   # Import existing configs
+loadouts install ./agent-pack      # Import from a source directory
 
 # Daily use
 loadouts activate <name>           # Activate loadout(s)

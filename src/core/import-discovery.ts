@@ -51,6 +51,8 @@ export interface DiscoveryOptions {
   tools?: string[];
   /** Filter to specific kinds */
   kinds?: ImportableKind[];
+  /** Restrict discovery to one explicit source file or directory */
+  sourcePath?: string;
   /** Path to .loadouts/ directory (to check for existing artifacts) */
   loadoutPath?: string;
 }
@@ -151,6 +153,157 @@ function toDisplayPath(scanRoot: string, absolutePath: string): string {
   }
 
   return toPosix(absolutePath);
+}
+
+function isPathWithin(parentPath: string, childPath: string): boolean {
+  const rel = path.relative(parentPath, childPath);
+  return rel === "" || (!!rel && !rel.startsWith("..") && !path.isAbsolute(rel));
+}
+
+function matchesSourcePath(artifact: DiscoveredArtifact, sourcePath: string): boolean {
+  if (artifact.kind === "skill" && isPathWithin(artifact.sourcePath, sourcePath)) {
+    return true;
+  }
+
+  return isPathWithin(sourcePath, artifact.sourcePath) || artifact.sourcePath === sourcePath;
+}
+
+function sourceAllowsKind(kindId: string, kinds: ImportableKind[] | undefined): boolean {
+  return !kinds || kinds.length === 0 || kinds.includes(kindId);
+}
+
+function buildSourceArtifact(
+  scanRoot: string,
+  kind: ImportableKind,
+  sourcePath: string,
+  destPath: string,
+  name: string
+): DiscoveredArtifact | null {
+  const metadata = readArtifactMetadata(sourcePath);
+  if (!metadata) return null;
+
+  return {
+    kind,
+    name,
+    sourcePath,
+    displayPath: toDisplayPath(scanRoot, sourcePath),
+    tool: "source",
+    size: metadata.size,
+    mtime: metadata.mtime,
+    destPath,
+  };
+}
+
+function buildRuleSourceArtifact(scanRoot: string, sourcePath: string): DiscoveredArtifact | null {
+  const ext = path.extname(sourcePath).toLowerCase();
+  if (ext !== ".md" && ext !== ".mdc") return null;
+
+  const stem = path.basename(sourcePath, ext);
+  if (!stem || stem === "AGENTS" || stem === "CLAUDE") return null;
+
+  return buildSourceArtifact(scanRoot, "rule", sourcePath, `rules/${stem}.md`, stem);
+}
+
+function buildInstructionSourceArtifact(scanRoot: string, sourcePath: string): DiscoveredArtifact | null {
+  const basename = path.basename(sourcePath);
+  if (basename !== "AGENTS.md" && basename !== "CLAUDE.md" && !/^AGENTS\.[^.]+\.md$/.test(basename)) {
+    return null;
+  }
+
+  return buildSourceArtifact(
+    scanRoot,
+    "instruction",
+    sourcePath,
+    "instructions/AGENTS.base.md",
+    "AGENTS.md"
+  );
+}
+
+function buildSkillSourceArtifact(scanRoot: string, skillDir: string): DiscoveredArtifact | null {
+  const skillMdPath = path.join(skillDir, "SKILL.md");
+  if (!fileExists(skillMdPath)) return null;
+
+  const name = path.basename(skillDir);
+  return buildSourceArtifact(scanRoot, "skill", skillDir, `skills/${name}`, name);
+}
+
+function discoverDirectSourceArtifacts(
+  scanRoot: string,
+  sourcePath: string,
+  kinds: ImportableKind[] | undefined
+): DiscoveredArtifact[] {
+  const artifacts: DiscoveredArtifact[] = [];
+
+  if (!fileExists(sourcePath)) return artifacts;
+
+  if (!isDirectory(sourcePath)) {
+    if (sourceAllowsKind("instruction", kinds)) {
+      const instruction = buildInstructionSourceArtifact(scanRoot, sourcePath);
+      if (instruction) artifacts.push(instruction);
+    }
+
+    if (sourceAllowsKind("skill", kinds) && path.basename(sourcePath) === "SKILL.md") {
+      const skill = buildSkillSourceArtifact(scanRoot, path.dirname(sourcePath));
+      if (skill) artifacts.push(skill);
+    }
+
+    if (sourceAllowsKind("rule", kinds)) {
+      const rule = buildRuleSourceArtifact(scanRoot, sourcePath);
+      if (rule) artifacts.push(rule);
+    }
+
+    return artifacts;
+  }
+
+  if (sourceAllowsKind("skill", kinds)) {
+    const directSkill = buildSkillSourceArtifact(scanRoot, sourcePath);
+    if (directSkill) artifacts.push(directSkill);
+  }
+
+  const basename = path.basename(sourcePath);
+
+  const rulesRoot = basename === "rules" ? sourcePath : path.join(sourcePath, "rules");
+  if (sourceAllowsKind("rule", kinds) && isDirectory(rulesRoot)) {
+    for (const rel of walkDir(rulesRoot)) {
+      const rule = buildRuleSourceArtifact(scanRoot, path.join(rulesRoot, rel));
+      if (rule) artifacts.push(rule);
+    }
+  }
+
+  const skillsRoot = basename === "skills" ? sourcePath : path.join(sourcePath, "skills");
+  if (sourceAllowsKind("skill", kinds) && isDirectory(skillsRoot)) {
+    for (const entry of listFiles(skillsRoot)) {
+      const skillDir = path.join(skillsRoot, entry);
+      if (!isDirectory(skillDir)) continue;
+
+      const skill = buildSkillSourceArtifact(scanRoot, skillDir);
+      if (skill) artifacts.push(skill);
+    }
+  }
+
+  const instructionsRoot = basename === "instructions" ? sourcePath : path.join(sourcePath, "instructions");
+  if (sourceAllowsKind("instruction", kinds) && isDirectory(instructionsRoot)) {
+    for (const rel of walkDir(instructionsRoot)) {
+      const instruction = buildInstructionSourceArtifact(scanRoot, path.join(instructionsRoot, rel));
+      if (instruction) artifacts.push(instruction);
+    }
+  }
+
+  return artifacts;
+}
+
+function dedupeArtifacts(artifacts: DiscoveredArtifact[]): DiscoveredArtifact[] {
+  const seen = new Set<string>();
+  const deduped: DiscoveredArtifact[] = [];
+
+  for (const artifact of artifacts) {
+    const key = `${artifact.kind}:${artifact.sourcePath}:${artifact.destPath}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(artifact);
+  }
+
+  return deduped;
 }
 
 /**
@@ -485,6 +638,7 @@ export function discoverImportableArtifacts(
   const artifacts: DiscoveredArtifact[] = [];
   const warnings: string[] = [];
   const { scope = "project", tools, kinds, loadoutPath } = options;
+  const sourcePath = options.sourcePath ? path.resolve(options.sourcePath) : undefined;
 
   const allTools = registry.allToolNames();
   const toolsToScan = tools
@@ -507,10 +661,20 @@ export function discoverImportableArtifacts(
     artifacts.push(...discoverInstructions(scanRoot, loadoutPath));
   }
 
+  if (sourcePath) {
+    artifacts.push(...discoverDirectSourceArtifacts(scanRoot, sourcePath, kinds));
+  }
+
   // Filter out artifacts already present in .loadouts/.
-  const filteredArtifacts = loadoutPath
+  const existingFilteredArtifacts = loadoutPath
     ? artifacts.filter((artifact) => !artifactExistsInLoadout(loadoutPath, artifact))
     : artifacts;
+
+  const sourceFilteredArtifacts = sourcePath
+    ? existingFilteredArtifacts.filter((artifact) => matchesSourcePath(artifact, sourcePath))
+    : existingFilteredArtifacts;
+
+  const filteredArtifacts = dedupeArtifacts(sourceFilteredArtifacts);
 
   // Detect conflicts by canonical destination path.
   const byDest = new Map<string, DiscoveredArtifact[]>();

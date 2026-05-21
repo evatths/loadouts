@@ -142,4 +142,61 @@ describe("discoverImportableArtifacts", () => {
     expect(result.artifacts[0].displayPath).toBe(".testscope-global/snippets/global.txt");
     expect(result.artifacts[0].destPath).toBe("snippets/global.txt");
   });
+
+  it("restricts discovery to an explicit source directory", () => {
+    setupFixture({
+      "project/.cursor/rules/one.mdc": "# One\n",
+      "project/.cursor/rules/two.mdc": "# Two\n",
+    });
+
+    const projectRoot = path.join(FIXTURES_DIR, "project");
+    const sourcePath = path.join(projectRoot, ".cursor", "rules", "one.mdc");
+    const result = discoverImportableArtifacts(projectRoot, {
+      tools: ["cursor"],
+      kinds: ["rule"],
+      sourcePath,
+    });
+
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts[0].sourcePath).toBe(sourcePath);
+    expect(result.artifacts[0].destPath).toBe("rules/one.md");
+  });
+
+  it("discovers canonical source layouts outside tool directories", () => {
+    setupFixture({
+      "package/rules/review.md": "# Review\n",
+      "package/skills/debug/SKILL.md": "---\ndescription: Debug\n---\n# Debug\n",
+      "package/instructions/AGENTS.backend.md": "# Backend\n",
+    });
+
+    const sourceRoot = path.join(FIXTURES_DIR, "package");
+    const result = discoverImportableArtifacts(sourceRoot, {
+      kinds: ["rule", "skill", "instruction"],
+      sourcePath: sourceRoot,
+    });
+
+    expect(result.artifacts.map((a) => a.destPath).sort()).toEqual([
+      "instructions/AGENTS.base.md",
+      "rules/review.md",
+      "skills/debug",
+    ]);
+    expect(result.artifacts.every((a) => a.tool === "source")).toBe(true);
+  });
+
+  it("discovers a direct skill directory source", () => {
+    setupFixture({
+      "downloaded/debug/SKILL.md": "---\ndescription: Debug\n---\n# Debug\n",
+      "downloaded/debug/script.sh": "#!/bin/sh\n",
+    });
+
+    const sourcePath = path.join(FIXTURES_DIR, "downloaded", "debug");
+    const result = discoverImportableArtifacts(sourcePath, {
+      kinds: ["skill"],
+      sourcePath,
+    });
+
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts[0].kind).toBe("skill");
+    expect(result.artifacts[0].destPath).toBe("skills/debug");
+  });
 });

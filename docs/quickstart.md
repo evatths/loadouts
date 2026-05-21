@@ -24,6 +24,8 @@ This creates `.loadouts/`, scans for existing rules/skills in `.claude/`, `.curs
 
 ```bash
 loadouts install                   # Discover and import existing configs
+loadouts install ./agent-pack      # Import from a source directory
+loadouts install ./rule.mdc        # Import a single artifact
 loadouts install --dry-run         # Preview what would be imported
 loadouts install -i                # Interactive mode (select what to import)
 ```
@@ -57,10 +59,11 @@ If you skipped import during init, or want to import additional configs later:
 
 ```bash
 loadouts install                   # Import existing configs
+loadouts install ./agent-pack      # Import from a source directory
 loadouts sync                      # Render unified config
 ```
 
-This finds rules/skills across `.claude/`, `.cursor/`, `.opencode/`, etc. and consolidates them into `.loadouts/`.
+Without a path, this finds rules/skills across `.claude/`, `.cursor/`, `.opencode/`, etc. and consolidates them into `.loadouts/`. With a path, it imports from that specific file or directory.
 
 **Verify it worked:**
 ```bash

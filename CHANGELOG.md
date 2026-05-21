@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-05-21
+
+### Added
+- Add canonical rule and skill frontmatter handling with render-time tool aliases
+- Add `loadouts install [source]` to import artifacts from a specific file or directory
+
 ### Changed
 - Change `doctor` output to use unified artifact-first drift tables with tool columns
 

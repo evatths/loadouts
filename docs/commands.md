@@ -64,10 +64,12 @@ loadouts init -g           # Global
 loadouts init --force      # Overwrite existing
 ```
 
-### `loadouts install`
-Discover and import existing tool configurations.
+### `loadouts install [source]`
+Discover and import existing tool configurations. When `source` is provided, import from that file or directory instead of scanning the current tool config directories.
 ```bash
 loadouts install                   # All configs
+loadouts install ./agent-pack      # Import from a source directory
+loadouts install ./rule.mdc        # Import a single rule file
 loadouts install --dry-run         # Preview
 loadouts install -i                # Interactive
 loadouts install --rules           # Rules only

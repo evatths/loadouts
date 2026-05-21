@@ -63,10 +63,12 @@ Already have rules and skills scattered across tool directories?
 ```bash
 loadouts init                      # Detects existing configs automatically
 loadouts install                   # Or import them separately
+loadouts install ./agent-pack      # Import from a source directory
+loadouts install ./rule.mdc        # Import a single artifact
 loadouts sync
 ```
 
-`loadouts install` scans all tool directories (`.claude/`, `.cursor/`, `.opencode/`, etc.) and imports everything it finds. Use `--dry-run` to preview, `-i` for interactive selection.
+`loadouts install` scans all tool directories (`.claude/`, `.cursor/`, `.opencode/`, etc.) and imports everything it finds. Pass a file or directory to import from a specific source. Use `--dry-run` to preview, `-i` for interactive selection, and `--keep` to leave originals in place.
 
 ## Documentation
 
