@@ -1,11 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { applyPlan, applyMultiPlan, removeManaged } from "./render.js";
+import { applyPlan, applyMultiPlan, planRender, removeManaged } from "./render.js";
 import { detectDrift, loadState } from "./manifest.js";
 import { hashContent } from "../lib/fs.js";
-import type { RenderPlan, ResolvedItem, ResolvedLoadout } from "./types.js";
+import { resolveLoadout } from "./resolve.js";
+import { registry } from "./registry.js";
+import { createPluginAPI } from "./plugin.js";
+import { registerBuiltins } from "../builtins/index.js";
+import type { LoadoutRoot, RenderPlan, ResolvedItem, ResolvedLoadout } from "./types.js";
 
 interface SymlinkFixture {
   tmpDir: string;
@@ -418,5 +422,114 @@ describe("render OpenCode-specific artifacts", () => {
     const outputPath = path.join(projectRoot, "opencode.jsonc");
     expect(fs.lstatSync(outputPath).isSymbolicLink()).toBe(true);
     expect(fs.realpathSync(outputPath)).toBe(fs.realpathSync(sourcePath));
+  });
+});
+
+describe("full render pipeline compatibility", () => {
+  beforeAll(() => {
+    if (registry.allToolNames().length === 0) {
+      registerBuiltins(createPluginAPI(registry));
+    }
+  });
+
+  function createPipelineFixture(structure: Record<string, string>): {
+    tmpDir: string;
+    projectRoot: string;
+    loadoutRoot: string;
+  } {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "loadout-pipeline-test-"));
+    const projectRoot = path.join(tmpDir, "project");
+    const loadoutRoot = path.join(projectRoot, ".loadouts");
+
+    fs.mkdirSync(loadoutRoot, { recursive: true });
+
+    for (const [relativePath, content] of Object.entries(structure)) {
+      const fullPath = path.join(loadoutRoot, relativePath);
+      fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+      fs.writeFileSync(fullPath, content, "utf-8");
+    }
+
+    return { tmpDir, projectRoot, loadoutRoot };
+  }
+
+  async function renderBaseLoadout(projectRoot: string, loadoutRoot: string): Promise<void> {
+    const roots: LoadoutRoot[] = [{ path: loadoutRoot, level: "project", depth: 0 }];
+    const loadout = resolveLoadout("base", roots);
+    const plan = await planRender(loadout, projectRoot, "project");
+
+    expect(plan.errors).toEqual([]);
+
+    await applyPlan(plan, loadout, projectRoot, "symlink", "project");
+  }
+
+  it("renders canonical rules to Cursor with globs/alwaysApply aliases", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - cursor\ninclude:\n  - rules/ts-style.md\n`,
+      "rules/ts-style.md": `---\ndescription: TypeScript style\npaths:\n  - \"**/*.ts\"\nactivation: scoped\n---\n\n# TypeScript Style\n`,
+    });
+
+    try {
+      await renderBaseLoadout(fixture.projectRoot, fixture.loadoutRoot);
+
+      const outputPath = path.join(
+        fixture.projectRoot,
+        ".cursor/rules/ts-style.mdc"
+      );
+      const rendered = fs.readFileSync(outputPath, "utf-8");
+
+      expect(fs.existsSync(outputPath)).toBe(true);
+      expect(rendered).toContain("paths:");
+      expect(rendered).toContain("activation: scoped");
+      expect(rendered).toContain("globs:");
+      expect(rendered).toContain("alwaysApply: false");
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("renders canonical skills to OpenCode with disable-model-invocation alias", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - opencode\ninclude:\n  - skills/debugger\n`,
+      "skills/debugger/SKILL.md": `---\nname: debugger\ndescription: Debug runtime issues\nuser-invocable: true\nmodel-invocable: false\n---\n\n# Debugger\n`,
+    });
+
+    try {
+      await renderBaseLoadout(fixture.projectRoot, fixture.loadoutRoot);
+
+      const outputPath = path.join(
+        fixture.projectRoot,
+        ".opencode/skills/debugger/SKILL.md"
+      );
+      const rendered = fs.readFileSync(outputPath, "utf-8");
+
+      expect(fs.existsSync(outputPath)).toBe(true);
+      expect(rendered).toContain("model-invocable: false");
+      expect(rendered).toContain("disable-model-invocation: true");
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("renders canonical rules to OpenCode with rule aliases", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - opencode\ninclude:\n  - rules/go-style.md\n`,
+      "rules/go-style.md": `---\ndescription: Go style\npaths:\n  - \"**/*.go\"\nactivation: always\n---\n\n# Go Style\n`,
+    });
+
+    try {
+      await renderBaseLoadout(fixture.projectRoot, fixture.loadoutRoot);
+
+      const outputPath = path.join(
+        fixture.projectRoot,
+        ".opencode/rules/go-style.md"
+      );
+      const rendered = fs.readFileSync(outputPath, "utf-8");
+
+      expect(fs.existsSync(outputPath)).toBe(true);
+      expect(rendered).toContain("globs:");
+      expect(rendered).toContain("alwaysApply: true");
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
   });
 });
