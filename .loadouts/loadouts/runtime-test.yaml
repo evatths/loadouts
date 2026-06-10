@@ -1,0 +1,5 @@
+name: runtime-test
+description: Runtime injection test loadout for verifying /loadouts context injection
+
+include:
+  - rules/runtime-test.md

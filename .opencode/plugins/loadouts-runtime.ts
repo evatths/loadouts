@@ -1,0 +1,1 @@
+../../bundled/opencode/plugins/loadouts-runtime.ts

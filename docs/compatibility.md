@@ -4,13 +4,13 @@ Current built-in rendering targets for canonical artifacts.
 
 ## Artifact Paths (Project Scope)
 
-| Tool | Rule | Skill | Instruction |
-|------|------|-------|-------------|
-| Claude Code | `.claude/rules/<name>.md` | `.claude/skills/<name>/` | `CLAUDE.md` (generated wrapper to `AGENTS.md`) |
-| Cursor | `.cursor/rules/<name>.mdc` | `.cursor/skills/<name>/` | `AGENTS.md` |
-| OpenCode | `.opencode/rules/<name>.md` | `.opencode/skills/<name>/` | `AGENTS.md` |
-| Codex | - (no rule target) | `.agents/skills/<name>/` | `AGENTS.md` |
-| Pi | - (no native rule target) | `.pi/skills/<name>/` | `AGENTS.md` |
+| Tool | Rule | Skill | Instruction | OpenCode Extras |
+|------|------|-------|-------------|-----------------|
+| Claude Code | `.claude/rules/<name>.md` | `.claude/skills/<name>/` | `CLAUDE.md` (generated wrapper to `AGENTS.md`) | - |
+| Cursor | `.cursor/rules/<name>.mdc` | `.cursor/skills/<name>/` | `AGENTS.md` | - |
+| OpenCode | `.opencode/rules/<name>.md` | `.opencode/skills/<name>/` | `AGENTS.md` | `.opencode/commands/<name>.md`, `.opencode/plugins/<name>.{ts,js}`, `opencode.json(c)` |
+| Codex | - (no rule target) | `.agents/skills/<name>/` | `AGENTS.md` | - |
+| Pi | - (no native rule target) | `.pi/skills/<name>/` | `AGENTS.md` | - |
 
 Global scope uses each tool's configured global base path. Instruction files may render to home-level `AGENTS.md` or `CLAUDE.md` paths depending on the tool.
 

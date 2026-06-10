@@ -61,6 +61,8 @@ Current implementation status:
 - `--json` emits the resolver-backed `RuntimeBundle` for adapters and plugins.
 - `--system-block` emits a model-ready text block for tools that support prompt/system injection.
 - Runtime capability flags are explicit per tool, so filesystem-first tools are not presented as native runtime integrations.
+- OpenCode runtime integration requires both a plugin hook and a registered slash command artifact; plugin-only activation is insufficient.
+- OpenCode runtime integrations should treat command parsing/state updates as deterministic, but model-visible slash command acknowledgment text as host-mediated behavior.
 
 ## Artifact Scope
 

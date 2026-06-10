@@ -136,6 +136,29 @@ describe("runInstall source path", () => {
     expect(loadout.include).toEqual(["opencode/plugins/notify.ts"]);
   });
 
+  it("imports OpenCode command artifacts from source paths", async () => {
+    const { loadoutPath, ctx } = setupProject();
+    const sourcePath = path.join(tempDir!, "export", ".opencode", "commands", "loadouts.md");
+    fs.mkdirSync(path.dirname(sourcePath), { recursive: true });
+    fs.writeFileSync(sourcePath, "# /loadouts\n");
+
+    const result = await runInstall(ctx, {
+      source: sourcePath,
+      kinds: "opencode-command",
+      yes: true,
+      keep: true,
+      to: "base",
+    });
+
+    expect(result).toEqual({ imported: 1, skipped: 0, failed: 0 });
+    expect(fs.existsSync(path.join(loadoutPath, "opencode", "commands", "loadouts.md"))).toBe(true);
+
+    const loadout = yaml.parse(
+      fs.readFileSync(path.join(loadoutPath, "loadouts", "base.yaml"), "utf-8")
+    );
+    expect(loadout.include).toEqual(["opencode/commands/loadouts.md"]);
+  });
+
   it("refuses to import from the target .loadouts directory", async () => {
     const { loadoutPath, ctx } = setupProject();
     const sourcePath = path.join(loadoutPath, "rules", "existing.md");

@@ -1,0 +1,5 @@
+name: opencode-runtime
+description: OpenCode runtime plugin scaffold for /loadouts
+
+include:
+  - opencode/plugins/loadouts-runtime.ts

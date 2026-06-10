@@ -1,5 +1,6 @@
 ---
 description: Release guidelines
+activation: always
 ---
 # Release Process
 

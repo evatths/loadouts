@@ -282,7 +282,7 @@ async function loadStatusGroupForLoadout(
   let scope: ScopeIndicator = ctx.scope === "global" ? { type: "global" } : { type: "local" };
 
   try {
-    const result = await loadResolvedLoadout(ctx, loadoutName);
+    const result = await loadResolvedLoadout(ctx, loadoutName, { includeBundled: true });
     loadout = result.loadout;
     roots = result.roots;
     scope = getScopeFromRoots(loadout.rootPath, roots, ctx.scope);

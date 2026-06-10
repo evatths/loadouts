@@ -306,7 +306,7 @@ async function loadLoadoutGroup(
   name: string,
   isActive: boolean
 ): Promise<LoadoutGroup> {
-  const { loadout, roots } = await loadResolvedLoadout(ctx, name);
+  const { loadout, roots } = await loadResolvedLoadout(ctx, name, { includeBundled: true });
   const scope = getScopeFromRoots(loadout.rootPath, roots, ctx.scope);
 
   return {

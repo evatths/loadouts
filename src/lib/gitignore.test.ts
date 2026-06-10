@@ -267,6 +267,11 @@ describe("gitignore", () => {
       expect(result.get(".")).toEqual(["opencode.jsonc"]);
     });
 
+    it("includes OpenCode commands under the OpenCode target directory", () => {
+      const result = computeArtifactGitignorePaths("opencode-command", "loadouts", "project");
+      expect(result.get(".opencode")).toEqual(["commands/loadouts.md"]);
+    });
+
     it("returns empty map for unknown kind", () => {
       const result = computeArtifactGitignorePaths("unknown-kind", "test", "project");
       expect(result.size).toBe(0);

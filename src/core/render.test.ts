@@ -6,6 +6,7 @@ import { applyPlan, applyMultiPlan, planRender, removeManaged } from "./render.j
 import { detectDrift, loadState } from "./manifest.js";
 import { hashContent } from "../lib/fs.js";
 import { resolveLoadout } from "./resolve.js";
+import { getBundledRoot } from "./discovery.js";
 import { registry } from "./registry.js";
 import { createPluginAPI } from "./plugin.js";
 import { registerBuiltins } from "../builtins/index.js";
@@ -423,6 +424,49 @@ describe("render OpenCode-specific artifacts", () => {
     expect(fs.lstatSync(outputPath).isSymbolicLink()).toBe(true);
     expect(fs.realpathSync(outputPath)).toBe(fs.realpathSync(sourcePath));
   });
+
+  it("renders OpenCode slash commands into .opencode/commands", async () => {
+    const sourcePath = path.join(loadoutRoot, "opencode", "commands", "loadouts.md");
+    fs.mkdirSync(path.dirname(sourcePath), { recursive: true });
+    fs.writeFileSync(sourcePath, "# /loadouts\n", "utf-8");
+
+    const item: ResolvedItem = {
+      kind: "opencode-command",
+      sourcePath,
+      relativePath: "opencode/commands/loadouts.md",
+      tools: ["opencode"],
+    };
+    const plan: RenderPlan = {
+      outputs: [
+        {
+          spec: {
+            tool: "opencode",
+            kind: "opencode-command",
+            sourcePath,
+            targetPath: ".opencode/commands/loadouts.md",
+            mode: "symlink",
+          },
+          item,
+          hash: hashContent(fs.readFileSync(sourcePath, "utf-8")),
+        },
+      ],
+      errors: [],
+      shadowed: [],
+    };
+    const loadout: ResolvedLoadout = {
+      name: "test",
+      description: "",
+      tools: ["opencode"],
+      items: [item],
+      rootPath: loadoutRoot,
+    };
+
+    await applyPlan(plan, loadout, projectRoot, "symlink", "project");
+
+    const outputPath = path.join(projectRoot, ".opencode/commands/loadouts.md");
+    expect(fs.lstatSync(outputPath).isSymbolicLink()).toBe(true);
+    expect(fs.realpathSync(outputPath)).toBe(fs.realpathSync(sourcePath));
+  });
 });
 
 describe("full render pipeline compatibility", () => {
@@ -528,6 +572,27 @@ describe("full render pipeline compatibility", () => {
       expect(fs.existsSync(outputPath)).toBe(true);
       expect(rendered).toContain("globs:");
       expect(rendered).toContain("alwaysApply: true");
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("renders bundled OpenCode runtime plugin artifact", async () => {
+    const fixture = createPipelineFixture({});
+    const bundledRoot = getBundledRoot();
+    expect(bundledRoot).not.toBeNull();
+
+    try {
+      const loadout = resolveLoadout("opencode-runtime", [bundledRoot!]);
+      const plan = await planRender(loadout, fixture.projectRoot, "project");
+
+      expect(plan.errors).toEqual([]);
+      expect(plan.outputs.map((o) => o.spec.targetPath).sort()).toEqual([
+        ".opencode/plugins/loadouts-runtime.ts",
+      ]);
+
+      // Do not apply a plan with the real bundled root: applyPlan persists
+      // state beside the loadout root, and bundled assets are package data.
     } finally {
       fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
     }
