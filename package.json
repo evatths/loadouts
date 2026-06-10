@@ -1,6 +1,6 @@
 {
   "name": "loadouts",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Composable configuration bundles for AI coding agents",
   "type": "module",
   "bin": {
