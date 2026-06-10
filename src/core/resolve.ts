@@ -23,17 +23,24 @@ import type {
 } from "./types.js";
 import { BUILTIN_TOOL_NAMES } from "../builtins/index.js";
 
+interface ResolveLoadoutOptions {
+  showKindNamespaceNotes?: boolean;
+}
+
 /**
  * Resolve a loadout by name.
  */
 export function resolveLoadout(
   name: string,
   roots: LoadoutRoot[],
-  rootConfig?: RootConfig
+  rootConfig?: RootConfig,
+  options: ResolveLoadoutOptions = {}
 ): ResolvedLoadout {
   // Load any YAML-defined kinds from the discovered roots before resolving
   // items, so inferKind() can match custom kinds. Idempotent.
-  loadYamlKindsFromRoots(roots);
+  loadYamlKindsFromRoots(roots, {
+    showNamespaceNotes: options.showKindNamespaceNotes,
+  });
 
   const found = findLoadoutDefinition(name, roots);
   if (!found) {
@@ -140,6 +147,7 @@ export interface LoadManyResult {
 
 export interface LoadResolvedLoadoutsOptions {
   includeBundled?: boolean;
+  showKindNamespaceNotes?: boolean;
 }
 
 async function collectContextRoots(
@@ -177,6 +185,7 @@ export async function loadResolvedLoadouts(
   options: LoadResolvedLoadoutsOptions = {}
 ): Promise<LoadManyResult> {
   const includeBundled = options.includeBundled ?? false;
+  const showKindNamespaceNotes = options.showKindNamespaceNotes ?? false;
   const { roots, sourceWarnings } = await collectContextRoots(ctx, includeBundled);
 
   const rootConfig = parseRootConfig(ctx.configPath);
@@ -186,7 +195,9 @@ export async function loadResolvedLoadouts(
 
   const loadouts: ResolvedLoadout[] = [];
   for (const loadoutName of loadoutNames) {
-    const loadout = resolveLoadout(loadoutName, roots, rootConfig);
+    const loadout = resolveLoadout(loadoutName, roots, rootConfig, {
+      showKindNamespaceNotes,
+    });
 
     const alreadyHasInstruction = loadout.items.some(
       (i) => i.relativePath === "AGENTS.md"

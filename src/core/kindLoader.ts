@@ -5,8 +5,8 @@
  * Declarative kind files let teams add new artifact types without writing code.
  * See plans/EXTENSIBILITY.md §3a for the full format.
  *
- * Loading is idempotent: kind IDs already present in the registry are skipped
- * with a warning (built-ins always take precedence over YAML definitions).
+ * Loading is idempotent: kind files already loaded into the registry are skipped
+ * silently on later calls. Other duplicate IDs are skipped with a warning.
  */
 
 import * as path from "node:path";
@@ -15,6 +15,13 @@ import { z } from "zod";
 import { readFile, fileExists, isDirectory, listFiles } from "../lib/fs.js";
 import { registry, type KindSpec, type OutputMapping, type PathTemplate } from "./registry.js";
 import type { LoadoutRoot } from "./types.js";
+
+const yamlKindSources = new Map<string, string>();
+
+interface LoadYamlKindsOptions {
+  /** Show advisory notes for valid-but-risky custom kind IDs. */
+  showNamespaceNotes?: boolean;
+}
 
 // ---------------------------------------------------------------------------
 // YAML schema
@@ -110,13 +117,17 @@ function buildDetect(
  * Load all YAML kinds from the `kinds/` subdirectory of each discovered root
  * and register them into the global registry.
  *
- * Already-registered IDs are skipped with a warning (built-ins win).
+ * Already-loaded YAML files are skipped silently. Other duplicate IDs are
+ * skipped with a warning because the existing registration wins.
  * Parse errors are reported but do not abort loading.
  *
  * This is called synchronously from `resolveLoadout` after root discovery,
  * so YAML kinds are available for `inferKind()` during item resolution.
  */
-export function loadYamlKindsFromRoots(roots: LoadoutRoot[]): void {
+export function loadYamlKindsFromRoots(
+  roots: LoadoutRoot[],
+  options: LoadYamlKindsOptions = {}
+): void {
   for (const root of roots) {
     const kindsDir = path.join(root.path, "kinds");
     if (!isDirectory(kindsDir)) continue;
@@ -132,21 +143,34 @@ export function loadYamlKindsFromRoots(roots: LoadoutRoot[]): void {
       try {
         const kind = parseYamlKind(filePath);
 
-        // Warn if ID looks like a built-in or has no namespace separator
-        if (!kind.id.includes(".")) {
+        const existingKind = registry.getKind(kind.id);
+        if (existingKind) {
+          const source = yamlKindSources.get(kind.id);
+          if (source === filePath) continue;
+
+          const sourceDetail = source ? ` by ${source}` : "";
           console.warn(
-            `[loadout] Warning: custom kind "${kind.id}" in ${filePath} ` +
-              `has no namespace (e.g. "myteam.${kind.id}"). ` +
-              `Dot-namespaced IDs are recommended to avoid collisions with built-ins.`
+            `[loadout] Warning: kind from ${filePath} was skipped — ` +
+              `"${kind.id}" is already registered${sourceDetail}; existing definition takes precedence.`
+          );
+          continue;
+        }
+
+        // Unnamespaced IDs are valid, but may collide with future built-ins.
+        if (options.showNamespaceNotes && !kind.id.includes(".")) {
+          console.warn(
+            `[loadout] Note: custom kind "${kind.id}" is unnamespaced. ` +
+              `Consider "myteam.${kind.id}" to avoid future name collisions.`
           );
         }
 
         registry.registerKind(kind);
+        yamlKindSources.set(kind.id, filePath);
       } catch (err) {
         if (err instanceof Error && err.message.includes("already registered")) {
           console.warn(
             `[loadout] Warning: kind from ${filePath} was skipped — ` +
-              `"${extractId(err.message)}" is already registered (built-in takes precedence).`
+              `"${extractId(err.message)}" is already registered; existing definition takes precedence.`
           );
         } else {
           console.warn(

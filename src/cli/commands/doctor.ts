@@ -13,9 +13,10 @@ import * as path from "node:path";
 import * as readline from "node:readline";
 import chalk from "chalk";
 import { findNearestLoadoutRoot, getGlobalRoot } from "../../core/discovery.js";
+import { loadYamlKindsFromRoots } from "../../core/kindLoader.js";
 import { registry } from "../../core/registry.js";
 import { resolveScopes, SCOPE_FLAGS, type ScopeFlags } from "../../core/scope.js";
-import type { Scope, Tool } from "../../core/types.js";
+import type { LoadoutRoot, Scope, Tool } from "../../core/types.js";
 import {
   getManagedPathsFromTarget,
   inspectGitignoreHealth,
@@ -635,6 +636,13 @@ export const doctorCommand = new Command("doctor")
       log.warn("No loadout roots found for selected scope(s)");
       return;
     }
+
+    const roots: LoadoutRoot[] = healthByScope.map((item) => ({
+      path: item.rootPath,
+      level: item.scope === "global" ? "global" : "project",
+      depth: 0,
+    }));
+    loadYamlKindsFromRoots(roots, { showNamespaceNotes: true });
 
     renderHealthTable(healthByScope);
 

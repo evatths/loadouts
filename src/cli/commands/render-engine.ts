@@ -28,6 +28,7 @@ export interface ApplyOptions {
   dryRun?: boolean;
   /** Verb for output heading (e.g., "Activated", "Synced"). Defaults to "Applied". */
   verb?: string;
+  showKindNamespaceNotes?: boolean;
 }
 
 export interface ApplyResult {
@@ -40,9 +41,13 @@ export interface ApplyResult {
  */
 async function resolveMultipleLoadouts(
   names: string[],
-  ctx: CommandContext
+  ctx: CommandContext,
+  options: { showKindNamespaceNotes?: boolean } = {}
 ): Promise<Array<{ loadout: ResolvedLoadout; plan: RenderPlan }>> {
-  const { loadouts } = await loadResolvedLoadouts(ctx, names, { includeBundled: true });
+  const { loadouts } = await loadResolvedLoadouts(ctx, names, {
+    includeBundled: true,
+    showKindNamespaceNotes: options.showKindNamespaceNotes,
+  });
   const results: Array<{ loadout: ResolvedLoadout; plan: RenderPlan }> = [];
 
   for (const loadout of loadouts) {
@@ -93,7 +98,7 @@ export async function applyTargetSet(
   targets: string[],
   options: ApplyOptions = {}
 ): Promise<ApplyResult> {
-  const { dryRun, verb = "Applied" } = options;
+  const { dryRun, verb = "Applied", showKindNamespaceNotes } = options;
 
   // Empty target set means clear — delegate to clearAllOutputs
   if (targets.length === 0) {
@@ -104,7 +109,7 @@ export async function applyTargetSet(
   // Resolve all target loadouts
   let plans;
   try {
-    plans = await resolveMultipleLoadouts(targets, ctx);
+    plans = await resolveMultipleLoadouts(targets, ctx, { showKindNamespaceNotes });
   } catch (err) {
     log.error(err instanceof Error ? err.message : String(err));
     process.exit(1);

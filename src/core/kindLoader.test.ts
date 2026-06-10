@@ -249,6 +249,117 @@ layout: file
     }).not.toThrow();
   });
 
+  it("does not warn when the same YAML kind file is loaded repeatedly", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    fs.writeFileSync(
+      path.join(kindsDir, "snippet.yaml"),
+      `
+id: test.snippet
+detect:
+  pathPrefix: snippets/
+layout: file
+`
+    );
+
+    loadYamlKindsFromRoots([{ path: testRoot, level: "project", depth: 0 }]);
+    loadYamlKindsFromRoots([{ path: testRoot, level: "project", depth: 0 }]);
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+
+    consoleWarnSpy.mockRestore();
+  });
+
+  it("does not show namespace notes by default", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    fs.writeFileSync(
+      path.join(kindsDir, "snippet.yaml"),
+      `
+id: snippet
+detect:
+  pathPrefix: snippets/
+layout: file
+`
+    );
+
+    loadYamlKindsFromRoots([{ path: testRoot, level: "project", depth: 0 }]);
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+
+    consoleWarnSpy.mockRestore();
+  });
+
+  it("shows a light namespace note when requested", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    fs.writeFileSync(
+      path.join(kindsDir, "snippet.yaml"),
+      `
+id: snippet
+detect:
+  pathPrefix: snippets/
+layout: file
+`
+    );
+
+    loadYamlKindsFromRoots(
+      [{ path: testRoot, level: "project", depth: 0 }],
+      { showNamespaceNotes: true }
+    );
+
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy.mock.calls[0]?.[0]).toBe(
+      '[loadout] Note: custom kind "snippet" is unnamespaced. Consider "myteam.snippet" to avoid future name collisions.'
+    );
+
+    consoleWarnSpy.mockClear();
+    loadYamlKindsFromRoots(
+      [{ path: testRoot, level: "project", depth: 0 }],
+      { showNamespaceNotes: true }
+    );
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+
+    consoleWarnSpy.mockRestore();
+  });
+
+  it("warns when a different YAML kind file reuses an existing ID", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    fs.writeFileSync(
+      path.join(kindsDir, "a.yaml"),
+      `
+id: test.duplicate
+detect:
+  pathPrefix: a/
+layout: file
+`
+    );
+
+    fs.writeFileSync(
+      path.join(kindsDir, "b.yaml"),
+      `
+id: test.duplicate
+detect:
+  pathPrefix: b/
+layout: file
+`
+    );
+
+    loadYamlKindsFromRoots([{ path: testRoot, level: "project", depth: 0 }]);
+
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy.mock.calls[0]?.[0]).toContain(
+      '"test.duplicate" is already registered'
+    );
+    expect(consoleWarnSpy.mock.calls[0]?.[0]).toContain(
+      "existing definition takes precedence"
+    );
+
+    consoleWarnSpy.mockRestore();
+  });
+
   it("warns but continues on parse errors", () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 

@@ -52,6 +52,7 @@ export const activateCommand = new Command("activate")
         await applyTargetSet(ctx, targets, {
           dryRun: options.dryRun,
           verb: "Activated",
+          showKindNamespaceNotes: true,
         });
       }
       return;
@@ -90,5 +91,6 @@ export const activateCommand = new Command("activate")
     await applyTargetSet(ctx, targets, {
       dryRun: options.dryRun,
       verb: "Activated",
+      showKindNamespaceNotes: true,
     });
   });
