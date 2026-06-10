@@ -39,7 +39,7 @@
     "@types/node": "^20.12.0",
     "@types/update-notifier": "^6.0.8",
     "typescript": "^5.4.0",
-    "vitest": "^1.5.0"
+    "vitest": "^4.1.6"
   },
   "dependencies": {
     "chalk": "^5.3.0",
