@@ -71,21 +71,23 @@ describe("discoverImportableArtifacts", () => {
     cleanupFixture();
   });
 
-  it("discovers built-in opencode plugin and config artifacts via templates", () => {
+  it("discovers built-in OpenCode artifacts via templates", () => {
     setupFixture({
       "project/opencode.jsonc": '{"$schema":"https://opencode.ai/config.json"}\n',
       "project/.opencode/plugins/notify.ts": "export default {};\n",
+      "project/.opencode/commands/loadouts.md": "# Loadouts command\n",
     });
 
     const projectRoot = path.join(FIXTURES_DIR, "project");
     const result = discoverImportableArtifacts(projectRoot, {
       tools: ["opencode"],
-      kinds: ["opencode-config", "opencode-plugin"],
+      kinds: ["opencode-config", "opencode-plugin", "opencode-command"],
     });
 
     expect(result.warnings).toEqual([]);
-    expect(result.artifacts).toHaveLength(2);
+    expect(result.artifacts).toHaveLength(3);
     expect(result.artifacts.map((a) => a.destPath).sort()).toEqual([
+      "opencode/commands/loadouts.md",
       "opencode/opencode.jsonc",
       "opencode/plugins/notify.ts",
     ]);

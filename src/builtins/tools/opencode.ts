@@ -14,6 +14,7 @@ export const opencodeTool: ToolSpec = {
     "instruction",
     "opencode-config",
     "opencode-plugin",
+    "opencode-command",
   ],
   targets: {
     rule: {
@@ -34,5 +35,6 @@ export const opencodeTool: ToolSpec = {
       },
     },
     "opencode-plugin": { path: "{base}/plugins/{stem}{ext}" },
+    "opencode-command": { path: "{base}/commands/{stem}.md" },
   },
 };

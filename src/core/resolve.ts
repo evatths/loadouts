@@ -215,9 +215,10 @@ export async function loadResolvedLoadouts(
  */
 export async function loadResolvedLoadout(
   ctx: CommandContext,
-  name?: string
+  name?: string,
+  options: LoadResolvedLoadoutsOptions = {}
 ): Promise<LoadResult> {
-  const result = await loadResolvedLoadouts(ctx, name ? [name] : undefined);
+  const result = await loadResolvedLoadouts(ctx, name ? [name] : undefined, options);
   return {
     loadout: result.loadouts[0],
     rootConfig: result.rootConfig,

@@ -154,7 +154,7 @@ include:
 
 ---
 
-## OpenCode Config And Plugins
+## OpenCode Config, Commands, And Plugins
 
 OpenCode-specific artifacts live under `.loadouts/opencode/` and only render when included in a loadout that targets `opencode`.
 
@@ -168,6 +168,16 @@ OpenCode-specific artifacts live under `.loadouts/opencode/` and only render whe
 ```
 
 Project scope renders this to `opencode.jsonc`. Global scope renders it to `~/.config/opencode/opencode.jsonc`. This is whole-file ownership; if you do not include this artifact, loadouts does not touch your OpenCode config file.
+
+**Slash commands:**
+```md
+<!-- .loadouts/opencode/commands/loadouts.md -->
+# /loadouts
+
+Arguments: `$ARGUMENTS`
+```
+
+Project scope renders this to `.opencode/commands/loadouts.md`. Global scope renders it to `~/.config/opencode/commands/loadouts.md`.
 
 **Local plugins:**
 ```ts
@@ -187,6 +197,7 @@ Project scope renders this to `.opencode/plugins/notify.ts`. Global scope render
 ```yaml
 include:
   - opencode/opencode.jsonc
+  - opencode/commands/loadouts.md
   - opencode/plugins/notify.ts
 ```
 

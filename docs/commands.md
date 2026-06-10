@@ -52,11 +52,15 @@ Compile a runtime bundle for inspection (no filesystem activation). Defaults to 
 loadouts runtime                     # Compile default loadout
 loadouts runtime base backend        # Compile multiple loadouts
 loadouts runtime base --tool cursor  # Target a different tool
+loadouts runtime base -l             # Force local/project scope
+loadouts runtime base -g             # Force global scope
 loadouts runtime base --json         # Output RuntimeBundle JSON only
 loadouts runtime base --system-block # Output renderRuntimeSystemBlock(bundle) only
 ```
 
 See `docs/runtime.md` for architecture, OpenCode-first integration flow, and per-tool capability flags.
+
+For OpenCode runtime plugin integrations, this is exposed as `/loadouts activate|a|use ...`, `/loadouts list|ls`, `/loadouts info`, and `/loadouts clear`. The bundled fallback command omits `$ARGUMENTS` to reduce model-visible command noise, and runtime JSON/intermediate plugin output should stay hidden. User-visible slash command acknowledgment text may still be model-mediated by OpenCode even when plugin state handling is deterministic.
 
 ### `loadouts diff [name]`
 Preview what would change if a loadout were applied.

@@ -58,7 +58,7 @@ loadouts install --keep            # Keep original files after import
 - Skills from `.claude/skills/`, `.cursor/skills/`, `.opencode/skills/`, `.agents/skills/`, `.pi/skills/`
 - Instruction files (`AGENTS.md`, `CLAUDE.md`) at project root
 
-**Source installs:** When a path is provided, Loadouts imports from that specific source. Source directories may contain canonical `rules/`, `skills/`, and `instructions/` folders, direct skill directories with `SKILL.md`, single rule files, or registry-mapped tool artifacts such as `.opencode/plugins/*.ts`.
+**Source installs:** When a path is provided, Loadouts imports from that specific source. Source directories may contain canonical `rules/`, `skills/`, and `instructions/` folders, direct skill directories with `SKILL.md`, single rule files, or registry-mapped tool artifacts such as `.opencode/plugins/*.ts` and `.opencode/commands/*.md`.
 
 **Conflict resolution:** When the same artifact exists in multiple tool directories, `loadouts install` detects the conflict and lets you choose which version to import (or import both with renamed destinations).
 
@@ -219,6 +219,9 @@ With `sources: [../..]` in `packages/api/.loadouts/loadouts.yaml`, running `load
 | `prompt` | file | Slash command templates |
 | `extension` | directory | Runtime code extensions |
 | `theme` | file | UI theme configuration |
+| `opencode-command` | file | OpenCode slash command markdown |
+| `opencode-config` | file | Whole-file OpenCode runtime configuration |
+| `opencode-plugin` | file | Local OpenCode plugin modules |
 
 ### Custom Artifact Kinds
 
@@ -274,7 +277,7 @@ List all registered kinds with `loadouts kinds -v`.
 |------|-------|--------|--------------|-----------------|
 | Claude Code | `.claude/rules/*.md` | `.claude/skills/` | `CLAUDE.md` (generated wrapper) | — |
 | Cursor | `.cursor/rules/*.mdc` | `.cursor/skills/` | `AGENTS.md` | — |
-| OpenCode | `.opencode/rules/*.md` | `.opencode/skills/` | `AGENTS.md` | `opencode.json(c)`, `.opencode/plugins/` |
+| OpenCode | `.opencode/rules/*.md` | `.opencode/skills/` | `AGENTS.md` | `opencode.json(c)`, `.opencode/plugins/`, `.opencode/commands/*.md` |
 | Codex | — | `.agents/skills/` | `AGENTS.md` | — |
 | Pi | `.pi/rules/*.md` | `.pi/skills/` | `AGENTS.md` | `.pi/extensions/`, `.pi/themes/` |
 
@@ -282,7 +285,7 @@ List all registered kinds with `loadouts kinds -v`.
 
 - **Claude Code** — Generates a `CLAUDE.md` wrapper that references `AGENTS.md`, keeping both in sync.
 - **Cursor** — Rules use `.mdc` extension. Loadout automatically converts `paths` ↔ `globs` in frontmatter.
-- **OpenCode** — Local plugins render to `.opencode/plugins/`. NPM plugins are configured with the `plugin` array in `opencode.json(c)`.
+- **OpenCode** — Local plugins render to `.opencode/plugins/`, slash commands render to `.opencode/commands/`, and NPM plugins are configured with the `plugin` array in `opencode.json(c)`.
 - **Codex** — Rules not yet supported; skills and instructions only.
 
 ---
@@ -323,6 +326,18 @@ loadouts runtime base --system-block  # Print renderRuntimeSystemBlock(bundle)
 ```
 
 Runtime v1 capabilities currently focus on model injection for instructions/rules plus skill path discovery metadata. Native skill hot-swap is intentionally disabled. This is the forward path for OpenCode plugin integration without relying on filesystem activation.
+
+In OpenCode, runtime integrations commonly expose a deterministic `/loadouts` slash command via plugin wiring. Scope flags are supported in that command flow:
+
+```text
+/loadouts activate base -l
+/loadouts a release -g
+/loadouts list
+/loadouts info base
+/loadouts clear
+```
+
+Command text may still be visible to the model, but the bundled command template omits `$ARGUMENTS` so requested loadout names are not included in fallback prompt text. Runtime JSON/intermediate plugin output should remain hidden; only the final user-facing result should be surfaced.
 
 #### `loadouts activate <names...>`
 

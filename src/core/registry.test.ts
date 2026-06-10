@@ -5,6 +5,7 @@ import { skillKind } from "../builtins/kinds/skill.js";
 import { instructionKind } from "../builtins/kinds/instruction.js";
 import { opencodeConfigKind } from "../builtins/kinds/opencode-config.js";
 import { opencodePluginKind } from "../builtins/kinds/opencode-plugin.js";
+import { opencodeCommandKind } from "../builtins/kinds/opencode-command.js";
 import { claudeCodeTool } from "../builtins/tools/claude-code.js";
 import { cursorTool } from "../builtins/tools/cursor.js";
 import { opencodeTool } from "../builtins/tools/opencode.js";
@@ -18,6 +19,7 @@ beforeEach(() => {
   reg.registerKind(instructionKind);
   reg.registerKind(opencodeConfigKind);
   reg.registerKind(opencodePluginKind);
+  reg.registerKind(opencodeCommandKind);
 });
 
 describe("Registry.inferKind", () => {
@@ -41,6 +43,10 @@ describe("Registry.inferKind", () => {
   it("infers OpenCode plugin kind", () => {
     expect(reg.inferKind("opencode/plugins/notify.ts")).toBe("opencode-plugin");
     expect(reg.inferKind("opencode/plugins/notify.js")).toBe("opencode-plugin");
+  });
+
+  it("infers OpenCode command kind", () => {
+    expect(reg.inferKind("opencode/commands/loadouts.md")).toBe("opencode-command");
   });
 
   it("returns undefined for unknown path", () => {
@@ -92,6 +98,12 @@ describe("Registry.resolveMapping", () => {
   it("does not expose OpenCode-only kinds to other tools", () => {
     expect(reg.resolveMapping("claude-code", "opencode-plugin")).toBeUndefined();
     expect(reg.resolveMapping("cursor", "opencode-config")).toBeUndefined();
+    expect(reg.resolveMapping("codex", "opencode-command")).toBeUndefined();
+  });
+
+  it("resolves OpenCode command mapping", () => {
+    const m = reg.resolveMapping("opencode", "opencode-command");
+    expect(m).toEqual({ path: "{base}/commands/{stem}.md" });
   });
 
   it("does not require stale OpenCode plugin validation", () => {

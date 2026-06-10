@@ -43,6 +43,36 @@ Recommended integration pattern:
 - Inject `instructions` and `rules` into model/system context.
 - Register `skills[*].path` for discovery only.
 
+### Slash Command UX (`/loadouts`)
+
+The OpenCode runtime path is designed around a deterministic plugin-backed slash command:
+
+```text
+/loadouts activate base
+/loadouts a base -l
+/loadouts a release -g
+/loadouts list
+/loadouts info base
+/loadouts clear
+```
+
+Expected behavior:
+
+- The plugin maps `/loadouts activate|a|use <names...>` to `loadouts runtime ...` (or equivalent runtime adapter path) and computes the final response deterministically.
+- `-l/--local` and `-g/--global` are supported as direct scope selectors for runtime compilation.
+- Runtime JSON and intermediate plugin outputs stay hidden from the model-facing response.
+- The bundled command template intentionally omits `$ARGUMENTS`; the plugin receives arguments through OpenCode's command hook, while the fallback prompt does not expose requested loadout names.
+- A bundled scaffold loadout (`opencode-runtime`) renders both `.opencode/plugins/loadouts-runtime.ts` and `.opencode/commands/loadouts.md`.
+
+### Known OpenCode Runtime Semantics
+
+- The runtime plugin's `command.execute.before` hook is deterministic for parsing `/loadouts` arguments and updating runtime state.
+- OpenCode may still route slash command text through model-facing flows. Treat user-visible acknowledgment text as host-dependent.
+- A plugin alone does not register `/loadouts`. You must also render a command artifact (`.opencode/commands/loadouts.md`) or equivalent command entry.
+- OpenCode loads plugins and command files at startup. Restart OpenCode after changing or activating runtime plugin/command artifacts.
+- The plugin bridge shells out to `loadouts runtime ...`. Ensure the `loadouts` binary available on OpenCode's `PATH` includes runtime support.
+- The bundled fallback prompt omits `$ARGUMENTS` to reduce model-visible leakage when slash command flow is not fully short-circuited.
+
 ## Tool Capability Matrix (Runtime v1)
 
 The bundle always includes resolved instructions, rules, and skill references. Capability flags tell consumers what should be treated as native runtime behavior for each tool.
@@ -66,6 +96,9 @@ For filesystem-first tools, use standard `activate/sync` as the primary path and
 
 ## Reference Scaffold
 
-- Example OpenCode plugin scaffold: `docs/examples/opencode-runtime-plugin.ts`
+- Bundled OpenCode runtime plugin: `bundled/opencode/plugins/loadouts-runtime.ts`
+- Bundled OpenCode slash command: `bundled/opencode/commands/loadouts.md`
+- Bundled scaffold loadout: `bundled/loadouts/opencode-runtime.yaml`
+- Historical/reference plugin scaffold: `docs/examples/opencode-runtime-plugin.ts`
 - Core compiler implementation: `src/core/runtime.ts`
 - CLI command surface: `src/cli/commands/runtime.ts`
