@@ -108,6 +108,27 @@ describe("discoverImportableArtifacts", () => {
     expect(result.artifacts[0].destPath).toBe("snippets/hello.txt");
   });
 
+  it("discovers Markdown and TOML agent definitions through tool mappings", () => {
+    setupFixture({
+      "project/.opencode/agents/reviewer.md": "---\ndescription: Review\n---\nReview.\n",
+      "project/.cursor/agents/verifier.md": "---\ndescription: Verify\n---\nVerify.\n",
+      "project/.codex/agents/explorer.toml": "name = \"explorer\"\n",
+    });
+
+    const projectRoot = path.join(FIXTURES_DIR, "project");
+    const result = discoverImportableArtifacts(projectRoot, {
+      tools: ["opencode", "cursor", "codex"],
+      kinds: ["agent"],
+    });
+
+    expect(result.warnings).toEqual([]);
+    expect(result.artifacts.map((a) => a.destPath).sort()).toEqual([
+      "agents/explorer.md",
+      "agents/reviewer.md",
+      "agents/verifier.md",
+    ]);
+  });
+
   it("filters already-imported custom artifacts when loadout path is provided", () => {
     setupFixture({
       "project/.opencode/snippets/hello.txt": "hello\n",
@@ -167,15 +188,17 @@ describe("discoverImportableArtifacts", () => {
       "package/rules/review.md": "# Review\n",
       "package/skills/debug/SKILL.md": "---\ndescription: Debug\n---\n# Debug\n",
       "package/instructions/AGENTS.backend.md": "# Backend\n",
+      "package/agents/reviewer.md": "---\ndescription: Review\n---\nReview.\n",
     });
 
     const sourceRoot = path.join(FIXTURES_DIR, "package");
     const result = discoverImportableArtifacts(sourceRoot, {
-      kinds: ["rule", "skill", "instruction"],
+      kinds: ["rule", "skill", "instruction", "agent"],
       sourcePath: sourceRoot,
     });
 
     expect(result.artifacts.map((a) => a.destPath).sort()).toEqual([
+      "agents/reviewer.md",
       "instructions/AGENTS.base.md",
       "rules/review.md",
       "skills/debug",

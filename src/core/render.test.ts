@@ -532,4 +532,95 @@ describe("full render pipeline compatibility", () => {
       fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
     }
   });
+
+  it("renders self-contained agent files with target-scoped overlays", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - opencode\n  - cursor\n  - claude-code\n  - codex\ninclude:\n  - agents/code-reviewer.md\n`,
+      "agents/code-reviewer.md": `---\nname: code-reviewer\ndescription: Reviews code for correctness, security, and missing tests.\nmodel: inherit\nreadonly: true\nbackground: true\ntargets:\n  opencode:\n    mode: subagent\n    steps: 8\n    color: accent\n  cursor:\n    model: gpt-5.5\n    is_background: false\n  claude-code:\n    tools: Read, Glob, Grep, Bash\n    maxTurns: 4\n  codex:\n    model_reasoning_effort: high\n---\n\nReview code like an owner.\n`,
+    });
+
+    try {
+      await renderBaseLoadout(fixture.projectRoot, fixture.loadoutRoot);
+
+      const opencodePath = path.join(
+        fixture.projectRoot,
+        ".opencode/agents/code-reviewer.md"
+      );
+      const cursorPath = path.join(
+        fixture.projectRoot,
+        ".cursor/agents/code-reviewer.md"
+      );
+      const claudePath = path.join(
+        fixture.projectRoot,
+        ".claude/agents/code-reviewer.md"
+      );
+      const codexPath = path.join(
+        fixture.projectRoot,
+        ".codex/agents/code-reviewer.toml"
+      );
+
+      const opencode = fs.readFileSync(opencodePath, "utf-8");
+      expect(opencode).toContain("description: Reviews code");
+      expect(opencode).toContain("mode: subagent");
+      expect(opencode).toContain("steps: 8");
+      expect(opencode).toContain("color: accent");
+      expect(opencode).toContain("permission:");
+      expect(opencode).toContain("edit: deny");
+      expect(opencode).not.toContain("targets:");
+      expect(opencode).not.toContain("name: code-reviewer");
+      expect(opencode).not.toContain("model: inherit");
+
+      const cursor = fs.readFileSync(cursorPath, "utf-8");
+      expect(cursor).toContain("name: code-reviewer");
+      expect(cursor).toContain("model: gpt-5.5");
+      expect(cursor).toContain("readonly: true");
+      expect(cursor).toContain("is_background: false");
+      expect(cursor).not.toContain("targets:");
+
+      const claude = fs.readFileSync(claudePath, "utf-8");
+      expect(claude).toContain("name: code-reviewer");
+      expect(claude).toContain("permissionMode: plan");
+      expect(claude).toContain("tools: Read, Glob, Grep, Bash");
+      expect(claude).toContain("maxTurns: 4");
+      expect(claude).not.toContain("targets:");
+
+      const codex = fs.readFileSync(codexPath, "utf-8");
+      expect(codex).toContain('name = "code-reviewer"');
+      expect(codex).toContain('description = "Reviews code for correctness, security, and missing tests."');
+      expect(codex).toContain('sandbox_mode = "read-only"');
+      expect(codex).toContain('model_reasoning_effort = "high"');
+      expect(codex).toContain('developer_instructions = "Review code like an owner."');
+      expect(codex).toContain("Review code like an owner.");
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("symlinks Markdown agents when frontmatter is natively safe", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - opencode\n  - cursor\n  - claude-code\ninclude:\n  - agents/verifier.md\n`,
+      "agents/verifier.md": `---\ndescription: Validates completed work.\n---\n\nVerify claims skeptically.\n`,
+    });
+
+    try {
+      await renderBaseLoadout(fixture.projectRoot, fixture.loadoutRoot);
+
+      const sourcePath = path.join(fixture.loadoutRoot, "agents/verifier.md");
+      const opencodePath = path.join(fixture.projectRoot, ".opencode/agents/verifier.md");
+      const cursorPath = path.join(fixture.projectRoot, ".cursor/agents/verifier.md");
+      const claudePath = path.join(fixture.projectRoot, ".claude/agents/verifier.md");
+
+      expect(fs.lstatSync(opencodePath).isSymbolicLink()).toBe(true);
+      expect(fs.realpathSync(opencodePath)).toBe(fs.realpathSync(sourcePath));
+      expect(fs.lstatSync(cursorPath).isSymbolicLink()).toBe(true);
+      expect(fs.realpathSync(cursorPath)).toBe(fs.realpathSync(sourcePath));
+
+      expect(fs.lstatSync(claudePath).isSymbolicLink()).toBe(false);
+      const claude = fs.readFileSync(claudePath, "utf-8");
+      expect(claude).toContain("name: verifier");
+      expect(claude).toContain("description: Validates completed work.");
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
 });

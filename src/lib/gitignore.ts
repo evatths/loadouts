@@ -514,6 +514,7 @@ function synthesizeArtifactRelativePath(
   if (kindId === "rule") return `rules/${artifactName}.md`;
   if (kindId === "skill") return `skills/${artifactName}`;
   if (kindId === "instruction") return `instructions/${artifactName}.md`;
+  if (kindId === "agent") return `agents/${artifactName}.md`;
   if (kindId === "prompt") return `prompts/${artifactName}.md`;
   if (kindId === "extension") return `extensions/${withDefaultExtension(artifactName, ".ts")}`;
   if (kindId === "theme") return `themes/${withDefaultExtension(artifactName, ".json")}`;

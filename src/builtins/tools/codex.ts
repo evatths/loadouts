@@ -8,11 +8,20 @@ export const codexTool: ToolSpec = {
     global: path.join(os.homedir(), ".agents"),
     project: ".agents",
   },
-  supports: ["skill", "instruction"],
+  supports: ["skill", "instruction", "agent"],
   targets: {
     skill: { path: "{base}/skills/{name}" },
     instruction: {
       path: { project: "AGENTS.md", global: "{home}/AGENTS.md" },
+    },
+    agent: {
+      path: {
+        project: ".codex/agents/{stem}.toml",
+        global: "{home}/.codex/agents/{stem}.toml",
+      },
+      ext: ".toml",
+      mode: "copy",
+      transform: "codex-agent-toml",
     },
   },
 };

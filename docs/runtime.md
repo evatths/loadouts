@@ -60,6 +60,7 @@ For filesystem-first tools, use standard `activate/sync` as the primary path and
 ## Runtime v1 Limits
 
 - Supported kinds: `instruction`, `rule`, `skill`.
+- Agents are filesystem-rendered native definitions for supported harnesses; they are not injected through runtime v1.
 - Unsupported kinds are reported as diagnostics, not hard failures.
 - Skills require a `SKILL.md` entrypoint for runtime discovery metadata.
 - Runtime v1 does not implement native skill hot-swap.

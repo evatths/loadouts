@@ -36,6 +36,7 @@ import {
   sanitizeRuleFile,
   sanitizeSkillFile,
 } from "../../core/config.js";
+import { canonicalizeAgentContent, inferAgentHarness } from "../../core/agent-migration.js";
 import { loadState } from "../../core/manifest.js";
 import { registry } from "../../core/registry.js";
 import { resolveContexts, SCOPE_FLAGS, type ScopeFlags } from "../../core/scope.js";
@@ -378,8 +379,18 @@ async function importArtifact(
         sanitizeSkillFile(path.join(destPath, "SKILL.md"));
       }
     } else {
-      // Copy file
-      copyFile(artifact.sourcePath, destPath);
+      // Copy file, or canonicalize native agent files during import.
+      if (artifact.kind === "agent") {
+        const raw = readFile(artifact.sourcePath);
+        const harness = inferAgentHarness(artifact.sourcePath, raw, artifact.tool);
+        const canonical = canonicalizeAgentContent(raw, {
+          harness,
+          sourcePath: artifact.sourcePath,
+        });
+        writeFile(destPath, canonical.content);
+      } else {
+        copyFile(artifact.sourcePath, destPath);
+      }
 
       // Canonicalize known native frontmatter aliases on import.
       if (artifact.kind === "rule") {

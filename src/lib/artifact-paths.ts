@@ -80,6 +80,10 @@ export function extractArtifactName(relativePath: string, kind: string): string 
       const match = relativePath.match(/^rules\/(.+)\.md$/);
       return match ? match[1] : relativePath;
     }
+    case "agent": {
+      const match = relativePath.match(/^agents\/(.+)\.md$/);
+      return match ? match[1] : relativePath;
+    }
     case "instruction": {
       const dirMatch = relativePath.match(/^instructions\/(AGENTS\.[^/]+\.md)$/);
       if (dirMatch) return dirMatch[1];

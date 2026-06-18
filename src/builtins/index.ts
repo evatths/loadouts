@@ -14,6 +14,7 @@ import {
 import { ruleKind } from "./kinds/rule.js";
 import { skillKind } from "./kinds/skill.js";
 import { instructionKind } from "./kinds/instruction.js";
+import { agentKind } from "./kinds/agent.js";
 import { promptKind } from "./kinds/prompt.js";
 import { extensionKind } from "./kinds/extension.js";
 import { themeKind } from "./kinds/theme.js";
@@ -24,6 +25,12 @@ import { cursorTool } from "./tools/cursor.js";
 import { opencodeTool } from "./tools/opencode.js";
 import { codexTool } from "./tools/codex.js";
 import { piTool } from "./tools/pi.js";
+import {
+  renderClaudeAgent,
+  renderCodexAgent,
+  renderCursorAgent,
+  renderOpenCodeAgent,
+} from "./agent-transforms.js";
 
 /** Names of the built-in tools, for use in defaults and display. */
 export const BUILTIN_TOOL_NAMES = [
@@ -72,6 +79,7 @@ export function registerBuiltins(api: PluginAPI): void {
   api.registerKind(ruleKind);
   api.registerKind(skillKind);
   api.registerKind(instructionKind);
+  api.registerKind(agentKind);
   api.registerKind(promptKind);
   api.registerKind(extensionKind);
   api.registerKind(themeKind);
@@ -82,6 +90,10 @@ export function registerBuiltins(api: PluginAPI): void {
   api.registerTransform("cursor-rule-frontmatter", translateRuleFrontmatter);
   api.registerTransform("opencode-rule-frontmatter", translateRuleFrontmatter);
   api.registerTransform("opencode-skill-frontmatter", translateOpenCodeSkillFrontmatter);
+  api.registerTransform("opencode-agent-frontmatter", renderOpenCodeAgent);
+  api.registerTransform("cursor-agent-frontmatter", renderCursorAgent);
+  api.registerTransform("claude-agent-frontmatter", renderClaudeAgent);
+  api.registerTransform("codex-agent-toml", renderCodexAgent);
 
   // Tools
   api.registerTool(claudeCodeTool);

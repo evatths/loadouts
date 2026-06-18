@@ -1,6 +1,7 @@
 import * as path from "node:path";
 import * as os from "node:os";
 import type { ToolSpec } from "../../core/registry.js";
+import { selectAgentMarkdownMode } from "../agent-transforms.js";
 
 /**
  * Claude Code reads CLAUDE.md (not AGENTS.md). We generate a thin wrapper
@@ -19,7 +20,7 @@ export const claudeCodeTool: ToolSpec = {
     global: path.join(os.homedir(), ".claude"),
     project: ".claude",
   },
-  supports: ["rule", "skill", "instruction"],
+  supports: ["rule", "skill", "instruction", "agent"],
   targets: {
     rule: { path: "{base}/rules/{stem}.md" },
     skill: { path: "{base}/skills/{name}" },
@@ -27,6 +28,11 @@ export const claudeCodeTool: ToolSpec = {
       path: { project: "CLAUDE.md", global: "{home}/CLAUDE.md" },
       mode: "generate",
       generate: () => CLAUDE_WRAPPER,
+    },
+    agent: {
+      path: "{base}/agents/{stem}.md",
+      mode: selectAgentMarkdownMode("claude-code"),
+      transform: "claude-agent-frontmatter",
     },
   },
 };

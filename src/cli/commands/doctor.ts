@@ -374,6 +374,9 @@ function inferArtifactFromGitignorePath(relativePath: string): { kind: string; n
   const ruleMatch = normalized.match(/^rules\/(.+)\.md$/);
   if (ruleMatch) return { kind: "rule", name: ruleMatch[1] };
 
+  const agentMatch = normalized.match(/^agents\/(.+)\.md$/);
+  if (agentMatch) return { kind: "agent", name: agentMatch[1] };
+
   const promptMatch = normalized.match(/^prompts\/(.+)\.md$/);
   if (promptMatch) return { kind: "prompt", name: promptMatch[1] };
 

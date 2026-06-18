@@ -1,11 +1,76 @@
 # Authoring Artifacts
 
-This guide covers creating rules, skills, and instructions. The typical workflow:
+This guide covers creating agents, rules, skills, and instructions. The typical workflow:
 
 1. **Create** an artifact (`loadouts rule add`, `loadouts skill add`, etc.)
 2. **Include** it in a loadout (`loadouts add-to <loadout> <artifact>`)
 3. **Sync** to render outputs (`loadouts sync`)
 4. **Verify** with `loadouts status` or `loadouts info`
+
+---
+
+## Agents
+
+Agents are self-contained Markdown files under `.loadouts/agents/`. The body is the agent prompt. Top-level frontmatter holds portable fields, while `targets.<tool>` holds harness-specific fields.
+
+```markdown
+---
+name: code-reviewer
+description: Reviews code for correctness, security, and missing tests.
+model: inherit
+readonly: true
+background: false
+
+targets:
+  opencode:
+    mode: subagent
+    steps: 8
+    color: accent
+    permission:
+      bash:
+        "*": ask
+        "git diff*": allow
+
+  cursor:
+    is_background: false
+
+  claude-code:
+    tools: Read, Glob, Grep, Bash
+    maxTurns: 8
+
+  codex:
+    sandbox_mode: read-only
+    model_reasoning_effort: high
+---
+
+Review code like an owner. Prioritize real bugs, behavior regressions,
+security issues, and missing tests.
+```
+
+Project scope renders agents to:
+
+- OpenCode: `.opencode/agents/<name>.md`
+- Cursor: `.cursor/agents/<name>.md`
+- Claude Code: `.claude/agents/<name>.md`
+- Codex: `.codex/agents/<name>.toml`
+
+Markdown targets are symlinked only when the source frontmatter is already native-safe for that harness. If the file contains `targets:` overlays, Loadouts writes a cleaned managed copy for each Markdown harness. Codex always gets generated TOML, with the Markdown body mapped to `developer_instructions`.
+
+After creating an agent manually, add it to a loadout:
+
+```bash
+loadouts add-to backend agents/code-reviewer.md
+```
+
+**Import or migrate existing agents:**
+
+```bash
+loadouts install .opencode/agents/reviewer.md --kinds agent --keep
+loadouts migrate agents --dry-run
+loadouts migrate agents
+```
+
+`install --kinds agent` imports native harness files from outside the target loadout. `migrate agents` converts native files already inside a loadout, such as `opencode/agents/*.md`, `cursor/agents/*.md`, `.claude/agents/*.md`, or `.codex/agents/*.toml`.
 
 ---
 

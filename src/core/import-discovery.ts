@@ -204,6 +204,17 @@ function buildRuleSourceArtifact(scanRoot: string, sourcePath: string): Discover
   return buildSourceArtifact(scanRoot, "rule", sourcePath, `rules/${stem}.md`, stem);
 }
 
+function buildAgentSourceArtifact(scanRoot: string, sourcePath: string): DiscoveredArtifact | null {
+  const ext = path.extname(sourcePath).toLowerCase();
+  if (ext !== ".md" && ext !== ".toml") return null;
+  if (path.basename(path.dirname(sourcePath)) !== "agents") return null;
+
+  const stem = path.basename(sourcePath, ext);
+  if (!stem) return null;
+
+  return buildSourceArtifact(scanRoot, "agent", sourcePath, `agents/${stem}.md`, stem);
+}
+
 function buildInstructionSourceArtifact(scanRoot: string, sourcePath: string): DiscoveredArtifact | null {
   const basename = path.basename(sourcePath);
   if (basename !== "AGENTS.md" && basename !== "CLAUDE.md" && !/^AGENTS\.[^.]+\.md$/.test(basename)) {
@@ -252,6 +263,11 @@ function discoverDirectSourceArtifacts(
       if (rule) artifacts.push(rule);
     }
 
+    if (sourceAllowsKind("agent", kinds)) {
+      const agent = buildAgentSourceArtifact(scanRoot, sourcePath);
+      if (agent) artifacts.push(agent);
+    }
+
     return artifacts;
   }
 
@@ -261,6 +277,14 @@ function discoverDirectSourceArtifacts(
   }
 
   const basename = path.basename(sourcePath);
+
+  const agentsRoot = basename === "agents" ? sourcePath : path.join(sourcePath, "agents");
+  if (sourceAllowsKind("agent", kinds) && isDirectory(agentsRoot)) {
+    for (const rel of walkDir(agentsRoot)) {
+      const agent = buildAgentSourceArtifact(scanRoot, path.join(agentsRoot, rel));
+      if (agent) artifacts.push(agent);
+    }
+  }
 
   const rulesRoot = basename === "rules" ? sourcePath : path.join(sourcePath, "rules");
   if (sourceAllowsKind("rule", kinds) && isDirectory(rulesRoot)) {
@@ -419,6 +443,9 @@ function inferDestPath(
   }
   if (kindId === "rule") {
     return `rules/${stem}.md`;
+  }
+  if (kindId === "agent") {
+    return `agents/${stem}.md`;
   }
 
   const candidates = [
