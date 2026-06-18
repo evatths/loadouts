@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -25,6 +26,11 @@ function makeBundle(): RuntimeBundle {
       supportedKinds: ["instruction", "rule", "skill"],
     },
   };
+}
+
+function runtimeEventPath(cacheHome: string, cwd: string): string {
+  const key = crypto.createHash("sha256").update(path.resolve(cwd)).digest("hex").slice(0, 32);
+  return path.join(cacheHome, "loadouts", "opencode-runtime", `${key}.event.json`);
 }
 
 describe("OpenCode runtime plugin adapter", () => {
@@ -73,7 +79,7 @@ describe("OpenCode runtime plugin adapter", () => {
       },
     };
 
-    const toasts: Array<{ message: string; variant: string }> = [];
+    const toasts: Array<{ message: string; variant: string; duration?: number }> = [];
     const plugin = createOpenCodeRuntimePlugin({ bridge, store });
     const hooks = await plugin({
       directory: "/repo",
@@ -81,7 +87,7 @@ describe("OpenCode runtime plugin adapter", () => {
       client: {
         tui: {
           showToast(input) {
-            toasts.push({ message: input.message, variant: input.variant });
+            toasts.push({ message: input.message, variant: input.variant, duration: input.duration });
           },
         },
       },
@@ -97,7 +103,11 @@ describe("OpenCode runtime plugin adapter", () => {
 
     expect(commandOutput.parts).toEqual([]);
     expect(toasts).toEqual([
-      { message: "runtime: activated (global) base [abcdef123456]", variant: "info" },
+      {
+        message: "Loaded base\nInjected: 0 instructions, 0 rules, 0 skills\nFingerprint: abcdef123456",
+        variant: "success",
+        duration: 5000,
+      },
     ]);
 
     const systemOutput = { system: [] as string[] };
@@ -134,6 +144,15 @@ describe("OpenCode runtime plugin adapter", () => {
           { parts: [] }
         )
       ).rejects.toThrow(LoadoutsRuntimeCommandHandledError);
+
+      const events = JSON.parse(
+        fs.readFileSync(runtimeEventPath(process.env.XDG_CACHE_HOME!, tempDir), "utf-8")
+      ) as Record<string, { title: string; message: string; variant: string }>;
+      expect(events.ses_persist).toMatchObject({
+        title: "Loadouts Activated",
+        message: "Loaded base\nInjected: 0 instructions, 0 rules, 0 skills\nFingerprint: abcdef123456",
+        variant: "success",
+      });
 
       const second = await createOpenCodeRuntimePlugin({ bridge, store: createRuntimeSessionStore() })({
         directory: tempDir,
@@ -192,7 +211,7 @@ describe("OpenCode runtime plugin adapter", () => {
         return "";
       },
     };
-    const toasts: Array<{ message: string; variant: string }> = [];
+    const toasts: Array<{ message: string; variant: string; duration?: number }> = [];
 
     const hooks = await createOpenCodeRuntimePlugin({ bridge, store })({
       directory: "/repo",
@@ -200,7 +219,7 @@ describe("OpenCode runtime plugin adapter", () => {
       client: {
         tui: {
           showToast(input) {
-            toasts.push({ message: input.message, variant: input.variant });
+            toasts.push({ message: input.message, variant: input.variant, duration: input.duration });
           },
         },
       },
@@ -212,6 +231,177 @@ describe("OpenCode runtime plugin adapter", () => {
     ).rejects.toThrow("runtime: error: Unknown runtime command: wat");
 
     expect(output.parts).toEqual([]);
-    expect(toasts).toEqual([{ message: "runtime: error: Unknown runtime command: wat", variant: "error" }]);
+    expect(toasts).toEqual([
+      {
+        message: "runtime: error: Unknown runtime command: wat",
+        variant: "error",
+        duration: 5000,
+      },
+    ]);
+  });
+
+  it("uses custom plugin toast duration option", async () => {
+    const store = createRuntimeSessionStore();
+    const bridge: RuntimeBridge = {
+      async compile() {
+        return { bundle: makeBundle(), systemBlock: "[runtime-system-block]" };
+      },
+      async list() {
+        return "base";
+      },
+      async info() {
+        return "base info";
+      },
+    };
+    const toasts: Array<{ duration?: number }> = [];
+
+    const hooks = await createOpenCodeRuntimePlugin({ bridge, store })(
+      {
+        directory: "/repo",
+        worktree: "/repo",
+        client: {
+          tui: {
+            showToast(input) {
+              toasts.push({ duration: input.duration });
+            },
+          },
+        },
+      },
+      { toastDuration: 1234 }
+    );
+
+    await expect(
+      hooks["command.execute.before"](
+        { command: "loadouts", sessionID: "ses_duration", arguments: "a base" },
+        { parts: [] }
+      )
+    ).rejects.toThrow(LoadoutsRuntimeCommandHandledError);
+
+    expect(toasts).toEqual([{ duration: 1234 }]);
+  });
+
+  it("uses env var toast duration fallback", async () => {
+    const previousValue = process.env.LOADOUTS_OPENCODE_TOAST_DURATION;
+    process.env.LOADOUTS_OPENCODE_TOAST_DURATION = "777";
+
+    try {
+      const store = createRuntimeSessionStore();
+      const bridge: RuntimeBridge = {
+        async compile() {
+          return { bundle: makeBundle(), systemBlock: "[runtime-system-block]" };
+        },
+        async list() {
+          return "base";
+        },
+        async info() {
+          return "base info";
+        },
+      };
+      const toasts: Array<{ duration?: number }> = [];
+
+      const hooks = await createOpenCodeRuntimePlugin({ bridge, store })({
+        directory: "/repo",
+        worktree: "/repo",
+        client: {
+          tui: {
+            showToast(input) {
+              toasts.push({ duration: input.duration });
+            },
+          },
+        },
+      });
+
+      await expect(
+        hooks["command.execute.before"](
+          { command: "loadouts", sessionID: "ses_env", arguments: "a base" },
+          { parts: [] }
+        )
+      ).rejects.toThrow(LoadoutsRuntimeCommandHandledError);
+
+      expect(toasts).toEqual([{ duration: 777 }]);
+    } finally {
+      if (previousValue === undefined) delete process.env.LOADOUTS_OPENCODE_TOAST_DURATION;
+      else process.env.LOADOUTS_OPENCODE_TOAST_DURATION = previousValue;
+    }
+  });
+
+  it("disables toast when duration is zero", async () => {
+    const store = createRuntimeSessionStore();
+    const bridge: RuntimeBridge = {
+      async compile() {
+        return { bundle: makeBundle(), systemBlock: "[runtime-system-block]" };
+      },
+      async list() {
+        return "base";
+      },
+      async info() {
+        return "base info";
+      },
+    };
+    let calls = 0;
+
+    const hooks = await createOpenCodeRuntimePlugin({ bridge, store })(
+      {
+        directory: "/repo",
+        worktree: "/repo",
+        client: {
+          tui: {
+            showToast() {
+              calls += 1;
+            },
+          },
+        },
+      },
+      { toastDuration: 0 }
+    );
+
+    await expect(
+      hooks["command.execute.before"](
+        { command: "loadouts", sessionID: "ses_disabled", arguments: "a base" },
+        { parts: [] }
+      )
+    ).rejects.toThrow(LoadoutsRuntimeCommandHandledError);
+
+    expect(calls).toBe(0);
+  });
+
+  it("uses configured duration for error toasts", async () => {
+    const store = createRuntimeSessionStore();
+    const bridge: RuntimeBridge = {
+      async compile() {
+        throw new Error("boom");
+      },
+      async list() {
+        return "";
+      },
+      async info() {
+        return "";
+      },
+    };
+    const toasts: Array<{ variant: string; duration?: number }> = [];
+
+    const hooks = await createOpenCodeRuntimePlugin({ bridge, store })(
+      {
+        directory: "/repo",
+        worktree: "/repo",
+        client: {
+          tui: {
+            showToast(input) {
+              toasts.push({ variant: input.variant, duration: input.duration });
+            },
+          },
+        },
+      },
+      { toastDuration: 999 }
+    );
+
+    await expect(
+      hooks["command.execute.before"](
+        { command: "loadouts", sessionID: "ses_error_duration", arguments: "a base" },
+        { parts: [] }
+      )
+    ).rejects.toThrow("runtime: error: boom");
+
+    expect(toasts).toEqual([{ variant: "error", duration: 999 }]);
   });
 });

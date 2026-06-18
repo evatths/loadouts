@@ -15,6 +15,16 @@ import type { RuntimeBridge, RuntimeSessionState, RuntimeSessionStore } from "./
 interface RuntimePluginOptions {
   bridge?: RuntimeBridge;
   store?: RuntimeSessionStore;
+  toastDuration?: number;
+}
+
+interface RuntimeUiEvent {
+  id: string;
+  sessionID: string;
+  title: string;
+  message: string;
+  variant: "info" | "success" | "error";
+  createdAt: string;
 }
 
 interface OpenCodePluginInput {
@@ -80,8 +90,11 @@ async function showRuntimeToast(
   client: OpenCodeClient | undefined,
   directory: string,
   message: string,
-  variant: "info" | "error"
+  variant: "info" | "success" | "error",
+  duration: number
 ): Promise<void> {
+  if (duration === 0) return;
+
   const showToast = client?.tui?.showToast;
   if (!showToast) return;
 
@@ -91,17 +104,87 @@ async function showRuntimeToast(
       title: "Loadouts",
       message,
       variant,
-      duration: 5000,
+      duration,
     });
   } catch {
     // Toast delivery is best-effort; command consumption should not depend on TUI availability.
   }
 }
 
+const DEFAULT_TOAST_DURATION_MS = 5000;
+const MAX_TOAST_DURATION_MS = 3_600_000;
+
+function parseToastDuration(value: unknown): number | undefined {
+  if (typeof value !== "number") return undefined;
+  if (!Number.isFinite(value) || value < 0) return undefined;
+  return Math.min(value, MAX_TOAST_DURATION_MS);
+}
+
+function parseToastDurationFromEnv(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return undefined;
+  return parseToastDuration(Number(trimmed));
+}
+
+function resolveToastDuration(
+  pluginOptions: RuntimePluginOptions,
+  runtimeOptions?: Record<string, unknown>
+): number {
+  const fromRuntime = parseToastDuration(runtimeOptions?.toastDuration);
+  if (fromRuntime !== undefined) return fromRuntime;
+
+  const fromPlugin = parseToastDuration(pluginOptions.toastDuration);
+  if (fromPlugin !== undefined) return fromPlugin;
+
+  const fromEnv = parseToastDurationFromEnv(process.env.LOADOUTS_OPENCODE_TOAST_DURATION);
+  if (fromEnv !== undefined) return fromEnv;
+
+  return DEFAULT_TOAST_DURATION_MS;
+}
+
+function shortFingerprint(fingerprint: string): string {
+  return fingerprint.replace(/^sha256:/, "").slice(0, 12);
+}
+
+function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function runtimeActivationToast(state: RuntimeSessionState | undefined): string | undefined {
+  if (!state) return undefined;
+  const injected = state.bundle.injection;
+  return [
+    `Loaded ${state.activeNames.join(", ")}`,
+    `Injected: ${pluralize(injected.instructions.length, "instruction")}, ${pluralize(injected.rules.length, "rule")}, ${pluralize(injected.skills.length, "skill")}`,
+    `Fingerprint: ${shortFingerprint(state.bundle.fingerprint)}`,
+  ].join("\n");
+}
+
+function runtimeToastVariant(action: string): "info" | "success" {
+  return action === "activate" || action === "deactivate" ? "success" : "info";
+}
+
+function runtimeEventTitle(action: string, variant: "info" | "success" | "error"): string {
+  if (variant === "error") return "Loadouts Error";
+  if (action === "activate") return "Loadouts Activated";
+  if (action === "deactivate") return "Loadouts Deactivated";
+  if (action === "list") return "Loadouts List";
+  if (action === "info") return "Loadouts Info";
+  if (action === "help") return "Loadouts Help";
+  return "Loadouts Runtime";
+}
+
 function runtimeStatePath(cwd: string): string {
   const cacheRoot = process.env.XDG_CACHE_HOME || path.join(os.homedir(), ".cache");
   const key = crypto.createHash("sha256").update(path.resolve(cwd)).digest("hex").slice(0, 32);
   return path.join(cacheRoot, "loadouts", "opencode-runtime", `${key}.json`);
+}
+
+function runtimeEventPath(cwd: string): string {
+  const cacheRoot = process.env.XDG_CACHE_HOME || path.join(os.homedir(), ".cache");
+  const key = crypto.createHash("sha256").update(path.resolve(cwd)).digest("hex").slice(0, 32);
+  return path.join(cacheRoot, "loadouts", "opencode-runtime", `${key}.event.json`);
 }
 
 function readPersistedStates(cwd: string): Record<string, RuntimeSessionState> {
@@ -135,6 +218,41 @@ function persistRuntimeState(cwd: string, store: RuntimeSessionStore, sessionID:
   }
 }
 
+function readRuntimeUiEvents(cwd: string): Record<string, RuntimeUiEvent> {
+  try {
+    const file = runtimeEventPath(cwd);
+    if (!fs.existsSync(file)) return {};
+    return JSON.parse(fs.readFileSync(file, "utf-8")) as Record<string, RuntimeUiEvent>;
+  } catch {
+    return {};
+  }
+}
+
+function persistRuntimeUiEvent(
+  cwd: string,
+  sessionID: string,
+  title: string,
+  message: string,
+  variant: "info" | "success" | "error"
+): void {
+  try {
+    const file = runtimeEventPath(cwd);
+    const events = readRuntimeUiEvents(cwd);
+    events[sessionID] = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      sessionID,
+      title,
+      message,
+      variant,
+      createdAt: new Date().toISOString(),
+    };
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(events, null, 2), "utf-8");
+  } catch {
+    // TUI event delivery is best-effort and should not affect runtime injection.
+  }
+}
+
 export type OpenCodeRuntimePlugin = (
   input: OpenCodePluginInput,
   options?: Record<string, unknown>
@@ -144,7 +262,10 @@ export function createOpenCodeRuntimePlugin(options: RuntimePluginOptions = {}):
   const bridge = options.bridge ?? new CliRuntimeBridge();
   const store = options.store ?? createRuntimeSessionStore();
 
-  return async ({ directory, worktree, client }) => ({
+  return async ({ directory, worktree, client }, runtimeOptions) => {
+    const toastDuration = resolveToastDuration(options, runtimeOptions);
+
+    return {
     config: async (config) => {
       config.command ??= {};
       config.command.loadouts = {
@@ -170,14 +291,26 @@ export function createOpenCodeRuntimePlugin(options: RuntimePluginOptions = {}):
 
         output.parts = [];
         persistRuntimeState(cwd, store, input.sessionID);
-        await showRuntimeToast(client, cwd, result.text, "info");
+        const state = getRuntimeSessionState(store, input.sessionID);
+        const toastMessage =
+          result.command.action === "activate" ? runtimeActivationToast(state) ?? result.text : result.text;
+        const variant = runtimeToastVariant(result.command.action);
+        persistRuntimeUiEvent(
+          cwd,
+          input.sessionID,
+          runtimeEventTitle(result.command.action, variant),
+          toastMessage,
+          variant
+        );
+        await showRuntimeToast(client, cwd, toastMessage, variant, toastDuration);
         throw new LoadoutsRuntimeCommandHandledError(result.text);
       } catch (error) {
         if (error instanceof LoadoutsRuntimeCommandHandledError) throw error;
 
         const text = `runtime: error: ${error instanceof Error ? error.message : String(error)}`;
         output.parts = [];
-        await showRuntimeToast(client, cwd, text, "error");
+        persistRuntimeUiEvent(cwd, input.sessionID, runtimeEventTitle("error", "error"), text, "error");
+        await showRuntimeToast(client, cwd, text, "error", toastDuration);
         throw new LoadoutsRuntimeCommandHandledError(text);
       }
     },
@@ -193,7 +326,8 @@ export function createOpenCodeRuntimePlugin(options: RuntimePluginOptions = {}):
 
       output.system.push(block);
     },
-  });
+    };
+  };
 }
 
 export const opencodeRuntimePlugin = createOpenCodeRuntimePlugin();

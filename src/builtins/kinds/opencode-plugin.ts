@@ -5,7 +5,7 @@ export const opencodePluginKind: KindSpec = {
   description: "Local OpenCode plugin modules.",
   detect: (rel) =>
     rel.startsWith("opencode/plugins/") &&
-    (rel.endsWith(".ts") || rel.endsWith(".js")),
+    (rel.endsWith(".ts") || rel.endsWith(".tsx") || rel.endsWith(".js")),
   layout: "file",
   defaultTargets: {},
 };

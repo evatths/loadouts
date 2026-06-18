@@ -58,15 +58,17 @@ loadouts sync      # Re-render if needed
 If `/loadouts` exists but does not activate runtime behavior, verify the full chain:
 
 1. Runtime artifacts are rendered in the expected scope:
-   - Local: `.opencode/plugins/loadouts-runtime.ts` and `.opencode/commands/loadouts.md`
-   - Global: `~/.config/opencode/plugins/loadouts-runtime.ts` and `~/.config/opencode/commands/loadouts.md`
+   - Local server plugin: `.opencode/plugins/loadouts-runtime.ts`
+   - Local TUI plugin/config: `.opencode/plugins/loadouts-runtime-tui.tsx` and `.opencode/tui.jsonc`
+   - Global server plugin: `~/.config/opencode/plugins/loadouts-runtime.ts`
+   - Global TUI plugin/config: `~/.config/opencode/plugins/loadouts-runtime-tui.tsx` and `~/.config/opencode/tui.jsonc`
 2. Runtime scaffold is active in the same scope (`loadouts info -l` or `loadouts info -g`).
-3. Restart OpenCode after activation or plugin/command changes (startup-time plugin loading).
+3. Restart OpenCode after activation or plugin/TUI config changes (startup-time plugin loading).
 4. Check the `loadouts` binary on OpenCode's `PATH` supports runtime:
 ```bash
 loadouts runtime base --tool opencode --json
 ```
-5. If command acknowledgment text looks model-generated, treat it as expected host behavior; the deterministic part is plugin state update and runtime system injection.
+5. In interactive OpenCode, the server plugin owns `/loadouts` and the TUI plugin listens for server events to render a user-only dialog. If command acknowledgment text looks model-generated, the TUI plugin is probably not loaded; the deterministic fallback is still server plugin state update and runtime system injection.
 
 **Claude Code:** Verify rules exist in `.claude/rules/`. May require restarting the session.
 

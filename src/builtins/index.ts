@@ -18,6 +18,7 @@ import { promptKind } from "./kinds/prompt.js";
 import { extensionKind } from "./kinds/extension.js";
 import { themeKind } from "./kinds/theme.js";
 import { opencodeConfigKind } from "./kinds/opencode-config.js";
+import { opencodeTuiConfigKind } from "./kinds/opencode-tui-config.js";
 import { opencodePluginKind } from "./kinds/opencode-plugin.js";
 import { opencodeCommandKind } from "./kinds/opencode-command.js";
 import { claudeCodeTool } from "./tools/claude-code.js";
@@ -77,6 +78,7 @@ export function registerBuiltins(api: PluginAPI): void {
   api.registerKind(extensionKind);
   api.registerKind(themeKind);
   api.registerKind(opencodeConfigKind);
+  api.registerKind(opencodeTuiConfigKind);
   api.registerKind(opencodePluginKind);
   api.registerKind(opencodeCommandKind);
 

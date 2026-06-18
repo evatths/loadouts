@@ -13,6 +13,7 @@ export const opencodeTool: ToolSpec = {
     "skill",
     "instruction",
     "opencode-config",
+    "opencode-tui-config",
     "opencode-plugin",
     "opencode-command",
   ],
@@ -32,6 +33,12 @@ export const opencodeTool: ToolSpec = {
       path: {
         project: "opencode{ext}",
         global: "{base}/opencode{ext}",
+      },
+    },
+    "opencode-tui-config": {
+      path: {
+        project: "{base}/tui{ext}",
+        global: "{base}/tui{ext}",
       },
     },
     "opencode-plugin": { path: "{base}/plugins/{stem}{ext}" },

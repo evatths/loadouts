@@ -28,6 +28,15 @@ type RuntimeState = {
   activatedAt: string;
 };
 
+type RuntimeUiEvent = {
+  id: string;
+  sessionID: string;
+  title: string;
+  message: string;
+  variant: "info" | "success" | "error";
+  createdAt: string;
+};
+
 type OpenCodeClient = {
   tui?: {
     showToast?: (input: {
@@ -44,6 +53,9 @@ type OpenCodeConfigInput = {
   command?: Record<string, { description?: string; template: string }>;
 };
 
+const DEFAULT_TOAST_DURATION_MS = 5000;
+const MAX_TOAST_DURATION_MS = 3_600_000;
+
 class LoadoutsRuntimeCommandHandledError extends Error {
   constructor(message: string) {
     super(message);
@@ -54,7 +66,7 @@ class LoadoutsRuntimeCommandHandledError extends Error {
 const sessions = new Map<string, RuntimeState>();
 
 const aliases: Record<string, string> = {
-  "": "status",
+  "": "help",
   status: "status",
   s: "status",
   activate: "activate",
@@ -114,6 +126,9 @@ function tokenize(text: string): string[] {
 
 function parseArgs(argumentsText: string): { action: string; names: string[]; scope: RuntimeScope } {
   const tokens = tokenize(argumentsText.trim());
+  if (tokens[0] === "/loadouts" || tokens[0] === "loadouts") {
+    tokens.shift();
+  }
   const action = aliases[(tokens.shift() ?? "").toLowerCase()];
   if (!action) throw new Error(`unknown /loadouts command: ${argumentsText || "(empty)"}`);
 
@@ -218,45 +233,146 @@ async function activate(names: string[], scope: RuntimeScope, sessionID: string,
   return `runtime: activated (${scope}) ${names.join(", ")} [${shortFingerprint(bundle.fingerprint)}]`;
 }
 
-async function handle(argumentsText: string, sessionID: string, cwd: string): Promise<string> {
+function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function runtimeActivationToast(state: RuntimeState | undefined): string | undefined {
+  if (!state) return undefined;
+  const injected = state.bundle.injection;
+  return [
+    `Loaded ${state.activeNames.join(", ")}`,
+    `Injected: ${pluralize(injected.instructions.length, "instruction")}, ${pluralize(injected.rules.length, "rule")}, ${pluralize(injected.skills.length, "skill")}`,
+    `Fingerprint: ${shortFingerprint(state.bundle.fingerprint)}`,
+  ].join("\n");
+}
+
+function runtimeToastVariant(action: string): "info" | "success" {
+  return action === "activate" || action === "deactivate" ? "success" : "info";
+}
+
+function runtimeEventTitle(action: string, variant: "info" | "success" | "error"): string {
+  if (variant === "error") return "Loadouts Error";
+  if (action === "activate") return "Loadouts Activated";
+  if (action === "deactivate") return "Loadouts Deactivated";
+  if (action === "list") return "Loadouts List";
+  if (action === "info") return "Loadouts Info";
+  if (action === "help") return "Loadouts Help";
+  return "Loadouts Runtime";
+}
+
+function helpText(): string {
+  return [
+    "runtime commands:",
+    "  (empty|help|-h|--help)",
+    "  status|s",
+    "  activate|a|use <names...> [-l|--local|-g|--global]",
+    "  deactivate|d|remove|rm|clear",
+    "  list|ls [-l|--local|-g|--global]",
+    "  info|i [names...] [-l|--local|-g|--global]",
+    "  show",
+    "  system-block",
+  ].join("\n");
+}
+
+function parseToastDuration(value: unknown): number | undefined {
+  if (typeof value !== "number") return undefined;
+  if (!Number.isFinite(value) || value < 0) return undefined;
+  return Math.min(value, MAX_TOAST_DURATION_MS);
+}
+
+function parseToastDurationFromEnv(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return undefined;
+  return parseToastDuration(Number(trimmed));
+}
+
+function resolveToastDuration(runtimeOptions?: Record<string, unknown>): number {
+  const fromRuntime = parseToastDuration(runtimeOptions?.toastDuration);
+  if (fromRuntime !== undefined) return fromRuntime;
+
+  const fromEnv = parseToastDurationFromEnv(process.env.LOADOUTS_OPENCODE_TOAST_DURATION);
+  if (fromEnv !== undefined) return fromEnv;
+
+  return DEFAULT_TOAST_DURATION_MS;
+}
+
+async function handle(
+  argumentsText: string,
+  sessionID: string,
+  cwd: string
+): Promise<{ action: string; text: string }> {
   const command = parseArgs(argumentsText);
   const state = sessions.get(sessionID);
 
   if (command.action === "help") {
-    return "runtime commands: status, activate|a|use <names...> [-l|-g], deactivate|d|clear, list|ls [-l|-g], info [names...] [-l|-g], show, system-block";
+    return {
+      action: command.action,
+      text: helpText(),
+    };
   }
-  if (command.action === "activate") return activate(command.names, command.scope, sessionID, cwd);
+  if (command.action === "activate") {
+    return {
+      action: command.action,
+      text: await activate(command.names, command.scope, sessionID, cwd),
+    };
+  }
   if (command.action === "deactivate") {
-    return sessions.delete(sessionID) ? "runtime: deactivated" : "runtime: already inactive";
+    return {
+      action: command.action,
+      text: sessions.delete(sessionID) ? "runtime: deactivated" : "runtime: already inactive",
+    };
   }
-  if (command.action === "list") return (await execLoadouts(["list", scopeFlag(command.scope)], cwd)).trim();
-  if (command.action === "info") return (await execLoadouts(["info", ...command.names, scopeFlag(command.scope)], cwd)).trim();
+  if (command.action === "list") {
+    return { action: command.action, text: (await execLoadouts(["list", scopeFlag(command.scope)], cwd)).trim() };
+  }
+  if (command.action === "info") {
+    return {
+      action: command.action,
+      text: (await execLoadouts(["info", ...command.names, scopeFlag(command.scope)], cwd)).trim(),
+    };
+  }
   if (command.action === "status") {
-    return state
-      ? `runtime: active ${state.activeNames.join(", ")} [${shortFingerprint(state.bundle.fingerprint)}]`
-      : "runtime: inactive";
+    return {
+      action: command.action,
+      text: state
+        ? `runtime: active ${state.activeNames.join(", ")} [${shortFingerprint(state.bundle.fingerprint)}]`
+        : "runtime: inactive",
+    };
   }
   if (command.action === "show") {
-    if (!state) return "runtime: inactive";
+    if (!state) return { action: command.action, text: "runtime: inactive" };
     const injected = state.bundle.injection;
-    return [
-      "runtime: active",
-      `loadouts: ${state.activeNames.join(", ")}`,
-      `fingerprint: ${state.bundle.fingerprint}`,
-      `injected: instructions=${injected.instructions.length}, rules=${injected.rules.length}, skills=${injected.skills.length}`,
-      `activatedAt: ${state.activatedAt}`,
-    ].join("\n");
+    return {
+      action: command.action,
+      text: [
+        "runtime: active",
+        `loadouts: ${state.activeNames.join(", ")}`,
+        `fingerprint: ${state.bundle.fingerprint}`,
+        `injected: instructions=${injected.instructions.length}, rules=${injected.rules.length}, skills=${injected.skills.length}`,
+        `activatedAt: ${state.activatedAt}`,
+      ].join("\n"),
+    };
   }
-  if (command.action === "system-block") return state?.systemBlock ?? "runtime: inactive";
-  return "runtime: unsupported command";
+  if (command.action === "system-block") {
+    return {
+      action: command.action,
+      text: state?.systemBlock ?? "runtime: inactive",
+    };
+  }
+  return { action: command.action, text: "runtime: unsupported command" };
 }
 
 async function showRuntimeToast(
   client: OpenCodeClient | undefined,
   directory: string,
   message: string,
-  variant: "info" | "error"
+  variant: "info" | "success" | "error",
+  duration: number
 ): Promise<void> {
+  if (duration === 0) return;
+
   const showToast = client?.tui?.showToast;
   if (!showToast) return;
 
@@ -266,7 +382,7 @@ async function showRuntimeToast(
       title: "Loadouts",
       message,
       variant,
-      duration: 5000,
+      duration,
     });
   } catch {
     // Toast delivery is best-effort; command consumption should not depend on TUI availability.
@@ -277,6 +393,12 @@ function runtimeStatePath(cwd: string): string {
   const cacheRoot = process.env.XDG_CACHE_HOME || path.join(os.homedir(), ".cache");
   const key = crypto.createHash("sha256").update(path.resolve(cwd)).digest("hex").slice(0, 32);
   return path.join(cacheRoot, "loadouts", "opencode-runtime", `${key}.json`);
+}
+
+function runtimeEventPath(cwd: string): string {
+  const cacheRoot = process.env.XDG_CACHE_HOME || path.join(os.homedir(), ".cache");
+  const key = crypto.createHash("sha256").update(path.resolve(cwd)).digest("hex").slice(0, 32);
+  return path.join(cacheRoot, "loadouts", "opencode-runtime", `${key}.event.json`);
 }
 
 function readPersistedStates(cwd: string): Record<string, RuntimeState> {
@@ -310,6 +432,41 @@ function persistRuntimeState(cwd: string, sessionID: string): void {
   }
 }
 
+function readRuntimeUiEvents(cwd: string): Record<string, RuntimeUiEvent> {
+  try {
+    const file = runtimeEventPath(cwd);
+    if (!fs.existsSync(file)) return {};
+    return JSON.parse(fs.readFileSync(file, "utf-8")) as Record<string, RuntimeUiEvent>;
+  } catch {
+    return {};
+  }
+}
+
+function persistRuntimeUiEvent(
+  cwd: string,
+  sessionID: string,
+  title: string,
+  message: string,
+  variant: "info" | "success" | "error"
+): void {
+  try {
+    const file = runtimeEventPath(cwd);
+    const events = readRuntimeUiEvents(cwd);
+    events[sessionID] = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      sessionID,
+      title,
+      message,
+      variant,
+      createdAt: new Date().toISOString(),
+    };
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(events, null, 2), "utf-8");
+  } catch {
+    // TUI event delivery is best-effort and should not affect runtime injection.
+  }
+}
+
 export const LoadoutsRuntimePlugin = async ({
   directory,
   worktree,
@@ -318,7 +475,11 @@ export const LoadoutsRuntimePlugin = async ({
   directory: string;
   worktree: string;
   client?: OpenCodeClient;
-}) => ({
+},
+runtimeOptions?: Record<string, unknown>) => {
+  const toastDuration = resolveToastDuration(runtimeOptions);
+
+  return {
   config: async (config: OpenCodeConfigInput) => {
     config.command ??= {};
     config.command.loadouts = {
@@ -335,17 +496,23 @@ export const LoadoutsRuntimePlugin = async ({
     const cwd = directory || worktree || process.cwd();
     loadPersistedRuntimeState(cwd, input.sessionID);
     try {
-      const text = await handle(input.arguments, input.sessionID, cwd);
+      const result = await handle(input.arguments, input.sessionID, cwd);
       output.parts = [];
       persistRuntimeState(cwd, input.sessionID);
-      await showRuntimeToast(client, cwd, text, "info");
-      throw new LoadoutsRuntimeCommandHandledError(text);
+      const state = sessions.get(input.sessionID);
+      const toastMessage =
+        result.action === "activate" ? runtimeActivationToast(state) ?? result.text : result.text;
+      const variant = runtimeToastVariant(result.action);
+      persistRuntimeUiEvent(cwd, input.sessionID, runtimeEventTitle(result.action, variant), toastMessage, variant);
+      await showRuntimeToast(client, cwd, toastMessage, variant, toastDuration);
+      throw new LoadoutsRuntimeCommandHandledError(result.text);
     } catch (error) {
       if (error instanceof LoadoutsRuntimeCommandHandledError) throw error;
 
       const text = `runtime: error: ${error instanceof Error ? error.message : String(error)}`;
       output.parts = [];
-      await showRuntimeToast(client, cwd, text, "error");
+      persistRuntimeUiEvent(cwd, input.sessionID, runtimeEventTitle("error", "error"), text, "error");
+      await showRuntimeToast(client, cwd, text, "error", toastDuration);
       throw new LoadoutsRuntimeCommandHandledError(text);
     }
   },
@@ -360,6 +527,7 @@ export const LoadoutsRuntimePlugin = async ({
     const state = sessions.get(input.sessionID);
     if (state) output.system.push(state.systemBlock);
   },
-});
+  };
+};
 
 export default LoadoutsRuntimePlugin;

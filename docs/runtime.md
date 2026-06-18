@@ -58,20 +58,21 @@ The OpenCode runtime path is designed around a deterministic plugin-backed slash
 
 Expected behavior:
 
-- The plugin maps `/loadouts activate|a|use <names...>` to `loadouts runtime ...` (or equivalent runtime adapter path) and computes the final response deterministically.
+- The server plugin maps `/loadouts activate|a|use <names...>` to `loadouts runtime ...` (or equivalent runtime adapter path) and computes session runtime state deterministically.
+- The TUI plugin listens for server plugin events and renders status/results in a TUI-only dialog that is not appended to chat and is not visible to the assistant.
 - `-l/--local` and `-g/--global` are supported as direct scope selectors for runtime compilation.
 - Runtime JSON and intermediate plugin outputs stay hidden from the model-facing response.
-- The bundled command template intentionally omits `$ARGUMENTS`; the plugin receives arguments through OpenCode's command hook, while the fallback prompt does not expose requested loadout names.
-- A bundled scaffold loadout (`opencode-runtime`) renders both `.opencode/plugins/loadouts-runtime.ts` and `.opencode/commands/loadouts.md`.
+- The server and TUI plugins share persisted runtime state through `~/.cache/loadouts/opencode-runtime/<cwd-hash>.json`; the server plugin uses that state during system-message injection.
+- A bundled scaffold loadout (`opencode-runtime`) renders `.opencode/plugins/loadouts-runtime.ts`, `.opencode/plugins/loadouts-runtime-tui.tsx`, and `.opencode/tui.jsonc`.
 
 ### Known OpenCode Runtime Semantics
 
 - The runtime plugin's `command.execute.before` hook is deterministic for parsing `/loadouts` arguments and updating runtime state.
-- OpenCode may still route slash command text through model-facing flows. Treat user-visible acknowledgment text as host-dependent.
-- A plugin alone does not register `/loadouts`. You must also render a command artifact (`.opencode/commands/loadouts.md`) or equivalent command entry.
-- OpenCode loads plugins and command files at startup. Restart OpenCode after changing or activating runtime plugin/command artifacts.
+- In interactive OpenCode, the server plugin owns `/loadouts` command handling and the TUI plugin owns user-visible feedback. If the TUI plugin is not loaded, the server plugin remains the headless/fallback path.
+- OpenCode may still route server slash command text through model-facing flows when the TUI plugin is absent. Treat user-visible server acknowledgment text as host-dependent.
+- OpenCode loads server plugins and TUI plugins at startup. Restart OpenCode after changing or activating runtime plugin or TUI config artifacts.
 - The plugin bridge shells out to `loadouts runtime ...`. Ensure the `loadouts` binary available on OpenCode's `PATH` includes runtime support.
-- The bundled fallback prompt omits `$ARGUMENTS` to reduce model-visible leakage when slash command flow is not fully short-circuited.
+- The bundled TUI config is whole-file managed like other Loadouts config artifacts. Existing unmanaged `.opencode/tui.jsonc` files are protected by normal shadowing; add `./plugins/loadouts-runtime-tui.tsx` to your existing TUI config if needed.
 
 ## Tool Capability Matrix (Runtime v1)
 
@@ -96,8 +97,9 @@ For filesystem-first tools, use standard `activate/sync` as the primary path and
 
 ## Reference Scaffold
 
-- Bundled OpenCode runtime plugin: `bundled/opencode/plugins/loadouts-runtime.ts`
-- Bundled OpenCode slash command: `bundled/opencode/commands/loadouts.md`
+- Bundled OpenCode server runtime plugin: `bundled/opencode/plugins/loadouts-runtime.ts`
+- Bundled OpenCode TUI runtime plugin: `bundled/opencode/plugins/loadouts-runtime-tui.tsx`
+- Bundled OpenCode TUI config: `bundled/opencode/tui.jsonc`
 - Bundled scaffold loadout: `bundled/loadouts/opencode-runtime.yaml`
 - Historical/reference plugin scaffold: `docs/examples/opencode-runtime-plugin.ts`
 - Core compiler implementation: `src/core/runtime.ts`

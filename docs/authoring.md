@@ -203,6 +203,47 @@ include:
 
 NPM plugins belong in the managed `opencode.json(c)` `plugin` array. Local plugin source files belong in `.loadouts/opencode/plugins/`.
 
+**TUI plugins:**
+
+OpenCode TUI plugins are local plugin modules loaded from `tui.json(c)`. They are useful for user-facing UI that should not be added to chat or model-visible prompt context.
+
+```tsx
+// .loadouts/opencode/plugins/status-popup.tsx
+/** @jsxImportSource @opentui/solid */
+
+import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui";
+
+const tui: TuiPlugin = async (api) => {
+  api.keymap.registerLayer({
+    commands: [
+      {
+        name: "status_popup_open",
+        title: "Open status popup",
+        category: "Plugin",
+        namespace: "palette",
+        slashName: "status-popup",
+        run() {
+          api.ui.dialog.setSize("medium");
+          api.ui.dialog.replace(() => <box border paddingLeft={2}>TUI-only popup</box>);
+        },
+      },
+    ],
+  });
+};
+
+export default { id: "status-popup", tui } satisfies TuiPluginModule & { id: string };
+```
+
+```jsonc
+// .loadouts/opencode/tui.jsonc
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "plugin": ["./plugins/status-popup.tsx"]
+}
+```
+
+Project scope renders this config to `.opencode/tui.jsonc`. Global scope renders it to `~/.config/opencode/tui.jsonc`. This is whole-file ownership; if you already manage `tui.jsonc`, add the plugin entry there instead of including this artifact.
+
 ---
 
 ## Custom Kinds

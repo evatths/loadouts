@@ -258,8 +258,13 @@ describe("gitignore", () => {
     });
 
     it("includes OpenCode plugins under the OpenCode target directory", () => {
-      const result = computeArtifactGitignorePaths("opencode-plugin", "notify.ts", "project");
-      expect(result.get(".opencode")).toEqual(["plugins/notify.ts"]);
+      const result = computeArtifactGitignorePaths("opencode-plugin", "notify.tsx", "project");
+      expect(result.get(".opencode")).toEqual(["plugins/notify.tsx"]);
+    });
+
+    it("includes OpenCode TUI config under the OpenCode target directory", () => {
+      const result = computeArtifactGitignorePaths("opencode-tui-config", "tui.jsonc", "project");
+      expect(result.get(".opencode")).toEqual(["tui.jsonc"]);
     });
 
     it("includes OpenCode config in the root gitignore target", () => {

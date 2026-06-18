@@ -80,6 +80,7 @@ include:
 | `theme` | file | UI theme configuration |
 | `opencode-command` | file | OpenCode slash command markdown |
 | `opencode-config` | file | Whole-file OpenCode runtime configuration |
+| `opencode-tui-config` | file | Whole-file OpenCode TUI configuration |
 | `opencode-plugin` | file | Local OpenCode plugin modules |
 
 ## Supported Tools
@@ -88,7 +89,7 @@ include:
 |------|-------|--------|--------------|-----------------|
 | Claude Code | `.claude/rules/*.md` | `.claude/skills/` | `CLAUDE.md` | — |
 | Cursor | `.cursor/rules/*.mdc` | `.cursor/skills/` | `AGENTS.md` | — |
-| OpenCode | `.opencode/rules/*.md` | `.opencode/skills/` | `AGENTS.md` | `opencode.json(c)`, `.opencode/plugins/`, `.opencode/commands/*.md` |
+| OpenCode | `.opencode/rules/*.md` | `.opencode/skills/` | `AGENTS.md` | `opencode.json(c)`, `.opencode/tui.json(c)`, `.opencode/plugins/`, `.opencode/commands/*.md` |
 | Codex | — | `.agents/skills/` | `AGENTS.md` | — |
 | Pi | `.pi/rules/*.md` | `.pi/skills/` | `AGENTS.md` | `.pi/extensions/`, `.pi/themes/` |
 

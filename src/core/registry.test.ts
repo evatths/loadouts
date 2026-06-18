@@ -4,6 +4,7 @@ import { ruleKind } from "../builtins/kinds/rule.js";
 import { skillKind } from "../builtins/kinds/skill.js";
 import { instructionKind } from "../builtins/kinds/instruction.js";
 import { opencodeConfigKind } from "../builtins/kinds/opencode-config.js";
+import { opencodeTuiConfigKind } from "../builtins/kinds/opencode-tui-config.js";
 import { opencodePluginKind } from "../builtins/kinds/opencode-plugin.js";
 import { opencodeCommandKind } from "../builtins/kinds/opencode-command.js";
 import { claudeCodeTool } from "../builtins/tools/claude-code.js";
@@ -18,6 +19,7 @@ beforeEach(() => {
   reg.registerKind(skillKind);
   reg.registerKind(instructionKind);
   reg.registerKind(opencodeConfigKind);
+  reg.registerKind(opencodeTuiConfigKind);
   reg.registerKind(opencodePluginKind);
   reg.registerKind(opencodeCommandKind);
 });
@@ -40,8 +42,14 @@ describe("Registry.inferKind", () => {
     expect(reg.inferKind("opencode/opencode.json")).toBe("opencode-config");
   });
 
+  it("infers OpenCode TUI config kind", () => {
+    expect(reg.inferKind("opencode/tui.jsonc")).toBe("opencode-tui-config");
+    expect(reg.inferKind("opencode/tui.json")).toBe("opencode-tui-config");
+  });
+
   it("infers OpenCode plugin kind", () => {
     expect(reg.inferKind("opencode/plugins/notify.ts")).toBe("opencode-plugin");
+    expect(reg.inferKind("opencode/plugins/toy-popup.tsx")).toBe("opencode-plugin");
     expect(reg.inferKind("opencode/plugins/notify.js")).toBe("opencode-plugin");
   });
 
@@ -95,9 +103,20 @@ describe("Registry.resolveMapping", () => {
     });
   });
 
+  it("resolves OpenCode TUI config mapping", () => {
+    const m = reg.resolveMapping("opencode", "opencode-tui-config");
+    expect(m).toEqual({
+      path: {
+        project: "{base}/tui{ext}",
+        global: "{base}/tui{ext}",
+      },
+    });
+  });
+
   it("does not expose OpenCode-only kinds to other tools", () => {
     expect(reg.resolveMapping("claude-code", "opencode-plugin")).toBeUndefined();
     expect(reg.resolveMapping("cursor", "opencode-config")).toBeUndefined();
+    expect(reg.resolveMapping("cursor", "opencode-tui-config")).toBeUndefined();
     expect(reg.resolveMapping("codex", "opencode-command")).toBeUndefined();
   });
 

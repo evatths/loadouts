@@ -336,14 +336,14 @@ describe("render OpenCode-specific artifacts", () => {
   });
 
   it("renders a local OpenCode plugin into .opencode/plugins", async () => {
-    const sourcePath = path.join(loadoutRoot, "opencode", "plugins", "notify.ts");
+    const sourcePath = path.join(loadoutRoot, "opencode", "plugins", "notify.tsx");
     fs.mkdirSync(path.dirname(sourcePath), { recursive: true });
     fs.writeFileSync(sourcePath, "export const Notify = async () => ({})\n", "utf-8");
 
     const item: ResolvedItem = {
       kind: "opencode-plugin",
       sourcePath,
-      relativePath: "opencode/plugins/notify.ts",
+      relativePath: "opencode/plugins/notify.tsx",
       tools: ["opencode"],
     };
     const plan: RenderPlan = {
@@ -353,7 +353,7 @@ describe("render OpenCode-specific artifacts", () => {
             tool: "opencode",
             kind: "opencode-plugin",
             sourcePath,
-            targetPath: ".opencode/plugins/notify.ts",
+            targetPath: ".opencode/plugins/notify.tsx",
             mode: "symlink",
           },
           item,
@@ -373,7 +373,54 @@ describe("render OpenCode-specific artifacts", () => {
 
     await applyPlan(plan, loadout, projectRoot, "symlink", "project");
 
-    const outputPath = path.join(projectRoot, ".opencode/plugins/notify.ts");
+    const outputPath = path.join(projectRoot, ".opencode/plugins/notify.tsx");
+    expect(fs.lstatSync(outputPath).isSymbolicLink()).toBe(true);
+    expect(fs.realpathSync(outputPath)).toBe(fs.realpathSync(sourcePath));
+  });
+
+  it("renders whole-file OpenCode TUI config under .opencode", async () => {
+    const sourcePath = path.join(loadoutRoot, "opencode", "tui.jsonc");
+    fs.mkdirSync(path.dirname(sourcePath), { recursive: true });
+    fs.writeFileSync(
+      sourcePath,
+      '{ "$schema": "https://opencode.ai/tui.json", "plugin": [] }\n',
+      "utf-8"
+    );
+
+    const item: ResolvedItem = {
+      kind: "opencode-tui-config",
+      sourcePath,
+      relativePath: "opencode/tui.jsonc",
+      tools: ["opencode"],
+    };
+    const plan: RenderPlan = {
+      outputs: [
+        {
+          spec: {
+            tool: "opencode",
+            kind: "opencode-tui-config",
+            sourcePath,
+            targetPath: ".opencode/tui.jsonc",
+            mode: "symlink",
+          },
+          item,
+          hash: hashContent(fs.readFileSync(sourcePath, "utf-8")),
+        },
+      ],
+      errors: [],
+      shadowed: [],
+    };
+    const loadout: ResolvedLoadout = {
+      name: "test",
+      description: "",
+      tools: ["opencode"],
+      items: [item],
+      rootPath: loadoutRoot,
+    };
+
+    await applyPlan(plan, loadout, projectRoot, "symlink", "project");
+
+    const outputPath = path.join(projectRoot, ".opencode/tui.jsonc");
     expect(fs.lstatSync(outputPath).isSymbolicLink()).toBe(true);
     expect(fs.realpathSync(outputPath)).toBe(fs.realpathSync(sourcePath));
   });
@@ -588,7 +635,9 @@ describe("full render pipeline compatibility", () => {
 
       expect(plan.errors).toEqual([]);
       expect(plan.outputs.map((o) => o.spec.targetPath).sort()).toEqual([
+        ".opencode/plugins/loadouts-runtime-tui.tsx",
         ".opencode/plugins/loadouts-runtime.ts",
+        ".opencode/tui.jsonc",
       ]);
 
       // Do not apply a plan with the real bundled root: applyPlan persists

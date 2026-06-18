@@ -123,8 +123,11 @@ function parseScope(tokens: string[], action: RuntimeCommandAction): { scope: Ru
 
 export function parseRuntimeCommand(argumentsText: string): ParsedRuntimeCommand {
   const tokens = tokenize(argumentsText.trim());
+  if (tokens[0] === "/loadouts" || tokens[0] === "loadouts") {
+    tokens.shift();
+  }
   if (tokens.length === 0) {
-    return { action: "status", names: [], scope: "local" };
+    return { action: "help", names: [], scope: "local" };
   }
 
   const actionToken = tokens[0].toLowerCase();
@@ -155,14 +158,14 @@ export function parseRuntimeCommand(argumentsText: string): ParsedRuntimeCommand
 function helpText(): string {
   return [
     "runtime commands:",
-    "  (empty|status|s)",
+    "  (empty|help|-h|--help)",
+    "  status|s",
     "  activate|a|use <names...> [-l|--local|-g|--global]",
     "  deactivate|d|remove|rm|clear",
     "  list|ls [-l|--local|-g|--global]",
     "  info|i [names...] [-l|--local|-g|--global]",
     "  show",
     "  system-block",
-    "  help|-h|--help",
   ].join("\n");
 }
 

@@ -518,6 +518,7 @@ function synthesizeArtifactRelativePath(
   if (kindId === "extension") return `extensions/${withDefaultExtension(artifactName, ".ts")}`;
   if (kindId === "theme") return `themes/${withDefaultExtension(artifactName, ".json")}`;
   if (kindId === "opencode-config") return `opencode/${withDefaultExtension(artifactName, ".jsonc")}`;
+  if (kindId === "opencode-tui-config") return `opencode/${withDefaultExtension(artifactName, ".jsonc")}`;
   if (kindId === "opencode-plugin") return `opencode/plugins/${withDefaultExtension(artifactName, ".ts")}`;
   return layout === "dir" ? `${kindId}s/${artifactName}` : `${kindId}s/${artifactName}.md`;
 }

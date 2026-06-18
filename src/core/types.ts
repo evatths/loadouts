@@ -13,7 +13,8 @@ export type Scope = "global" | "project";
 // Open string types backed by the registry.
 // Built-in tools: "claude-code" | "cursor" | "opencode" | "codex" | "pi"
 // Built-in kinds include "rule", "skill", "instruction", and tool-specific
-// artifact kinds such as "opencode-config" and "opencode-plugin".
+// artifact kinds such as "opencode-config", "opencode-tui-config", and
+// "opencode-plugin".
 export type Tool = string;
 export type ArtifactKind = string;
 

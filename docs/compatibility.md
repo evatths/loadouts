@@ -8,7 +8,7 @@ Current built-in rendering targets for canonical artifacts.
 |------|------|-------|-------------|-----------------|
 | Claude Code | `.claude/rules/<name>.md` | `.claude/skills/<name>/` | `CLAUDE.md` (generated wrapper to `AGENTS.md`) | - |
 | Cursor | `.cursor/rules/<name>.mdc` | `.cursor/skills/<name>/` | `AGENTS.md` | - |
-| OpenCode | `.opencode/rules/<name>.md` | `.opencode/skills/<name>/` | `AGENTS.md` | `.opencode/commands/<name>.md`, `.opencode/plugins/<name>.{ts,js}`, `opencode.json(c)` |
+| OpenCode | `.opencode/rules/<name>.md` | `.opencode/skills/<name>/` | `AGENTS.md` | `.opencode/commands/<name>.md`, `.opencode/plugins/<name>.{ts,tsx,js}`, `.opencode/tui.json(c)`, `opencode.json(c)` |
 | Codex | - (no rule target) | `.agents/skills/<name>/` | `AGENTS.md` | - |
 | Pi | - (no native rule target) | `.pi/skills/<name>/` | `AGENTS.md` | - |
 

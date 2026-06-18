@@ -33,9 +33,19 @@ function makeBundle(fingerprint: string): RuntimeBundle {
 
 describe("parseRuntimeCommand", () => {
   it("maps empty input and aliases", () => {
-    expect(parseRuntimeCommand("")).toEqual({ action: "status", names: [], scope: "local" });
+    expect(parseRuntimeCommand("")).toEqual({ action: "help", names: [], scope: "local" });
     expect(parseRuntimeCommand("s")).toEqual({ action: "status", names: [], scope: "local" });
     expect(parseRuntimeCommand("ls -g")).toEqual({ action: "list", names: [], scope: "global" });
+  });
+
+  it("accepts raw slash command text from OpenCode", () => {
+    expect(parseRuntimeCommand("/loadouts")).toEqual({ action: "help", names: [], scope: "local" });
+    expect(parseRuntimeCommand("/loadouts s")).toEqual({ action: "status", names: [], scope: "local" });
+    expect(parseRuntimeCommand("loadouts a base")).toEqual({
+      action: "activate",
+      names: ["base"],
+      scope: "local",
+    });
   });
 
   it("parses activate and info forms with default local scope", () => {
