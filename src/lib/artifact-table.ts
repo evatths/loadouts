@@ -15,7 +15,8 @@ export const KIND_SORT_ORDER: Record<string, number> = {
   instruction: 0,
   rule: 1,
   skill: 2,
-  prompt: 3,  // slash commands
+  agent: 3,
+  prompt: 4,  // slash commands
   // Everything else gets 100, sorted alphabetically within that tier
 };
 
@@ -48,6 +49,12 @@ export function getArtifactName(relativePath: string, kind: string): string {
   // For rules, strip the rules/ prefix and .md extension
   if (kind === "rule") {
     const match = relativePath.match(/^rules\/(.+)\.md$/);
+    if (match) return match[1];
+  }
+
+  // For agents, strip the agents/ prefix and .md extension
+  if (kind === "agent") {
+    const match = relativePath.match(/^agents\/(.+)\.md$/);
     if (match) return match[1];
   }
 
@@ -218,6 +225,11 @@ function getGroupingKey(sourcePath: string, kind: string): string {
   if (kind === "skill") {
     const match = relativePath.match(/^skills\/([^/]+)/);
     if (match) return `skill:${match[1]}`;
+  }
+
+  if (kind === "agent") {
+    const match = relativePath.match(/^agents\/(.+)\.md$/);
+    if (match) return `agent:${match[1]}`;
   }
   
   // For other kinds, use the full source path

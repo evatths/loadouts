@@ -27,7 +27,10 @@ export type PathTemplate = string | { project: string; global: string };
  * Inline transform: accepts raw source content, returns transformed content.
  * Can also be a string that names a registered transform.
  */
-export type TransformFn = (raw: string) => string;
+export type TransformFn = (raw: string, item?: ResolvedItem) => string;
+
+/** Dynamic output mode selector for mappings that can sometimes symlink. */
+export type OutputModeFn = (item: ResolvedItem) => OutputMode;
 
 /**
  * Generator: produces file content from scratch (e.g. CLAUDE.md wrapper).
@@ -47,7 +50,7 @@ export interface OutputMapping {
    *   transform present   → "copy"
    *   otherwise           → "symlink"
    */
-  mode?: OutputMode;
+  mode?: OutputMode | OutputModeFn;
   /** Content transform. Either an inline function or a registered transform name. */
   transform?: TransformFn | string;
   /** Content generator. Mutually exclusive with transform. */

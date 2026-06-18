@@ -145,6 +145,7 @@ describe("runInstall source path", () => {
     const result = await runInstall(ctx, {
       source: sourcePath,
       kinds: "opencode-command",
+
       yes: true,
       keep: true,
       to: "base",
@@ -157,6 +158,51 @@ describe("runInstall source path", () => {
       fs.readFileSync(path.join(loadoutPath, "loadouts", "base.yaml"), "utf-8")
     );
     expect(loadout.include).toEqual(["opencode/commands/loadouts.md"]);
+  });
+
+  it("canonicalizes native agent files during install", async () => {
+    const { loadoutPath, ctx } = setupProject();
+    const sourcePath = path.join(tempDir!, "export", ".opencode", "agents", "reviewer.md");
+    fs.mkdirSync(path.dirname(sourcePath), { recursive: true });
+    fs.writeFileSync(
+      sourcePath,
+      `---
+description: Reviews with OpenCode.
+mode: subagent
+model: openai/gpt-5.5
+reasoningEffort: medium
+permission:
+  edit: deny
+---
+
+Review with evidence.
+`
+    );
+
+    const result = await runInstall(ctx, {
+      source: sourcePath,
+      kinds: "agent",
+      yes: true,
+      keep: true,
+      to: "base",
+    });
+
+    expect(result).toEqual({ imported: 1, skipped: 0, failed: 0 });
+    const canonicalPath = path.join(loadoutPath, "agents", "reviewer.md");
+    expect(fs.existsSync(canonicalPath)).toBe(true);
+    const content = fs.readFileSync(canonicalPath, "utf-8");
+    expect(content).toContain("name: reviewer");
+    expect(content).toContain("readonly: true");
+    expect(content).toContain("targets:");
+    expect(content).toContain("opencode:");
+    expect(content).toContain("mode: subagent");
+    expect(content).toContain("codex:");
+    expect(content).toContain("model_reasoning_effort: medium");
+
+    const loadout = yaml.parse(
+      fs.readFileSync(path.join(loadoutPath, "loadouts", "base.yaml"), "utf-8")
+    );
+    expect(loadout.include).toEqual(["agents/reviewer.md"]);
   });
 
   it("refuses to import from the target .loadouts directory", async () => {

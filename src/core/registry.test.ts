@@ -3,6 +3,7 @@ import { Registry } from "./registry.js";
 import { ruleKind } from "../builtins/kinds/rule.js";
 import { skillKind } from "../builtins/kinds/skill.js";
 import { instructionKind } from "../builtins/kinds/instruction.js";
+import { agentKind } from "../builtins/kinds/agent.js";
 import { opencodeConfigKind } from "../builtins/kinds/opencode-config.js";
 import { opencodeTuiConfigKind } from "../builtins/kinds/opencode-tui-config.js";
 import { opencodePluginKind } from "../builtins/kinds/opencode-plugin.js";
@@ -10,6 +11,7 @@ import { opencodeCommandKind } from "../builtins/kinds/opencode-command.js";
 import { claudeCodeTool } from "../builtins/tools/claude-code.js";
 import { cursorTool } from "../builtins/tools/cursor.js";
 import { opencodeTool } from "../builtins/tools/opencode.js";
+import { codexTool } from "../builtins/tools/codex.js";
 
 let reg: Registry;
 
@@ -18,6 +20,7 @@ beforeEach(() => {
   reg.registerKind(ruleKind);
   reg.registerKind(skillKind);
   reg.registerKind(instructionKind);
+  reg.registerKind(agentKind);
   reg.registerKind(opencodeConfigKind);
   reg.registerKind(opencodeTuiConfigKind);
   reg.registerKind(opencodePluginKind);
@@ -35,6 +38,10 @@ describe("Registry.inferKind", () => {
 
   it("infers instruction kind", () => {
     expect(reg.inferKind("instructions/AGENTS.base.md")).toBe("instruction");
+  });
+
+  it("infers agent kind", () => {
+    expect(reg.inferKind("agents/code-reviewer.md")).toBe("agent");
   });
 
   it("infers OpenCode config kind", () => {
@@ -67,6 +74,7 @@ describe("Registry.resolveMapping", () => {
     reg.registerTool(claudeCodeTool);
     reg.registerTool(cursorTool);
     reg.registerTool(opencodeTool);
+    reg.registerTool(codexTool);
   });
 
   it("resolves claude-code rule mapping", () => {
@@ -110,6 +118,16 @@ describe("Registry.resolveMapping", () => {
         project: "{base}/tui{ext}",
         global: "{base}/tui{ext}",
       },
+    });
+  });
+
+  it("resolves agent mappings for markdown and toml harnesses", () => {
+    expect(reg.resolveMapping("opencode", "agent")?.path).toBe("{base}/agents/{stem}.md");
+    expect(reg.resolveMapping("cursor", "agent")?.path).toBe("{base}/agents/{stem}.md");
+    expect(reg.resolveMapping("claude-code", "agent")?.path).toBe("{base}/agents/{stem}.md");
+    expect(reg.resolveMapping("codex", "agent")?.path).toEqual({
+      project: ".codex/agents/{stem}.toml",
+      global: "{home}/.codex/agents/{stem}.toml",
     });
   });
 

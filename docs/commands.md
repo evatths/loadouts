@@ -89,9 +89,25 @@ loadouts install ./rule.mdc        # Import a single rule file
 loadouts install --dry-run         # Preview
 loadouts install -i                # Interactive
 loadouts install --rules           # Rules only
+loadouts install --kinds agent     # Import and canonicalize agents
 loadouts install --from cursor     # From specific tool
 loadouts install --keep            # Don't delete originals
 ```
+
+Native agent files are converted to canonical `.loadouts/agents/*.md` during import. OpenCode, Cursor, Claude Code, and Codex fields are preserved under `targets.<tool>` overlays where needed.
+
+### `loadouts migrate agents [source]`
+Migrate native harness agent definitions that already live in a loadout tree into canonical `.loadouts/agents/*.md` files.
+
+```bash
+loadouts migrate agents                  # Scan legacy agent paths in current loadout
+loadouts migrate agents --dry-run         # Preview migration
+loadouts migrate agents --keep            # Keep old native files
+loadouts migrate agents --force           # Overwrite existing canonical agents
+loadouts migrate agents ./agents --from opencode
+```
+
+When migrating from a harness-specific source path such as `opencode/agents/reviewer.md`, loadout includes are updated to `agents/reviewer.md` with `tools: [opencode]` to preserve existing behavior. The canonical file still receives compatible fields for other harnesses where Loadouts can infer them.
 
 ### `loadouts create <name>`
 Create a new loadout definition.

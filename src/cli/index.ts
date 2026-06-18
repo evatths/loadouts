@@ -36,6 +36,7 @@ import { docsCommand } from "./commands/docs.js";
 import { sanitizeCommand } from "./commands/sanitize.js";
 import { fallbackCommand } from "./commands/fallback.js";
 import { installCommand } from "./commands/install.js";
+import { migrateCommand } from "./commands/migrate.js";
 import { updateCommand } from "./commands/update.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { runtimeCommand } from "./commands/runtime.js";
@@ -64,6 +65,7 @@ const COMMAND_GROUPS: Array<{ title: string; commands: Command[] }> = [
     commands: [
       initCommand,
       installCommand,
+      migrateCommand,
       createCommand,
       addToCommand,
       removeFromCommand,

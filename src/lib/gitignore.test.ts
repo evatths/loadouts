@@ -272,10 +272,18 @@ describe("gitignore", () => {
       expect(result.get(".")).toEqual(["opencode.jsonc"]);
     });
 
-    it("includes OpenCode commands under the OpenCode target directory", () => {
-      const result = computeArtifactGitignorePaths("opencode-command", "loadouts", "project");
-      expect(result.get(".opencode")).toEqual(["commands/loadouts.md"]);
-    });
+  it("includes OpenCode commands under the OpenCode target directory", () => {
+    const result = computeArtifactGitignorePaths("opencode-command", "loadouts", "project");
+    expect(result.get(".opencode")).toEqual(["commands/loadouts.md"]);
+  });
+
+  it("includes agent paths for Markdown harnesses and Codex TOML", () => {
+    const result = computeArtifactGitignorePaths("agent", "reviewer", "project");
+    expect(result.get(".opencode")).toContain("agents/reviewer.md");
+    expect(result.get(".cursor")).toContain("agents/reviewer.md");
+    expect(result.get(".claude")).toContain("agents/reviewer.md");
+    expect(result.get(".")).toContain(".codex/agents/reviewer.toml");
+  });
 
     it("returns empty map for unknown kind", () => {
       const result = computeArtifactGitignorePaths("unknown-kind", "test", "project");
@@ -294,6 +302,7 @@ describe("gitignore", () => {
       loadoutsDir = path.join(tmpDir, ".loadouts");
       fs.mkdirSync(path.join(loadoutsDir, "rules"), { recursive: true });
       fs.mkdirSync(path.join(loadoutsDir, "skills"), { recursive: true });
+      fs.mkdirSync(path.join(loadoutsDir, "agents"), { recursive: true });
     });
 
     it("writes per-target .gitignore files for all rules", () => {
@@ -353,6 +362,28 @@ describe("gitignore", () => {
       expect(claudePaths).toContain("rules/rule-a.md");
       expect(claudePaths).toContain("rules/rule-b.md");
       expect(claudePaths).toContain("skills/skill-x/");
+    });
+
+    it("writes per-target .gitignore entries for agents", () => {
+      fs.writeFileSync(
+        path.join(loadoutsDir, "agents", "reviewer.md"),
+        "---\ndescription: Review\n---\nReview.\n"
+      );
+
+      rebuildAllGitignores(loadoutsDir, tmpDir, "project");
+
+      expect(getManagedPathsFromTarget(path.join(tmpDir, ".opencode"))).toContain(
+        "agents/reviewer.md"
+      );
+      expect(getManagedPathsFromTarget(path.join(tmpDir, ".cursor"))).toContain(
+        "agents/reviewer.md"
+      );
+      expect(getManagedPathsFromTarget(path.join(tmpDir, ".claude"))).toContain(
+        "agents/reviewer.md"
+      );
+      expect(getManagedPathsFromTarget(tmpDir)).toContain(
+        ".codex/agents/reviewer.toml"
+      );
     });
 
     it("handles empty loadouts directory without error", () => {

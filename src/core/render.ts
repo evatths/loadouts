@@ -28,6 +28,7 @@ import {
 } from "../lib/fs.js";
 
 import { registry } from "./registry.js";
+import type { OutputMapping } from "./registry.js";
 import { expandTemplate, type TemplateVars } from "./template.js";
 import { isUnmanagedCollision, saveState, loadState } from "./manifest.js";
 import type {
@@ -74,9 +75,7 @@ export function resolveOutputSpec(
   };
 
   const targetPath = expandTemplate(mapping.path, scope, vars);
-  const mode: OutputMode =
-    mapping.mode ??
-    (mapping.generate ? "generate" : mapping.transform ? "copy" : "symlink");
+  const mode = resolveMappingMode(mapping, item);
 
   return {
     tool: toolName,
@@ -85,6 +84,15 @@ export function resolveOutputSpec(
     targetPath,
     mode,
   };
+}
+
+function resolveMappingMode(mapping: OutputMapping, item: ResolvedItem): OutputMode {
+  if (typeof mapping.mode === "function") {
+    return mapping.mode(item);
+  }
+
+  return mapping.mode ??
+    (mapping.generate ? "generate" : mapping.transform ? "copy" : "symlink");
 }
 
 // ---------------------------------------------------------------------------
@@ -107,13 +115,17 @@ export async function renderOutput(
   const mapping = registry.resolveMapping(spec.tool, spec.kind);
 
   // generate mode: produce content from a registered generator
-  if (mapping?.generate) {
+  if (mapping?.generate && spec.mode !== "symlink") {
     const content = mapping.generate(item);
     return { content, hash: hashContent(content) };
   }
 
   // file-layout: read source, optionally transform
   const raw = readFile(item.sourcePath);
+
+  if (spec.mode === "symlink") {
+    return { content: raw, hash: hashContent(raw) };
+  }
 
   if (mapping?.transform) {
     const transformFn =
@@ -123,7 +135,7 @@ export async function renderOutput(
     if (!transformFn) {
       throw new Error(`Transform "${mapping.transform}" is not registered.`);
     }
-    const content = transformFn(raw);
+    const content = transformFn(raw, item);
     return { content, hash: hashContent(content) };
   }
 
@@ -190,9 +202,7 @@ function resolveExpandedOutputSpec(
   // Append the relative file path within the directory
   const targetPath = path.join(baseTargetPath, relativeWithinDir);
 
-  const mode: OutputMode =
-    mapping.mode ??
-    (mapping.generate ? "generate" : mapping.transform ? "copy" : "symlink");
+  const mode = resolveMappingMode(mapping, expandedItem);
 
   return {
     tool: toolName,

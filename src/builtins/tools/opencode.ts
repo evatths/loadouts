@@ -1,6 +1,7 @@
 import * as path from "node:path";
 import * as os from "node:os";
 import type { ToolSpec } from "../../core/registry.js";
+import { selectAgentMarkdownMode } from "../agent-transforms.js";
 
 export const opencodeTool: ToolSpec = {
   name: "opencode",
@@ -12,6 +13,7 @@ export const opencodeTool: ToolSpec = {
     "rule",
     "skill",
     "instruction",
+    "agent",
     "opencode-config",
     "opencode-tui-config",
     "opencode-plugin",
@@ -28,6 +30,11 @@ export const opencodeTool: ToolSpec = {
     },
     instruction: {
       path: { project: "AGENTS.md", global: "{home}/AGENTS.md" },
+    },
+    agent: {
+      path: "{base}/agents/{stem}.md",
+      mode: selectAgentMarkdownMode("opencode"),
+      transform: "opencode-agent-frontmatter",
     },
     "opencode-config": {
       path: {

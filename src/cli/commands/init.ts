@@ -47,6 +47,7 @@ async function initLoadout(
   ensureDir(path.join(loadoutPath, "instructions"));
   ensureDir(path.join(loadoutPath, "rules"));
   ensureDir(path.join(loadoutPath, "skills"));
+  ensureDir(path.join(loadoutPath, "agents"));
   ensureDir(path.join(loadoutPath, "loadouts"));
 
   // Create root config
@@ -122,6 +123,7 @@ Add your project-specific guidelines here.
   log.success(`Created ${displayPath}instructions/`);
   log.success(`Created ${displayPath}rules/`);
   log.success(`Created ${displayPath}skills/`);
+  log.success(`Created ${displayPath}agents/`);
   if (scope === "project") {
     log.success(`Created ${displayPath}sync-fallback.sh`);
     const gitRoot = await findGitRoot(process.cwd());
@@ -210,6 +212,7 @@ Add your project-specific guidelines here.
   if (scope === "project") {
     log.dim("  • Edit .loadouts/instructions/AGENTS.base.md with your project instructions");
     log.dim("  • Add rules with: loadouts rule add <name>");
+    log.dim("  • Add agents by creating .loadouts/agents/<name>.md");
     log.dim("  • Run 'loadouts sync' to re-sync after changes");
     console.log();
     const gitRoot = await findGitRoot(process.cwd());
@@ -226,6 +229,7 @@ Add your project-specific guidelines here.
   } else {
     log.dim("  • Add rules with: loadouts rule add <name> -g");
     log.dim("  • Add skills with: loadouts skill add <name> -g");
+    log.dim("  • Add agents in ~/.config/loadouts/agents/<name>.md");
     log.dim("  • Run 'loadouts sync -g' to re-sync after changes");
   }
 }
@@ -242,6 +246,7 @@ export async function initProjectLoadout(projectRoot: string): Promise<string> {
   ensureDir(path.join(loadoutPath, "instructions"));
   ensureDir(path.join(loadoutPath, "rules"));
   ensureDir(path.join(loadoutPath, "skills"));
+  ensureDir(path.join(loadoutPath, "agents"));
   ensureDir(path.join(loadoutPath, "loadouts"));
 
   // Create root config
