@@ -47,7 +47,7 @@
     "esbuild": "^0.23.1",
     "solid-js": "^1.9.12",
     "typescript": "^5.4.0",
-    "vitest": "^1.5.0"
+    "vitest": "^4.1.9"
   },
   "dependencies": {
     "@earendil-works/pi-tui": "^0.79.7",
