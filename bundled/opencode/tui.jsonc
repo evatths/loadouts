@@ -1,4 +1,5 @@
 {
   "$schema": "https://opencode.ai/tui.json",
+  // Route-based embedded dashboard plugin generated from src/tui/hosts/opencode/embed-entry.tsx.
   "plugin": ["./plugins/loadouts-runtime-tui.tsx"]
 }

@@ -191,6 +191,7 @@ export async function handleRuntimeCommand(
       bundle: compiled.bundle,
       systemBlock: compiled.systemBlock,
       activatedAt,
+      scope: command.scope,
     });
 
     return {

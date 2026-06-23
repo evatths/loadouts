@@ -10,7 +10,7 @@ export const piTool: ToolSpec = {
   },
   // Note: "rule" intentionally omitted - pi has no native rules concept.
   // Users can map rules to prompts if needed, or use a compatibility extension.
-  supports: ["skill", "instruction", "prompt", "extension", "theme"],
+  supports: ["skill", "instruction", "prompt", "extension", "extension-dir", "theme"],
   targets: {
     skill: { path: "{base}/skills/{name}" },
     instruction: {
@@ -18,6 +18,7 @@ export const piTool: ToolSpec = {
     },
     prompt: { path: "{base}/prompts/{stem}.md" },
     extension: { path: "{base}/extensions/{stem}.ts" },
+    "extension-dir": { path: "{base}/extensions/{stem}", mode: "copy" },
     theme: { path: "{base}/themes/{stem}.json" },
   },
 };

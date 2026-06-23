@@ -47,6 +47,7 @@ import {
 } from "../../lib/loadout-column.js";
 import type { CommandContext, AppliedState, Tool, LoadoutRoot, ResolvedLoadout } from "../../core/types.js";
 import type { RenderPlan } from "../../core/types.js";
+import { loadDashboardData } from "../../tui/core/data.js";
 
 type DriftStatus = DriftResult["status"];
 
@@ -585,6 +586,113 @@ export async function executeStatus(
 
 interface StatusOptions extends ScopeFlags {
   references?: boolean;
+  json?: boolean;
+}
+
+export interface StatusJsonOutput {
+  active: string[];
+  drift: Array<{
+    name: string;
+    kind: string;
+    path: string;
+    reason: string;
+  }>;
+}
+
+function scopeSet(contexts: CommandContext[]): Set<"project" | "global"> {
+  return new Set(contexts.map((ctx) => ctx.scope));
+}
+
+export async function getStatusJson(
+  contexts: CommandContext[],
+  cwd: string = process.cwd()
+): Promise<StatusJsonOutput> {
+  const dashboard = await loadDashboardData(cwd);
+  const allowedScopes = scopeSet(contexts);
+  const active = dashboard.rows
+    .filter((row) => row.activation && allowedScopes.has(row.scope))
+    .map((row) => row.name);
+
+  const dedupedActive = Array.from(new Set(active));
+  const drift: StatusJsonOutput["drift"] = [];
+  const driftSeen = new Set<string>();
+
+  for (const ctx of contexts) {
+    const state = loadState(ctx.configPath);
+    if (!state || state.active.length === 0) continue;
+
+    const allDriftResults = detectDrift(state, ctx.projectRoot);
+
+    for (const loadoutName of state.active) {
+      let loadout: ResolvedLoadout;
+      try {
+        ({ loadout } = await loadResolvedLoadout(ctx, loadoutName, { includeBundled: true }));
+      } catch {
+        continue;
+      }
+
+      const plan = await planRender(loadout, ctx.projectRoot, ctx.scope, ctx.configPath);
+      const sourcePaths = new Set(plan.outputs.map((output) => output.spec.sourcePath));
+      const planTargets = new Set(plan.outputs.map((output) => output.spec.targetPath));
+
+      for (const result of allDriftResults) {
+        if (result.status === "ok") continue;
+        if (!sourcePaths.has(result.entry.sourcePath)) continue;
+        const key = `${loadoutName}:${result.entry.kind}:${result.entry.targetPath}:${result.status}`;
+        if (driftSeen.has(key)) continue;
+        driftSeen.add(key);
+        drift.push({
+          name: loadoutName,
+          kind: result.entry.kind,
+          path: result.entry.targetPath,
+          reason: result.status,
+        });
+      }
+
+      const manifestEntries = state.entries.filter((entry) => sourcePaths.has(entry.sourcePath));
+      const manifestTargets = new Set(manifestEntries.map((entry) => entry.targetPath));
+
+      for (const output of plan.outputs) {
+        if (manifestTargets.has(output.spec.targetPath)) continue;
+        const key = `${loadoutName}:${output.spec.kind}:${output.spec.targetPath}:added`;
+        if (driftSeen.has(key)) continue;
+        driftSeen.add(key);
+        drift.push({
+          name: loadoutName,
+          kind: output.spec.kind,
+          path: output.spec.targetPath,
+          reason: "added",
+        });
+      }
+
+      for (const entry of manifestEntries) {
+        if (planTargets.has(entry.targetPath)) continue;
+        const key = `${loadoutName}:${entry.kind}:${entry.targetPath}:removed`;
+        if (driftSeen.has(key)) continue;
+        driftSeen.add(key);
+        drift.push({
+          name: loadoutName,
+          kind: entry.kind,
+          path: entry.targetPath,
+          reason: "removed",
+        });
+      }
+
+      for (const shadowed of plan.shadowed) {
+        const key = `${loadoutName}:${shadowed.kind}:${shadowed.targetPath}:shadowed`;
+        if (driftSeen.has(key)) continue;
+        driftSeen.add(key);
+        drift.push({
+          name: loadoutName,
+          kind: shadowed.kind,
+          path: shadowed.targetPath,
+          reason: "shadowed",
+        });
+      }
+    }
+  }
+
+  return { active: dedupedActive, drift };
 }
 
 export const statusCommand = new Command("status")
@@ -594,8 +702,17 @@ export const statusCommand = new Command("status")
   .option(...SCOPE_FLAGS.global)
   .option(...SCOPE_FLAGS.all)
   .option("-r, --references", "Show individual skill reference files")
+  .option("--json", "Output machine-readable JSON")
   .action(async (options: StatusOptions) => {
-    const { contexts } = await resolveContexts(options);
+    const cwd = process.cwd();
+    const { contexts } = await resolveContexts(options, cwd);
+
+    if (options.json) {
+      const payload = await getStatusJson(contexts, cwd);
+      console.log(JSON.stringify(payload, null, 2));
+      return;
+    }
+
     const hasAny = await executeStatus(contexts, options.references ?? false);
 
     if (!hasAny) {

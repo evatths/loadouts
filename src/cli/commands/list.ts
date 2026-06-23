@@ -40,6 +40,7 @@ import {
 } from "../../lib/loadout-column.js";
 import type { LoadoutRoot, Scope } from "../../core/types.js";
 import chalk from "chalk";
+import { loadDashboardData } from "../../tui/core/data.js";
 
 interface LoadoutInfo {
   name: string;
@@ -54,6 +55,46 @@ interface LoadoutInfo {
 interface ActiveLoadoutNames {
   project: Set<string>;
   global: Set<string>;
+}
+
+export interface ListJsonOutput {
+  loadouts: Array<{
+    name: string;
+    scope: Scope;
+    description?: string;
+    status: "active" | "available" | "drift" | "broken";
+    tools: string[];
+    counts: {
+      rules: number;
+      skills: number;
+      instructions: number;
+      extensions: number;
+    };
+  }>;
+}
+
+export async function getListJson(options: ScopeFlags, cwd: string = process.cwd()): Promise<ListJsonOutput> {
+  const data = await loadDashboardData(cwd);
+  const rows = data.rows.filter((row) => {
+    if (options.local) return row.scope === "project";
+    if (options.global) return row.scope === "global";
+    return true;
+  });
+
+  return {
+    loadouts: rows.map((row) => ({
+      name: row.name,
+      scope: row.scope,
+      description: row.description,
+      status: row.status,
+      tools: row.tools,
+      counts: row.counts,
+    })),
+  };
+}
+
+interface ListOptions extends ScopeFlags {
+  json?: boolean;
 }
 
 /**
@@ -269,8 +310,16 @@ export const listCommand = new Command("list")
   .option(...SCOPE_FLAGS.local)
   .option(...SCOPE_FLAGS.global)
   .option(...SCOPE_FLAGS.all)
-  .action(async (options: ScopeFlags) => {
+  .option("--json", "Output machine-readable JSON")
+  .action(async (options: ListOptions) => {
     const cwd = process.cwd();
+
+    if (options.json) {
+      const payload = await getListJson(options, cwd);
+      console.log(JSON.stringify(payload, null, 2));
+      return;
+    }
+
     const allInfos: LoadoutInfo[] = [];
     const allWarnings: string[] = [];
     const sourceChain: string[] = [];

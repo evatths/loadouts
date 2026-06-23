@@ -23,6 +23,7 @@ export interface RuntimeSessionState {
   bundle: RuntimeBundle;
   systemBlock: string;
   activatedAt: string;
+  scope?: RuntimeScope;
 }
 
 export type RuntimeSessionStore = Map<string, RuntimeSessionState>;

@@ -16,6 +16,7 @@ import { skillKind } from "./kinds/skill.js";
 import { instructionKind } from "./kinds/instruction.js";
 import { promptKind } from "./kinds/prompt.js";
 import { extensionKind } from "./kinds/extension.js";
+import { extensionDirKind } from "./kinds/extension-dir.js";
 import { themeKind } from "./kinds/theme.js";
 import { opencodeConfigKind } from "./kinds/opencode-config.js";
 import { opencodeTuiConfigKind } from "./kinds/opencode-tui-config.js";
@@ -76,6 +77,7 @@ export function registerBuiltins(api: PluginAPI): void {
   api.registerKind(instructionKind);
   api.registerKind(promptKind);
   api.registerKind(extensionKind);
+  api.registerKind(extensionDirKind);
   api.registerKind(themeKind);
   api.registerKind(opencodeConfigKind);
   api.registerKind(opencodeTuiConfigKind);

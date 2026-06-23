@@ -21,6 +21,7 @@ interface RuntimePluginOptions {
 interface RuntimeUiEvent {
   id: string;
   sessionID: string;
+  kind?: "toast" | "open";
   title: string;
   message: string;
   variant: "info" | "success" | "error";
@@ -233,7 +234,8 @@ function persistRuntimeUiEvent(
   sessionID: string,
   title: string,
   message: string,
-  variant: "info" | "success" | "error"
+  variant: "info" | "success" | "error",
+  kind: RuntimeUiEvent["kind"] = "toast"
 ): void {
   try {
     const file = runtimeEventPath(cwd);
@@ -241,6 +243,7 @@ function persistRuntimeUiEvent(
     events[sessionID] = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       sessionID,
+      kind,
       title,
       message,
       variant,
@@ -279,6 +282,12 @@ export function createOpenCodeRuntimePlugin(options: RuntimePluginOptions = {}):
 
       const cwd = directory || worktree || process.cwd();
       loadPersistedRuntimeState(cwd, store, input.sessionID);
+
+      if (input.arguments.trim().length === 0) {
+        output.parts = [];
+        persistRuntimeUiEvent(cwd, input.sessionID, "Loadouts", "Opening dashboard", "info", "open");
+        throw new LoadoutsRuntimeCommandHandledError("runtime: opening loadouts dashboard");
+      }
 
       try {
         const result = await handleRuntimeCommand({

@@ -1,4 +1,11 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "test-fixtures"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "test-fixtures",
+    "src/tui/skins/opentui/**",
+    "src/tui/hosts/opencode/**"
+  ]
 }

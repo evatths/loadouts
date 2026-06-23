@@ -1,5 +1,5 @@
 name: opencode-runtime
-description: OpenCode runtime plugin scaffold for /loadouts
+description: OpenCode runtime plugin and embedded dashboard for /loadouts
 
 include:
   - opencode/plugins/loadouts-runtime.ts

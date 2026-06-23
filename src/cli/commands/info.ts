@@ -54,6 +54,7 @@ import {
   estimateSkillUpfrontTokens,
   formatTokens,
 } from "../../core/tokens.js";
+import { loadDashboardData } from "../../tui/core/data.js";
 
 // Kinds whose content goes into the agent's context window.
 // Extensions (runtime code) and themes (UI config) don't count.
@@ -119,6 +120,51 @@ interface LoadoutGroup {
 interface CatalogLoadoutGroupResult {
   group: LoadoutGroup;
   warnings: string[];
+}
+
+export interface InfoJsonOutput {
+  name: string;
+  items: Array<{
+    kind: string;
+    relativePath: string;
+    tools: string[];
+  }>;
+}
+
+interface InfoOptions extends ScopeFlags {
+  json?: boolean;
+}
+
+export async function getInfoJson(
+  name: string,
+  options: ScopeFlags,
+  cwd: string = process.cwd()
+): Promise<InfoJsonOutput> {
+  const dashboard = await loadDashboardData(cwd);
+  const matches = dashboard.rows.filter((row) => {
+    if (row.name !== name) return false;
+    if (options.local) return row.scope === "project";
+    if (options.global) return row.scope === "global";
+    return true;
+  });
+
+  if (matches.length === 0) {
+    throw new Error(`Loadout not found: ${name}`);
+  }
+
+  if (matches.length > 1) {
+    throw new Error(`Loadout '${name}' exists in both project and global scope. Use --local or --global.`);
+  }
+
+  const row = matches[0];
+  return {
+    name,
+    items: row.slots.map((slot) => ({
+      kind: slot.kind,
+      relativePath: slot.relativePath,
+      tools: slot.tools,
+    })),
+  };
 }
 
 function renderCatalogLoadoutResult(name: string, result: CatalogLoadoutGroupResult): void {
@@ -445,8 +491,24 @@ export const infoCommand = new Command("info")
   .option(...SCOPE_FLAGS.local)
   .option(...SCOPE_FLAGS.global)
   .option(...SCOPE_FLAGS.all)
-  .action(async (name: string | undefined, options: ScopeFlags) => {
+  .option("--json", "Output machine-readable JSON")
+  .action(async (name: string | undefined, options: InfoOptions) => {
     const cwd = process.cwd();
+
+    if (options.json) {
+      if (!name) {
+        log.error("Loadout name required for --json.");
+        process.exit(1);
+      }
+      try {
+        const payload = await getInfoJson(name, options, cwd);
+        console.log(JSON.stringify(payload, null, 2));
+      } catch (err) {
+        log.error(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+      return;
+    }
 
     const canUseCatalogFallback = Boolean(name && !options.local && !options.global);
 

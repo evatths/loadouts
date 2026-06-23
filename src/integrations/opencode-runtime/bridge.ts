@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { renderRuntimeSystemBlock } from "../../core/runtime.js";
 import type { RuntimeBundle } from "../../core/runtime.js";
+import type { Tool } from "../../core/types.js";
 import type { BridgeCompileResult, RuntimeBridge, RuntimeScope } from "./types.js";
 
 interface ExecResult {
@@ -10,6 +11,7 @@ interface ExecResult {
 
 export interface CliRuntimeBridgeOptions {
   bin?: string;
+  tool?: Tool;
 }
 
 function scopeFlag(scope: RuntimeScope): string {
@@ -18,13 +20,15 @@ function scopeFlag(scope: RuntimeScope): string {
 
 export class CliRuntimeBridge implements RuntimeBridge {
   private readonly bin: string;
+  private readonly tool: Tool;
 
   constructor(options: CliRuntimeBridgeOptions = {}) {
     this.bin = options.bin ?? "loadouts";
+    this.tool = options.tool ?? "opencode";
   }
 
   async compile(names: string[], scope: RuntimeScope, cwd: string): Promise<BridgeCompileResult> {
-    const args = ["runtime", ...names, "--tool", "opencode", "--json", scopeFlag(scope)];
+    const args = ["runtime", ...names, "--tool", this.tool, "--json", scopeFlag(scope)];
     const { stdout } = await this.exec(args, cwd);
     const bundle = JSON.parse(stdout) as RuntimeBundle;
     return {

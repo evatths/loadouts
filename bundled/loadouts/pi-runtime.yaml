@@ -1,0 +1,5 @@
+name: pi-runtime
+description: Pi runtime extension for /loadouts
+
+include:
+  - extensions/loadouts-runtime

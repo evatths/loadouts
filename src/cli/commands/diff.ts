@@ -29,53 +29,57 @@ import {
 } from "../../lib/artifact-table.js";
 import type { CommandContext, Tool } from "../../core/types.js";
 
-export async function executeDiff(
-  ctx: CommandContext,
-  name?: string
-): Promise<void> {
+interface DiffOptions extends ScopeFlags {
+  json?: boolean;
+}
+
+type DiffOutputEntry = {
+  spec: {
+    tool: string;
+    kind: string;
+    sourcePath: string;
+    targetPath: string;
+    mode: "symlink" | "copy" | "generate";
+  };
+  change: ChangeType;
+};
+
+export interface DiffJsonOutput {
+  changes: Array<{
+    tool: string;
+    path: string;
+    op: "create" | "overwrite" | "remove" | "shadowed";
+  }>;
+}
+
+const JSON_OP_MAP: Record<ChangeType, DiffJsonOutput["changes"][number]["op"]> = {
+  added: "create",
+  updated: "overwrite",
+  unchanged: "overwrite",
+  removed: "remove",
+  shadowed: "shadowed",
+};
+
+async function buildDiffOutputs(ctx: CommandContext, name?: string): Promise<DiffOutputEntry[]> {
   const result = await loadResolvedLoadout(ctx, name);
-  const { loadout, loadoutName } = result;
+  const { loadout } = result;
 
   const plan = await planRender(loadout, ctx.projectRoot, ctx.scope, ctx.configPath);
   const state = loadState(ctx.configPath);
 
-  heading(`Diff: ${loadoutName} (${ctx.scope})`);
+  const stateTargets = new Set(state?.entries.map((entry) => entry.targetPath) || []);
+  const planTargets = new Set(plan.outputs.map((output) => output.spec.targetPath));
 
-  // Build sets for change detection
-  const stateTargets = new Set(state?.entries.map((e) => e.targetPath) || []);
-  const planTargets = new Set(plan.outputs.map((o) => o.spec.targetPath));
+  const outputs: DiffOutputEntry[] = [];
 
-  // Collect all tools
-  const toolSet = new Set<Tool>();
-  for (const { spec } of plan.outputs) {
-    toolSet.add(spec.tool);
-  }
-  if (state) {
-    for (const entry of state.entries) {
-      for (const tool of entry.tools) {
-        toolSet.add(tool);
-      }
-    }
-  }
-  const tools = Array.from(toolSet).sort();
-
-  // Build outputs with change types
-  const outputs: Array<{
-    spec: (typeof plan.outputs)[0]["spec"];
-    change: ChangeType;
-  }> = [];
-
-  // Current plan outputs: create or update
   for (const { spec } of plan.outputs) {
     const change: ChangeType = stateTargets.has(spec.targetPath) ? "updated" : "added";
     outputs.push({ spec, change });
   }
 
-  // Deleted entries from state
   if (state) {
     for (const entry of state.entries) {
       if (!planTargets.has(entry.targetPath)) {
-        // Use first tool for display (all tools share the same output)
         outputs.push({
           spec: {
             tool: entry.tools[0],
@@ -90,19 +94,75 @@ export async function executeDiff(
     }
   }
 
-  // Shadowed entries
-  for (const s of plan.shadowed) {
+  for (const entry of plan.shadowed) {
     outputs.push({
       spec: {
-        tool: s.tool,
-        kind: s.kind,
-        sourcePath: s.sourcePath,
-        targetPath: s.targetPath,
-        mode: "symlink", // Default, doesn't matter for display
+        tool: entry.tool,
+        kind: entry.kind,
+        sourcePath: entry.sourcePath,
+        targetPath: entry.targetPath,
+        mode: "symlink",
       },
       change: "shadowed",
     });
   }
+
+  return outputs;
+}
+
+export async function getDiffJsonForContext(ctx: CommandContext, name?: string): Promise<DiffJsonOutput> {
+  const outputs = await buildDiffOutputs(ctx, name);
+  return {
+    changes: outputs.map((output) => ({
+      tool: output.spec.tool,
+      path: output.spec.targetPath,
+      op: JSON_OP_MAP[output.change],
+    })),
+  };
+}
+
+export async function getDiffJson(
+  name: string | undefined,
+  options: ScopeFlags,
+  cwd: string = process.cwd()
+): Promise<DiffJsonOutput> {
+  if (name && !options.local && !options.global && !options.all) {
+    const scope = await requireScopeForName(name, options, cwd);
+    const ctx = await getContext(scope, cwd);
+    return getDiffJsonForContext(ctx, name);
+  }
+
+  const { contexts } = await resolveContexts(options, cwd);
+  const changes: DiffJsonOutput["changes"] = [];
+
+  for (const ctx of contexts) {
+    try {
+      const payload = await getDiffJsonForContext(ctx, name);
+      changes.push(...payload.changes);
+    } catch {
+      // Scope doesn't have this loadout.
+    }
+  }
+
+  return { changes };
+}
+
+export async function executeDiff(
+  ctx: CommandContext,
+  name?: string
+): Promise<void> {
+  const result = await loadResolvedLoadout(ctx, name);
+  const { loadoutName } = result;
+  const outputs = await buildDiffOutputs(ctx, name);
+
+  heading(`Diff: ${loadoutName} (${ctx.scope})`);
+
+  // Collect all tools
+  const toolSet = new Set<Tool>();
+  for (const { spec } of outputs) {
+    toolSet.add(spec.tool);
+  }
+  const tools = Array.from(toolSet).sort();
 
   if (outputs.length === 0) {
     log.success("No changes");
@@ -134,8 +194,20 @@ export const diffCommand = new Command("diff")
   .option(...SCOPE_FLAGS.local)
   .option(...SCOPE_FLAGS.global)
   .option(...SCOPE_FLAGS.all)
-  .action(async (name: string | undefined, options: ScopeFlags) => {
+  .option("--json", "Output machine-readable JSON")
+  .action(async (name: string | undefined, options: DiffOptions) => {
     const cwd = process.cwd();
+
+    if (options.json) {
+      try {
+        const payload = await getDiffJson(name, options, cwd);
+        console.log(JSON.stringify(payload, null, 2));
+      } catch (err) {
+        log.error(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+      return;
+    }
 
     // If a name is given and no explicit scope, check for collisions
     if (name && !options.local && !options.global && !options.all) {

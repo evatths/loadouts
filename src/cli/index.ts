@@ -39,6 +39,7 @@ import { installCommand } from "./commands/install.js";
 import { updateCommand } from "./commands/update.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { runtimeCommand } from "./commands/runtime.js";
+import { tuiCommand } from "./commands/tui.js";
 
 // ---------------------------------------------------------------------------
 // Command groups — controls help output order and section headers
@@ -48,6 +49,7 @@ const COMMAND_GROUPS: Array<{ title: string; commands: Command[] }> = [
     title: "Active Configuration",
     commands: [
       infoCommand,
+      tuiCommand,
       runtimeCommand,
       activateCommand,
       deactivateCommand,
