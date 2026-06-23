@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-06-23
+
+### Added
+- Add canonical agent artifacts with cross-tool rendering for OpenCode, Cursor, Claude Code, and Codex
+- Add `loadouts migrate agents` to convert native agent files into portable canonical agents
+
 ## [0.2.4] - 2026-06-09
 
 ### Fixed
