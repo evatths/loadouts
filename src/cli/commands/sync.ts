@@ -16,6 +16,7 @@ import { parseRootConfig } from "../../core/config.js";
 import { resolveContexts, SCOPE_FLAGS, type ScopeFlags } from "../../core/scope.js";
 import { computeSyncSet } from "./policy.js";
 import { applyTargetSet } from "./render-engine.js";
+import { rebuildAllGitignores } from "../../lib/gitignore.js";
 import { log } from "../../lib/output.js";
 
 interface SyncOptions extends ScopeFlags {
@@ -57,6 +58,12 @@ export const syncCommand = new Command("sync")
         verb: state ? "Synced" : "Applied",
       });
       synced = true;
+
+      // Rebuild per-target .gitignore files so rendered artifacts are ignored
+      // even when definitions were added/edited outside `add`/`install`.
+      if (!options.dryRun) {
+        rebuildAllGitignores(ctx.configPath, ctx.projectRoot, ctx.scope);
+      }
     }
 
     if (!synced) {

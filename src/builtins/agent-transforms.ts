@@ -15,6 +15,7 @@ const MARKDOWN_NATIVE_KEYS: Record<Exclude<AgentTarget, "codex">, Set<string>> =
     "mode",
     "model",
     "variant",
+    "reasoningEffort",
     "temperature",
     "top_p",
     "steps",

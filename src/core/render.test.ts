@@ -737,4 +737,92 @@ describe("full render pipeline compatibility", () => {
       fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
     }
   });
+
+  it("adopts unmanaged file that is already a symlink to the source", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - opencode\ninclude:\n  - skills/debugger\n`,
+      "skills/debugger/SKILL.md": `---\nname: debugger\ndescription: Debug issues\n---\n\n# Debugger\n`,
+    });
+
+    try {
+      const sourcePath = path.join(fixture.loadoutRoot, "skills/debugger/SKILL.md");
+      const outputPath = path.join(
+        fixture.projectRoot,
+        ".opencode/skills/debugger/SKILL.md"
+      );
+
+      // Pre-create an unmanaged symlink to the source (simulates a manually
+      // placed symlink that loadouts doesn't own yet).
+      fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+      fs.symlinkSync(sourcePath, outputPath, "file");
+
+      const roots: LoadoutRoot[] = [{ path: fixture.loadoutRoot, level: "project", depth: 0 }];
+      const loadout = resolveLoadout("base", roots);
+      const plan = await planRender(loadout, fixture.projectRoot, "project");
+
+      expect(plan.errors).toEqual([]);
+      expect(plan.shadowed).toEqual([]);
+      expect(plan.outputs.some((o) => o.spec.targetPath === ".opencode/skills/debugger/SKILL.md")).toBe(true);
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("adopts unmanaged file with identical content to the rendered output", async () => {
+    const sourceContent = `---\nname: debugger\ndescription: Debug issues\n---\n\n# Debugger\n`;
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - opencode\ninclude:\n  - skills/debugger\n`,
+      "skills/debugger/SKILL.md": sourceContent,
+    });
+
+    try {
+      const outputPath = path.join(
+        fixture.projectRoot,
+        ".opencode/skills/debugger/SKILL.md"
+      );
+
+      // Pre-create an unmanaged regular file with identical content.
+      fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+      fs.writeFileSync(outputPath, sourceContent, "utf-8");
+
+      const roots: LoadoutRoot[] = [{ path: fixture.loadoutRoot, level: "project", depth: 0 }];
+      const loadout = resolveLoadout("base", roots);
+      const plan = await planRender(loadout, fixture.projectRoot, "project");
+
+      expect(plan.errors).toEqual([]);
+      expect(plan.shadowed).toEqual([]);
+      expect(plan.outputs.some((o) => o.spec.targetPath === ".opencode/skills/debugger/SKILL.md")).toBe(true);
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("shadows unmanaged file with differing content", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - opencode\ninclude:\n  - skills/debugger\n`,
+      "skills/debugger/SKILL.md": `---\nname: debugger\ndescription: Debug issues\n---\n\n# Debugger\n`,
+    });
+
+    try {
+      const outputPath = path.join(
+        fixture.projectRoot,
+        ".opencode/skills/debugger/SKILL.md"
+      );
+
+      // Pre-create an unmanaged file with DIFFERENT content.
+      fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+      fs.writeFileSync(outputPath, "# my custom debugger\n", "utf-8");
+
+      const roots: LoadoutRoot[] = [{ path: fixture.loadoutRoot, level: "project", depth: 0 }];
+      const loadout = resolveLoadout("base", roots);
+      const plan = await planRender(loadout, fixture.projectRoot, "project");
+
+      expect(plan.errors).toEqual([]);
+      expect(plan.shadowed.length).toBe(1);
+      expect(plan.shadowed[0].targetPath).toBe(".opencode/skills/debugger/SKILL.md");
+      expect(plan.outputs.some((o) => o.spec.targetPath === ".opencode/skills/debugger/SKILL.md")).toBe(false);
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
 });

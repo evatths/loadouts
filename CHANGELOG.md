@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-01
+
+### Added
+- Auto-adopt shadowed files that are already correct — unmanaged files that are symlinks to the loadout source or byte-identical to the rendered output are removed automatically to make way for the managed version instead of blocking as shadows
+
+### Fixed
+- Fix `sync` and `activate` to rebuild per-target `.gitignore` files so rendered artifacts are ignored even when definitions were added or edited outside `add`/`install`
+- Add `reasoningEffort` to the OpenCode agent native frontmatter keys so it is preserved on render instead of stripped
+
 ## [0.2.5] - 2026-06-23
 
 ### Added

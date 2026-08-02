@@ -22,6 +22,7 @@ import {
   fileExists,
   isDirectory,
   isSymlink,
+  readSymlinkTarget,
   ensureDir,
   hashContent,
   walkDir,
@@ -214,6 +215,44 @@ function resolveExpandedOutputSpec(
 }
 
 /**
+ * Check whether an unmanaged collision can be safely adopted.
+ *
+ * A collision is adoptable when removing the existing file and writing the
+ * managed version would be lossless — i.e. the existing file is already what
+ * loadouts would render. This covers two cases:
+ *
+ * 1. The existing file is a symlink pointing at the loadout source (already
+ *    correct, just untracked).
+ * 2. The existing file's effective content is byte-identical to the rendered
+ *    output (covers regular files and symlinks resolving to matching content).
+ *
+ * In both cases the shadowed file is removed automatically to make way for the
+ * managed version, rather than blocking the output as a shadow.
+ */
+function isAdoptableCollision(
+  fullPath: string,
+  spec: OutputSpec,
+  renderedContent: string
+): boolean {
+  // Symlink already pointing at the source — already correct, just untracked.
+  if (
+    spec.mode === "symlink" &&
+    isSymlink(fullPath) &&
+    readSymlinkTarget(fullPath) === spec.sourcePath
+  ) {
+    return true;
+  }
+
+  // Content-identical (reads through any symlink chain).
+  if (isDirectory(fullPath)) return false;
+  try {
+    return readFile(fullPath) === renderedContent;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Compute what would be written for a resolved loadout without touching disk.
  *
  * Dir-layout items (skills) are expanded into individual file outputs,
@@ -255,12 +294,20 @@ export async function planRender(
           if (!spec) continue; // tool doesn't support this kind
 
           if (isUnmanagedCollision(state, spec.targetPath, projectRoot)) {
-            shadowed.push({
-              tool: spec.tool,
-              kind: spec.kind,
-              sourcePath: spec.sourcePath,
-              targetPath: spec.targetPath,
-            });
+            const fullPath = resolveTargetPath(spec.targetPath, projectRoot);
+            const rendered = await renderOutput(expandedItem, spec);
+            if (isAdoptableCollision(fullPath, spec, rendered.content)) {
+              // Existing file is already what loadouts would render — adopt it
+              // as a managed output rather than blocking on a shadow.
+              outputs.push({ spec, item: expandedItem, hash: rendered.hash });
+            } else {
+              shadowed.push({
+                tool: spec.tool,
+                kind: spec.kind,
+                sourcePath: spec.sourcePath,
+                targetPath: spec.targetPath,
+              });
+            }
             continue;
           }
 
