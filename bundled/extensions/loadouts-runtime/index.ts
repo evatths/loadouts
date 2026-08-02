@@ -111,17 +111,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path19) {
-      const ctrl = callVisitor(key, node, visitor, path19);
+    function visit_(key, node, visitor, path20) {
+      const ctrl = callVisitor(key, node, visitor, path20);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
-        replaceNode(key, path19, ctrl);
-        return visit_(key, ctrl, visitor, path19);
+        replaceNode(key, path20, ctrl);
+        return visit_(key, ctrl, visitor, path20);
       }
       if (typeof ctrl !== "symbol") {
         if (identity2.isCollection(node)) {
-          path19 = Object.freeze(path19.concat(node));
+          path20 = Object.freeze(path20.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = visit_(i, node.items[i], visitor, path19);
+            const ci = visit_(i, node.items[i], visitor, path20);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -132,13 +132,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity2.isPair(node)) {
-          path19 = Object.freeze(path19.concat(node));
-          const ck = visit_("key", node.key, visitor, path19);
+          path20 = Object.freeze(path20.concat(node));
+          const ck = visit_("key", node.key, visitor, path20);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path19);
+          const cv = visit_("value", node.value, visitor, path20);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -159,17 +159,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path19) {
-      const ctrl = await callVisitor(key, node, visitor, path19);
+    async function visitAsync_(key, node, visitor, path20) {
+      const ctrl = await callVisitor(key, node, visitor, path20);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
-        replaceNode(key, path19, ctrl);
-        return visitAsync_(key, ctrl, visitor, path19);
+        replaceNode(key, path20, ctrl);
+        return visitAsync_(key, ctrl, visitor, path20);
       }
       if (typeof ctrl !== "symbol") {
         if (identity2.isCollection(node)) {
-          path19 = Object.freeze(path19.concat(node));
+          path20 = Object.freeze(path20.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = await visitAsync_(i, node.items[i], visitor, path19);
+            const ci = await visitAsync_(i, node.items[i], visitor, path20);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -180,13 +180,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity2.isPair(node)) {
-          path19 = Object.freeze(path19.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path19);
+          path20 = Object.freeze(path20.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path20);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path19);
+          const cv = await visitAsync_("value", node.value, visitor, path20);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -213,23 +213,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path19) {
+    function callVisitor(key, node, visitor, path20) {
       if (typeof visitor === "function")
-        return visitor(key, node, path19);
+        return visitor(key, node, path20);
       if (identity2.isMap(node))
-        return visitor.Map?.(key, node, path19);
+        return visitor.Map?.(key, node, path20);
       if (identity2.isSeq(node))
-        return visitor.Seq?.(key, node, path19);
+        return visitor.Seq?.(key, node, path20);
       if (identity2.isPair(node))
-        return visitor.Pair?.(key, node, path19);
+        return visitor.Pair?.(key, node, path20);
       if (identity2.isScalar(node))
-        return visitor.Scalar?.(key, node, path19);
+        return visitor.Scalar?.(key, node, path20);
       if (identity2.isAlias(node))
-        return visitor.Alias?.(key, node, path19);
+        return visitor.Alias?.(key, node, path20);
       return void 0;
     }
-    function replaceNode(key, path19, node) {
-      const parent = path19[path19.length - 1];
+    function replaceNode(key, path20, node) {
+      const parent = path20[path20.length - 1];
       if (identity2.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity2.isPair(parent)) {
@@ -839,10 +839,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity2 = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path19, value) {
+    function collectionFromPath(schema, path20, value) {
       let v = value;
-      for (let i = path19.length - 1; i >= 0; --i) {
-        const k = path19[i];
+      for (let i = path20.length - 1; i >= 0; --i) {
+        const k = path20[i];
         if (typeof k === "number" && Number.isInteger(k) && k >= 0) {
           const a = [];
           a[k] = v;
@@ -861,7 +861,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path19) => path19 == null || typeof path19 === "object" && !!path19[Symbol.iterator]().next().done;
+    var isEmptyPath = (path20) => path20 == null || typeof path20 === "object" && !!path20[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -891,11 +891,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path19, value) {
-        if (isEmptyPath(path19))
+      addIn(path20, value) {
+        if (isEmptyPath(path20))
           this.add(value);
         else {
-          const [key, ...rest] = path19;
+          const [key, ...rest] = path20;
           const node = this.get(key, true);
           if (identity2.isCollection(node))
             node.addIn(rest, value);
@@ -909,8 +909,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path19) {
-        const [key, ...rest] = path19;
+      deleteIn(path20) {
+        const [key, ...rest] = path20;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -924,8 +924,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path19, keepScalar) {
-        const [key, ...rest] = path19;
+      getIn(path20, keepScalar) {
+        const [key, ...rest] = path20;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity2.isScalar(node) ? node.value : node;
@@ -943,8 +943,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path19) {
-        const [key, ...rest] = path19;
+      hasIn(path20) {
+        const [key, ...rest] = path20;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -954,8 +954,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path19, value) {
-        const [key, ...rest] = path19;
+      setIn(path20, value) {
+        const [key, ...rest] = path20;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -3470,9 +3470,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path19, value) {
+      addIn(path20, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path19, value);
+          this.contents.addIn(path20, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -3547,14 +3547,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path19) {
-        if (Collection.isEmptyPath(path19)) {
+      deleteIn(path20) {
+        if (Collection.isEmptyPath(path20)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path19) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path20) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -3569,10 +3569,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path19, keepScalar) {
-        if (Collection.isEmptyPath(path19))
+      getIn(path20, keepScalar) {
+        if (Collection.isEmptyPath(path20))
           return !keepScalar && identity2.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity2.isCollection(this.contents) ? this.contents.getIn(path19, keepScalar) : void 0;
+        return identity2.isCollection(this.contents) ? this.contents.getIn(path20, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -3583,10 +3583,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path19) {
-        if (Collection.isEmptyPath(path19))
+      hasIn(path20) {
+        if (Collection.isEmptyPath(path20))
           return this.contents !== void 0;
-        return identity2.isCollection(this.contents) ? this.contents.hasIn(path19) : false;
+        return identity2.isCollection(this.contents) ? this.contents.hasIn(path20) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -3603,13 +3603,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path19, value) {
-        if (Collection.isEmptyPath(path19)) {
+      setIn(path20, value) {
+        if (Collection.isEmptyPath(path20)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path19), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path20), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path19, value);
+          this.contents.setIn(path20, value);
         }
       }
       /**
@@ -5569,9 +5569,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path19) => {
+    visit.itemAtPath = (cst, path20) => {
       let item = cst;
-      for (const [field, index] of path19) {
+      for (const [field, index] of path20) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -5580,23 +5580,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path19) => {
-      const parent = visit.itemAtPath(cst, path19.slice(0, -1));
-      const field = path19[path19.length - 1][0];
+    visit.parentCollection = (cst, path20) => {
+      const parent = visit.itemAtPath(cst, path20.slice(0, -1));
+      const field = path20[path20.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path19, item, visitor) {
-      let ctrl = visitor(item, path19);
+    function _visit(path20, item, visitor) {
+      let ctrl = visitor(item, path20);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i = 0; i < token.items.length; ++i) {
-            const ci = _visit(Object.freeze(path19.concat([[field, i]])), token.items[i], visitor);
+            const ci = _visit(Object.freeze(path20.concat([[field, i]])), token.items[i], visitor);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -5607,10 +5607,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path19);
+            ctrl = ctrl(item, path20);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path19) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path20) : ctrl;
     }
     exports.visit = visit;
   }
@@ -7362,7 +7362,7 @@ var require_dist = __commonJS({
 });
 
 // src/tui/hosts/pi/embed-entry.ts
-import * as path18 from "node:path";
+import * as path19 from "node:path";
 
 // src/core/discovery.ts
 var yaml2 = __toESM(require_dist(), 1);
@@ -7994,8 +7994,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path19, errorMaps, issueData } = params;
-  const fullPath = [...path19, ...issueData.path || []];
+  const { data, path: path20, errorMaps, issueData } = params;
+  const fullPath = [...path20, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -8111,11 +8111,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path19, key) {
+  constructor(parent, value, path20, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path19;
+    this._path = path20;
     this._key = key;
   }
   get path() {
@@ -11655,6 +11655,16 @@ var FrontmatterSchema = external_exports.object({
 // src/core/config.ts
 var ROOT_CONFIG_FILE = "loadouts.yaml";
 var LOADOUTS_DIR = "loadouts";
+function parseMarkdownFrontmatter(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!match) {
+    return { frontmatter: {}, body: content };
+  }
+  const [, frontmatterStr, body] = match;
+  const parsed = yaml.parse(frontmatterStr);
+  const frontmatter = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  return { frontmatter, body };
+}
 function parseRootConfig(loadoutRoot) {
   const configPath = path2.join(loadoutRoot, ROOT_CONFIG_FILE);
   if (!fileExists(configPath)) {
@@ -12482,7 +12492,7 @@ function resolveOutputSpec(toolName, item, scope) {
     kind: item.kind
   };
   const targetPath = expandTemplate(mapping.path, scope, vars);
-  const mode = mapping.mode ?? (mapping.generate ? "generate" : mapping.transform ? "copy" : "symlink");
+  const mode = resolveMappingMode(mapping, item);
   return {
     tool: toolName,
     kind: item.kind,
@@ -12491,21 +12501,30 @@ function resolveOutputSpec(toolName, item, scope) {
     mode
   };
 }
+function resolveMappingMode(mapping, item) {
+  if (typeof mapping.mode === "function") {
+    return mapping.mode(item);
+  }
+  return mapping.mode ?? (mapping.generate ? "generate" : mapping.transform ? "copy" : "symlink");
+}
 async function renderOutput(item, spec) {
   const kind = registry.getKind(spec.kind);
   if (!kind) throw new Error(`Unknown kind: "${spec.kind}"`);
   const mapping = registry.resolveMapping(spec.tool, spec.kind);
-  if (mapping?.generate) {
+  if (mapping?.generate && spec.mode !== "symlink") {
     const content = mapping.generate(item);
     return { content, hash: hashContent(content) };
   }
   const raw = readFile(item.sourcePath);
+  if (spec.mode === "symlink") {
+    return { content: raw, hash: hashContent(raw) };
+  }
   if (mapping?.transform) {
     const transformFn = typeof mapping.transform === "string" ? registry.getTransform(mapping.transform) : mapping.transform;
     if (!transformFn) {
       throw new Error(`Transform "${mapping.transform}" is not registered.`);
     }
-    const content = transformFn(raw);
+    const content = transformFn(raw, item);
     return { content, hash: hashContent(content) };
   }
   return { content: raw, hash: hashContent(raw) };
@@ -12541,7 +12560,7 @@ function resolveExpandedOutputSpec(toolName, baseItem, expandedItem, scope) {
   };
   const baseTargetPath = expandTemplate(mapping.path, scope, vars);
   const targetPath = path8.join(baseTargetPath, relativeWithinDir);
-  const mode = mapping.mode ?? (mapping.generate ? "generate" : mapping.transform ? "copy" : "symlink");
+  const mode = resolveMappingMode(mapping, expandedItem);
   return {
     tool: toolName,
     kind: expandedItem.kind,
@@ -12549,6 +12568,17 @@ function resolveExpandedOutputSpec(toolName, baseItem, expandedItem, scope) {
     targetPath,
     mode
   };
+}
+function isAdoptableCollision(fullPath, spec, renderedContent) {
+  if (spec.mode === "symlink" && isSymlink(fullPath) && readSymlinkTarget(fullPath) === spec.sourcePath) {
+    return true;
+  }
+  if (isDirectory(fullPath)) return false;
+  try {
+    return readFile(fullPath) === renderedContent;
+  } catch {
+    return false;
+  }
 }
 async function planRender(loadout, projectRoot, scope, statePath) {
   const state = loadState(statePath ?? loadout.rootPath);
@@ -12568,12 +12598,18 @@ async function planRender(loadout, projectRoot, scope, statePath) {
           const spec = kind.layout === "dir" ? resolveExpandedOutputSpec(toolName, item, expandedItem, scope) : resolveOutputSpec(toolName, expandedItem, scope);
           if (!spec) continue;
           if (isUnmanagedCollision(state, spec.targetPath, projectRoot)) {
-            shadowed.push({
-              tool: spec.tool,
-              kind: spec.kind,
-              sourcePath: spec.sourcePath,
-              targetPath: spec.targetPath
-            });
+            const fullPath = resolveTargetPath(spec.targetPath, projectRoot);
+            const rendered2 = await renderOutput(expandedItem, spec);
+            if (isAdoptableCollision(fullPath, spec, rendered2.content)) {
+              outputs.push({ spec, item: expandedItem, hash: rendered2.hash });
+            } else {
+              shadowed.push({
+                tool: spec.tool,
+                kind: spec.kind,
+                sourcePath: spec.sourcePath,
+                targetPath: spec.targetPath
+              });
+            }
             continue;
           }
           const rendered = await renderOutput(expandedItem, spec);
@@ -12727,11 +12763,12 @@ async function removeManaged(loadoutRoot, projectRoot, scope = "project") {
 }
 
 // src/core/resolve.ts
-import * as path15 from "node:path";
+import * as path16 from "node:path";
 
 // src/core/kindLoader.ts
 var yaml3 = __toESM(require_dist(), 1);
 import * as path9 from "node:path";
+var yamlKindSources = /* @__PURE__ */ new Map();
 var YamlOutputMappingSchema = external_exports.object({
   path: external_exports.union([
     external_exports.string(),
@@ -12792,7 +12829,7 @@ function buildDetect(spec) {
   }
   throw new Error("Invalid detect spec");
 }
-function loadYamlKindsFromRoots(roots) {
+function loadYamlKindsFromRoots(roots, options = {}) {
   for (const root of roots) {
     const kindsDir = path9.join(root.path, "kinds");
     if (!isDirectory(kindsDir)) continue;
@@ -12804,16 +12841,27 @@ function loadYamlKindsFromRoots(roots) {
       if (!fileExists(filePath)) continue;
       try {
         const kind = parseYamlKind(filePath);
-        if (!kind.id.includes(".")) {
+        const existingKind = registry.getKind(kind.id);
+        if (existingKind) {
+          const source = yamlKindSources.get(kind.id);
+          if (source === filePath) continue;
+          const sourceDetail = source ? ` by ${source}` : "";
           console.warn(
-            `[loadout] Warning: custom kind "${kind.id}" in ${filePath} has no namespace (e.g. "myteam.${kind.id}"). Dot-namespaced IDs are recommended to avoid collisions with built-ins.`
+            `[loadout] Warning: kind from ${filePath} was skipped \u2014 "${kind.id}" is already registered${sourceDetail}; existing definition takes precedence.`
+          );
+          continue;
+        }
+        if (options.showNamespaceNotes && !kind.id.includes(".")) {
+          console.warn(
+            `[loadout] Note: custom kind "${kind.id}" is unnamespaced. Consider "myteam.${kind.id}" to avoid future name collisions.`
           );
         }
         registry.registerKind(kind);
+        yamlKindSources.set(kind.id, filePath);
       } catch (err) {
         if (err instanceof Error && err.message.includes("already registered")) {
           console.warn(
-            `[loadout] Warning: kind from ${filePath} was skipped \u2014 "${extractId(err.message)}" is already registered (built-in takes precedence).`
+            `[loadout] Warning: kind from ${filePath} was skipped \u2014 "${extractId(err.message)}" is already registered; existing definition takes precedence.`
           );
         } else {
           console.warn(
@@ -12830,8 +12878,79 @@ function extractId(errMsg) {
 }
 
 // src/builtins/tools/claude-code.ts
-import * as path10 from "node:path";
+import * as path11 from "node:path";
 import * as os3 from "node:os";
+
+// src/builtins/agent-transforms.ts
+import * as path10 from "node:path";
+var MARKDOWN_NATIVE_KEYS = {
+  opencode: /* @__PURE__ */ new Set([
+    "description",
+    "mode",
+    "model",
+    "variant",
+    "reasoningEffort",
+    "temperature",
+    "top_p",
+    "steps",
+    "disable",
+    "hidden",
+    "color",
+    "permission"
+  ]),
+  cursor: /* @__PURE__ */ new Set([
+    "name",
+    "description",
+    "model",
+    "readonly",
+    "is_background"
+  ]),
+  "claude-code": /* @__PURE__ */ new Set([
+    "name",
+    "description",
+    "tools",
+    "disallowedTools",
+    "model",
+    "permissionMode",
+    "maxTurns",
+    "skills",
+    "mcpServers",
+    "hooks",
+    "memory",
+    "background",
+    "effort",
+    "isolation",
+    "color",
+    "initialPrompt"
+  ])
+};
+function isRecord(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+function getTargets(frontmatter) {
+  return isRecord(frontmatter.targets) ? frontmatter.targets : {};
+}
+function canSymlinkMarkdownAgent(raw, target) {
+  const { frontmatter } = parseMarkdownFrontmatter(raw);
+  if (Object.keys(getTargets(frontmatter)).length > 0) return false;
+  const allowed = MARKDOWN_NATIVE_KEYS[target];
+  if (!Object.keys(frontmatter).every((key) => allowed.has(key))) return false;
+  if (target === "opencode") {
+    return typeof frontmatter.description === "string" && frontmatter.description.length > 0;
+  }
+  if (target === "claude-code") {
+    return typeof frontmatter.name === "string" && frontmatter.name.length > 0 && typeof frontmatter.description === "string" && frontmatter.description.length > 0;
+  }
+  return true;
+}
+function selectAgentMarkdownMode(target) {
+  return (item) => {
+    const raw = readFile(item.sourcePath);
+    return canSymlinkMarkdownAgent(raw, target) ? "symlink" : "copy";
+  };
+}
+
+// src/builtins/tools/claude-code.ts
 var CLAUDE_WRAPPER = `# Claude Code Instructions
 
 > This file is auto-generated by Loadouts. Edit .loadouts/AGENTS.md instead.
@@ -12841,10 +12960,10 @@ See [AGENTS.md](AGENTS.md) for project instructions.
 var claudeCodeTool = {
   name: "claude-code",
   basePath: {
-    global: path10.join(os3.homedir(), ".claude"),
+    global: path11.join(os3.homedir(), ".claude"),
     project: ".claude"
   },
-  supports: ["rule", "skill", "instruction"],
+  supports: ["rule", "skill", "instruction", "agent"],
   targets: {
     rule: { path: "{base}/rules/{stem}.md" },
     skill: { path: "{base}/skills/{name}" },
@@ -12852,20 +12971,25 @@ var claudeCodeTool = {
       path: { project: "CLAUDE.md", global: "{home}/CLAUDE.md" },
       mode: "generate",
       generate: () => CLAUDE_WRAPPER
+    },
+    agent: {
+      path: "{base}/agents/{stem}.md",
+      mode: selectAgentMarkdownMode("claude-code"),
+      transform: "claude-agent-frontmatter"
     }
   }
 };
 
 // src/builtins/tools/cursor.ts
-import * as path11 from "node:path";
+import * as path12 from "node:path";
 import * as os4 from "node:os";
 var cursorTool = {
   name: "cursor",
   basePath: {
-    global: path11.join(os4.homedir(), ".cursor"),
+    global: path12.join(os4.homedir(), ".cursor"),
     project: ".cursor"
   },
-  supports: ["rule", "skill", "instruction"],
+  supports: ["rule", "skill", "instruction", "agent"],
   targets: {
     // Cursor rules render canonical paths/activation with native aliases.
     rule: {
@@ -12875,23 +12999,29 @@ var cursorTool = {
     skill: { path: "{base}/skills/{name}" },
     instruction: {
       path: { project: "AGENTS.md", global: "{home}/AGENTS.md" }
+    },
+    agent: {
+      path: "{base}/agents/{stem}.md",
+      mode: selectAgentMarkdownMode("cursor"),
+      transform: "cursor-agent-frontmatter"
     }
   }
 };
 
 // src/builtins/tools/opencode.ts
-import * as path12 from "node:path";
+import * as path13 from "node:path";
 import * as os5 from "node:os";
 var opencodeTool = {
   name: "opencode",
   basePath: {
-    global: path12.join(os5.homedir(), ".config", "opencode"),
+    global: path13.join(os5.homedir(), ".config", "opencode"),
     project: ".opencode"
   },
   supports: [
     "rule",
     "skill",
     "instruction",
+    "agent",
     "opencode-config",
     "opencode-tui-config",
     "opencode-plugin",
@@ -12908,6 +13038,11 @@ var opencodeTool = {
     },
     instruction: {
       path: { project: "AGENTS.md", global: "{home}/AGENTS.md" }
+    },
+    agent: {
+      path: "{base}/agents/{stem}.md",
+      mode: selectAgentMarkdownMode("opencode"),
+      transform: "opencode-agent-frontmatter"
     },
     "opencode-config": {
       path: {
@@ -12927,30 +13062,39 @@ var opencodeTool = {
 };
 
 // src/builtins/tools/codex.ts
-import * as path13 from "node:path";
+import * as path14 from "node:path";
 import * as os6 from "node:os";
 var codexTool = {
   name: "codex",
   basePath: {
-    global: path13.join(os6.homedir(), ".agents"),
+    global: path14.join(os6.homedir(), ".agents"),
     project: ".agents"
   },
-  supports: ["skill", "instruction"],
+  supports: ["skill", "instruction", "agent"],
   targets: {
     skill: { path: "{base}/skills/{name}" },
     instruction: {
       path: { project: "AGENTS.md", global: "{home}/AGENTS.md" }
+    },
+    agent: {
+      path: {
+        project: ".codex/agents/{stem}.toml",
+        global: "{home}/.codex/agents/{stem}.toml"
+      },
+      ext: ".toml",
+      mode: "copy",
+      transform: "codex-agent-toml"
     }
   }
 };
 
 // src/builtins/tools/pi.ts
-import * as path14 from "node:path";
+import * as path15 from "node:path";
 import * as os7 from "node:os";
 var piTool = {
   name: "pi",
   basePath: {
-    global: path14.join(os7.homedir(), ".pi", "agent"),
+    global: path15.join(os7.homedir(), ".pi", "agent"),
     project: ".pi"
   },
   // Note: "rule" intentionally omitted - pi has no native rules concept.
@@ -12978,8 +13122,10 @@ var BUILTIN_TOOL_NAMES = [
 ];
 
 // src/core/resolve.ts
-function resolveLoadout(name, roots, rootConfig) {
-  loadYamlKindsFromRoots(roots);
+function resolveLoadout(name, roots, rootConfig, options = {}) {
+  loadYamlKindsFromRoots(roots, {
+    showNamespaceNotes: options.showKindNamespaceNotes
+  });
   const found = findLoadoutDefinition(name, roots);
   if (!found) {
     throw new Error(`Loadout not found: ${name}`);
@@ -13001,7 +13147,7 @@ function resolveLoadout(name, roots, rootConfig) {
 function resolveInclude(include, rootPath, defaultTools) {
   const relativePath = typeof include === "string" ? include : include.path;
   const tools = typeof include === "object" && include.tools ? include.tools : defaultTools;
-  const sourcePath = path15.join(rootPath, relativePath);
+  const sourcePath = path16.join(rootPath, relativePath);
   if (!fileExists(sourcePath) && !isDirectory(sourcePath)) {
     throw new Error(`Include not found: ${relativePath} (in ${rootPath})`);
   }
@@ -13017,7 +13163,7 @@ function resolveInclude(include, rootPath, defaultTools) {
   };
 }
 function getInstructionItem(loadoutRoot, tools) {
-  const sourcePath = path15.join(loadoutRoot, "AGENTS.md");
+  const sourcePath = path16.join(loadoutRoot, "AGENTS.md");
   if (!fileExists(sourcePath)) {
     return null;
   }
@@ -13053,12 +13199,15 @@ async function collectContextRoots(ctx, includeBundled) {
 }
 async function loadResolvedLoadouts(ctx, names, options = {}) {
   const includeBundled = options.includeBundled ?? false;
+  const showKindNamespaceNotes = options.showKindNamespaceNotes ?? false;
   const { roots, sourceWarnings } = await collectContextRoots(ctx, includeBundled);
   const rootConfig = parseRootConfig(ctx.configPath);
   const loadoutNames = names && names.length > 0 ? names : [rootConfig.default || "base"];
   const loadouts = [];
   for (const loadoutName of loadoutNames) {
-    const loadout = resolveLoadout(loadoutName, roots, rootConfig);
+    const loadout = resolveLoadout(loadoutName, roots, rootConfig, {
+      showKindNamespaceNotes
+    });
     const alreadyHasInstruction = loadout.items.some(
       (i) => i.relativePath === "AGENTS.md"
     );
@@ -13127,7 +13276,7 @@ function done(effect, ok, message, data) {
 }
 
 // src/tui/core/data.ts
-import * as path17 from "node:path";
+import * as path18 from "node:path";
 import * as os9 from "node:os";
 
 // node_modules/chalk/source/vendor/ansi-styles/index.js
@@ -13626,14 +13775,15 @@ var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
 var source_default = chalk;
 
 // src/lib/artifact-paths.ts
-import * as path16 from "node:path";
+import * as path17 from "node:path";
 
 // src/lib/artifact-table.ts
 var KIND_SORT_ORDER = {
   instruction: 0,
   rule: 1,
   skill: 2,
-  prompt: 3
+  agent: 3,
+  prompt: 4
   // slash commands
   // Everything else gets 100, sorted alphabetically within that tier
 };
@@ -13644,6 +13794,10 @@ function getArtifactName(relativePath, kind) {
   }
   if (kind === "rule") {
     const match = relativePath.match(/^rules\/(.+)\.md$/);
+    if (match) return match[1];
+  }
+  if (kind === "agent") {
+    const match = relativePath.match(/^agents\/(.+)\.md$/);
     if (match) return match[1];
   }
   if (kind === "instruction") {
@@ -13764,7 +13918,7 @@ function ownerStateMap(entries) {
     map.set(owner, {
       active: new Set(loadState(primary.root.path)?.active ?? []),
       configPath: primary.root.path,
-      projectRoot: owner === "project" ? path17.dirname(primary.root.path) : os9.homedir(),
+      projectRoot: owner === "project" ? path18.dirname(primary.root.path) : os9.homedir(),
       scope: owner
     });
   }
@@ -13794,8 +13948,8 @@ function countSlots(slots) {
   };
 }
 function loadoutDefinitionPath(root, name) {
-  const yamlPath = path17.join(root, "loadouts", `${name}.yaml`);
-  return fileExists(yamlPath) ? yamlPath : path17.join(root, "loadouts", `${name}.yml`);
+  const yamlPath = path18.join(root, "loadouts", `${name}.yaml`);
+  return fileExists(yamlPath) ? yamlPath : path18.join(root, "loadouts", `${name}.yml`);
 }
 function scopeFromRoot(root) {
   return root.level === "global" ? "global" : "project";
@@ -14598,7 +14752,7 @@ async function actionContext(effect, fallbackScope, cwd) {
     return {
       scope: fallbackScope,
       configPath: cwd,
-      statePath: path18.join(cwd, ".state.json"),
+      statePath: path19.join(cwd, ".state.json"),
       projectRoot: cwd
     };
   }

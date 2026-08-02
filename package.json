@@ -17,7 +17,7 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "tsc --noEmit",
+    "lint": "tsc --noEmit -p tsconfig.lint.json",
     "loadouts": "node dist/index.js"
   },
   "keywords": [
