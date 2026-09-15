@@ -26,10 +26,13 @@ targets:
     mode: subagent
     steps: 8
     color: accent
-    permission:
-      bash:
-        "*": ask
-        "git diff*": allow
+    permissions:
+      - action: shell
+        resource: "*"
+        effect: ask
+      - action: shell
+        resource: "git diff *"
+        effect: allow
 
   cursor:
     is_background: false
@@ -228,7 +231,7 @@ OpenCode-specific artifacts live under `.loadouts/opencode/` and only render whe
 // .loadouts/opencode/opencode.jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-wakatime"]
+  "plugins": ["opencode-wakatime"]
 }
 ```
 

@@ -42,6 +42,11 @@ export type GenerateFn = (item: ResolvedItem) => string;
 export interface OutputMapping {
   /** Path template. Tokens: {base} {home} {stem} {ext} {name} {relative} {kind} */
   path: PathTemplate;
+  /**
+   * Restrict this mapping to specific scopes (e.g. a tool config file that
+   * only has a global location). Omit to support every scope, the default.
+   */
+  scopes?: Scope[];
   /** Override source extension (include the dot). */
   ext?: string;
   /**

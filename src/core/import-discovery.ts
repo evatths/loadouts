@@ -543,6 +543,7 @@ function discoverForToolKind(
 
   const mapping = registry.resolveMapping(toolName, kindId);
   if (!mapping) return [];
+  if (mapping.scopes && !mapping.scopes.includes(scope)) return [];
 
   const template = getScopeTemplate(mapping.path, scope);
   const absoluteBasePath = resolveAbsoluteBasePath(scanRoot, tool.basePath[scope]);

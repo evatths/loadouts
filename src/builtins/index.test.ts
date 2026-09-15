@@ -108,7 +108,8 @@ model-invocable: false
 
     expect(rendered).toContain("user-invocable: true");
     expect(rendered).toContain("model-invocable: false");
-    expect(rendered).toContain("disable-model-invocation: true");
+    expect(rendered).toContain("opencode/autoinvoke: false");
+    expect(rendered).not.toContain("disable-model-invocation");
   });
 
   it("preserves unknown frontmatter fields during render translation", () => {

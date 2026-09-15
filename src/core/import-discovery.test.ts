@@ -74,7 +74,6 @@ describe("discoverImportableArtifacts", () => {
   it("discovers built-in OpenCode artifacts via templates", () => {
     setupFixture({
       "project/opencode.jsonc": '{"$schema":"https://opencode.ai/config.json"}\n',
-      "project/.opencode/tui.jsonc": '{"$schema":"https://opencode.ai/tui.json"}\n',
       "project/.opencode/plugins/notify.ts": "export default {};\n",
       "project/.opencode/plugins/toy-popup.tsx": "export default {};\n",
       "project/.opencode/commands/loadouts.md": "# Loadouts command\n",
@@ -83,18 +82,31 @@ describe("discoverImportableArtifacts", () => {
     const projectRoot = path.join(FIXTURES_DIR, "project");
     const result = discoverImportableArtifacts(projectRoot, {
       tools: ["opencode"],
-      kinds: ["opencode-config", "opencode-tui-config", "opencode-plugin", "opencode-command"],
+      kinds: ["opencode-config", "opencode-cli-config", "opencode-plugin", "opencode-command"],
     });
 
     expect(result.warnings).toEqual([]);
-    expect(result.artifacts).toHaveLength(5);
+    expect(result.artifacts).toHaveLength(4);
     expect(result.artifacts.map((a) => a.destPath).sort()).toEqual([
       "opencode/commands/loadouts.md",
       "opencode/opencode.jsonc",
       "opencode/plugins/notify.ts",
       "opencode/plugins/toy-popup.tsx",
-      "opencode/tui.jsonc",
     ]);
+  });
+
+  it("does not discover OpenCode CLI config at project scope (global-only kind)", () => {
+    setupFixture({
+      "project/.opencode/cli.jsonc": '{"$schema":"https://opencode.ai/v2/cli.json"}\n',
+    });
+
+    const projectRoot = path.join(FIXTURES_DIR, "project");
+    const result = discoverImportableArtifacts(projectRoot, {
+      tools: ["opencode"],
+      kinds: ["opencode-cli-config"],
+    });
+
+    expect(result.artifacts).toHaveLength(0);
   });
 
   it("discovers custom registered kinds through registry mappings", () => {

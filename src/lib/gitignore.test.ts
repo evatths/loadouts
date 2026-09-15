@@ -262,9 +262,14 @@ describe("gitignore", () => {
       expect(result.get(".opencode")).toEqual(["plugins/notify.tsx"]);
     });
 
-    it("includes OpenCode TUI config under the OpenCode target directory", () => {
-      const result = computeArtifactGitignorePaths("opencode-tui-config", "tui.jsonc", "project");
-      expect(result.get(".opencode")).toEqual(["tui.jsonc"]);
+    it("includes OpenCode CLI config under the OpenCode target directory (global scope)", () => {
+      const result = computeArtifactGitignorePaths("opencode-cli-config", "cli.jsonc", "global");
+      expect(result.get(path.join(os.homedir(), ".config", "opencode"))).toEqual(["cli.jsonc"]);
+    });
+
+    it("excludes OpenCode CLI config from project-scope gitignore (global-only kind)", () => {
+      const result = computeArtifactGitignorePaths("opencode-cli-config", "cli.jsonc", "project");
+      expect(result.size).toBe(0);
     });
 
     it("includes OpenCode config in the root gitignore target", () => {

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { applyPlan, applyMultiPlan, planRender, removeManaged } from "./render.js";
+import { applyPlan, applyMultiPlan, planRender, removeManaged, resolveOutputSpec } from "./render.js";
 import { detectDrift, loadState } from "./manifest.js";
 import { hashContent } from "../lib/fs.js";
 import { resolveLoadout } from "./resolve.js";
@@ -378,19 +378,19 @@ describe("render OpenCode-specific artifacts", () => {
     expect(fs.realpathSync(outputPath)).toBe(fs.realpathSync(sourcePath));
   });
 
-  it("renders whole-file OpenCode TUI config under .opencode", async () => {
-    const sourcePath = path.join(loadoutRoot, "opencode", "tui.jsonc");
+  it("renders whole-file OpenCode CLI config under .opencode", async () => {
+    const sourcePath = path.join(loadoutRoot, "opencode", "cli.jsonc");
     fs.mkdirSync(path.dirname(sourcePath), { recursive: true });
     fs.writeFileSync(
       sourcePath,
-      '{ "$schema": "https://opencode.ai/tui.json", "plugin": [] }\n',
+      '{ "$schema": "https://opencode.ai/v2/cli.json", "plugins": [] }\n',
       "utf-8"
     );
 
     const item: ResolvedItem = {
-      kind: "opencode-tui-config",
+      kind: "opencode-cli-config",
       sourcePath,
-      relativePath: "opencode/tui.jsonc",
+      relativePath: "opencode/cli.jsonc",
       tools: ["opencode"],
     };
     const plan: RenderPlan = {
@@ -398,9 +398,9 @@ describe("render OpenCode-specific artifacts", () => {
         {
           spec: {
             tool: "opencode",
-            kind: "opencode-tui-config",
+            kind: "opencode-cli-config",
             sourcePath,
-            targetPath: ".opencode/tui.jsonc",
+            targetPath: ".opencode/cli.jsonc",
             mode: "symlink",
           },
           item,
@@ -420,7 +420,7 @@ describe("render OpenCode-specific artifacts", () => {
 
     await applyPlan(plan, loadout, projectRoot, "symlink", "project");
 
-    const outputPath = path.join(projectRoot, ".opencode/tui.jsonc");
+    const outputPath = path.join(projectRoot, ".opencode/cli.jsonc");
     expect(fs.lstatSync(outputPath).isSymbolicLink()).toBe(true);
     expect(fs.realpathSync(outputPath)).toBe(fs.realpathSync(sourcePath));
   });
@@ -523,6 +523,20 @@ describe("full render pipeline compatibility", () => {
     }
   });
 
+  it("does not resolve an output spec for OpenCode CLI config at project scope (global-only)", () => {
+    const item: ResolvedItem = {
+      kind: "opencode-cli-config",
+      sourcePath: "/unused/absolute/source/path/cli.jsonc",
+      relativePath: "opencode/cli.jsonc",
+      tools: ["opencode"],
+    };
+
+    expect(resolveOutputSpec("opencode", item, "project")).toBeNull();
+    expect(resolveOutputSpec("opencode", item, "global")?.targetPath).toMatch(
+      /[/\\]\.config[/\\]opencode[/\\]cli\.jsonc$/
+    );
+  });
+
   function createPipelineFixture(structure: Record<string, string>): {
     tmpDir: string;
     projectRoot: string;
@@ -578,7 +592,7 @@ describe("full render pipeline compatibility", () => {
     }
   });
 
-  it("renders canonical skills to OpenCode with disable-model-invocation alias", async () => {
+  it("renders canonical skills to OpenCode with metadata.opencode/autoinvoke alias", async () => {
     const fixture = createPipelineFixture({
       "loadouts/base.yaml": `name: base\ntools:\n  - opencode\ninclude:\n  - skills/debugger\n`,
       "skills/debugger/SKILL.md": `---\nname: debugger\ndescription: Debug runtime issues\nuser-invocable: true\nmodel-invocable: false\n---\n\n# Debugger\n`,
@@ -595,7 +609,8 @@ describe("full render pipeline compatibility", () => {
 
       expect(fs.existsSync(outputPath)).toBe(true);
       expect(rendered).toContain("model-invocable: false");
-      expect(rendered).toContain("disable-model-invocation: true");
+      expect(rendered).toContain("opencode/autoinvoke: false");
+      expect(rendered).not.toContain("disable-model-invocation");
     } finally {
       fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
     }
@@ -678,8 +693,11 @@ describe("full render pipeline compatibility", () => {
       expect(opencode).toContain("mode: subagent");
       expect(opencode).toContain("steps: 8");
       expect(opencode).toContain("color: accent");
-      expect(opencode).toContain("permission:");
-      expect(opencode).toContain("edit: deny");
+      expect(opencode).toContain("permissions:");
+      expect(opencode).toContain('action: edit');
+      expect(opencode).toContain('resource: "*"');
+      expect(opencode).toContain("effect: deny");
+      expect(opencode).not.toContain("permission:");
       expect(opencode).not.toContain("targets:");
       expect(opencode).not.toContain("name: code-reviewer");
       expect(opencode).not.toContain("model: inherit");

@@ -60,6 +60,7 @@ export function resolveOutputSpec(
 ): OutputSpec | null {
   const mapping = registry.resolveMapping(toolName, item.kind);
   if (!mapping) return null;
+  if (mapping.scopes && !mapping.scopes.includes(scope)) return null;
 
   const tool = registry.getTool(toolName)!;
   const sourceExt = path.extname(item.sourcePath);
@@ -180,6 +181,7 @@ function resolveExpandedOutputSpec(
 ): OutputSpec | null {
   const mapping = registry.resolveMapping(toolName, baseItem.kind);
   if (!mapping) return null;
+  if (mapping.scopes && !mapping.scopes.includes(scope)) return null;
 
   const tool = registry.getTool(toolName)!;
   const sourceExt = path.extname(expandedItem.sourcePath);
@@ -291,7 +293,7 @@ export async function planRender(
               ? resolveExpandedOutputSpec(toolName, item, expandedItem, scope)
               : resolveOutputSpec(toolName, expandedItem, scope);
 
-          if (!spec) continue; // tool doesn't support this kind
+          if (!spec) continue; // tool doesn't support this kind, or not for this scope
 
           if (isUnmanagedCollision(state, spec.targetPath, projectRoot)) {
             const fullPath = resolveTargetPath(spec.targetPath, projectRoot);

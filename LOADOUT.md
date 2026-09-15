@@ -285,7 +285,7 @@ List all registered kinds with `loadouts kinds -v`.
 
 - **Claude Code** — Generates a `CLAUDE.md` wrapper that references `AGENTS.md`, keeping both in sync.
 - **Cursor** — Rules use `.mdc` extension. Loadout automatically converts `paths` ↔ `globs` in frontmatter.
-- **OpenCode** — Local plugins render to `.opencode/plugins/`, slash commands render to `.opencode/commands/`, and NPM plugins are configured with the `plugin` array in `opencode.json(c)`.
+- **OpenCode** — Local plugins render to `.opencode/plugins/`, slash commands render to `.opencode/commands/`, and NPM plugins are configured with the `plugins` array in `opencode.json(c)`.
 - **Codex** — Rules not yet supported; skills and instructions only.
 
 ---

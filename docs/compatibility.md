@@ -8,7 +8,7 @@ Current built-in rendering targets for canonical artifacts.
 |------|------|-------|-------|-------------|-----------------|
 | Claude Code | `.claude/rules/<name>.md` | `.claude/skills/<name>/` | `.claude/agents/<name>.md` | `CLAUDE.md` (generated wrapper to `AGENTS.md`) | - |
 | Cursor | `.cursor/rules/<name>.mdc` | `.cursor/skills/<name>/` | `.cursor/agents/<name>.md` | `AGENTS.md` | - |
-| OpenCode | `.opencode/rules/<name>.md` | `.opencode/skills/<name>/` | `.opencode/agents/<name>.md` | `AGENTS.md` | `.opencode/commands/<name>.md`, `.opencode/plugins/<name>.{ts,tsx,js}`, `.opencode/tui.json(c)`, `opencode.json(c)` |
+| OpenCode | `.opencode/rules/<name>.md` | `.opencode/skills/<name>/` | `.opencode/agents/<name>.md` | `AGENTS.md` | `.opencode/commands/<name>.md`, `.opencode/plugins/<name>.{ts,tsx,js}`, `~/.config/opencode/cli.json(c)` (global-only), `opencode.json(c)` |
 | Codex | - (no rule target) | `.agents/skills/<name>/` | `.codex/agents/<name>.toml` | `AGENTS.md` | - |
 | Pi | - (no native rule target) | `.pi/skills/<name>/` | - | `AGENTS.md` | - |
 
@@ -24,7 +24,7 @@ Rendered aliases for compatibility:
 
 - Cursor/OpenCode rules: `paths` is mirrored to `globs`.
 - Cursor/OpenCode rules: `activation` is mirrored to `alwaysApply` (`always -> true`, `scoped -> false`).
-- OpenCode skills: `model-invocable` is mirrored to `disable-model-invocation` (inverted boolean).
+- OpenCode skills: `model-invocable` is mirrored to `metadata["opencode/autoinvoke"]` (same boolean, not inverted — OpenCode V2 has no `disable-model-invocation` field).
 - Agent overlays are rendered into each harness' native frontmatter. Codex agents are generated as TOML with the Markdown body mapped to `developer_instructions`.
 
 Transforms add aliases when canonical fields are present and alias fields are not already set.

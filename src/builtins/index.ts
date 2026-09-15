@@ -20,7 +20,7 @@ import { extensionKind } from "./kinds/extension.js";
 import { extensionDirKind } from "./kinds/extension-dir.js";
 import { themeKind } from "./kinds/theme.js";
 import { opencodeConfigKind } from "./kinds/opencode-config.js";
-import { opencodeTuiConfigKind } from "./kinds/opencode-tui-config.js";
+import { opencodeCliConfigKind } from "./kinds/opencode-cli-config.js";
 import { opencodePluginKind } from "./kinds/opencode-plugin.js";
 import { opencodePluginDirKind } from "./kinds/opencode-plugin-dir.js";
 import { opencodeCommandKind } from "./kinds/opencode-command.js";
@@ -66,12 +66,18 @@ function translateRuleFrontmatter(raw: string): string {
 function translateOpenCodeSkillFrontmatter(raw: string): string {
   const { frontmatter, body } = parseMarkdownFrontmatter(raw);
 
+  // OpenCode V2 has no `disable-model-invocation` field. The native lever is
+  // nested: `metadata["opencode/autoinvoke"]` (opencode.ai/v2/docs/skills#frontmatter).
   const modelInvocable = frontmatter["model-invocable"];
-  if (
-    typeof modelInvocable === "boolean" &&
-    frontmatter["disable-model-invocation"] === undefined
-  ) {
-    frontmatter["disable-model-invocation"] = !modelInvocable;
+  if (typeof modelInvocable === "boolean") {
+    const metadata =
+      frontmatter.metadata && typeof frontmatter.metadata === "object" && !Array.isArray(frontmatter.metadata)
+        ? { ...(frontmatter.metadata as Record<string, unknown>) }
+        : {};
+    if (metadata["opencode/autoinvoke"] === undefined) {
+      metadata["opencode/autoinvoke"] = modelInvocable;
+      frontmatter.metadata = metadata;
+    }
   }
 
   return serializeMarkdownFrontmatter(frontmatter, body);
@@ -89,7 +95,7 @@ export function registerBuiltins(api: PluginAPI): void {
   api.registerKind(extensionDirKind);
   api.registerKind(themeKind);
   api.registerKind(opencodeConfigKind);
-  api.registerKind(opencodeTuiConfigKind);
+  api.registerKind(opencodeCliConfigKind);
   api.registerKind(opencodePluginKind);
   api.registerKind(opencodePluginDirKind);
   api.registerKind(opencodeCommandKind);

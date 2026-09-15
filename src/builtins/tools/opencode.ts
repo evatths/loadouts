@@ -15,7 +15,7 @@ export const opencodeTool: ToolSpec = {
     "instruction",
     "agent",
     "opencode-config",
-    "opencode-tui-config",
+    "opencode-cli-config",
     "opencode-plugin",
     "opencode-plugin-dir",
     "opencode-command",
@@ -45,11 +45,10 @@ export const opencodeTool: ToolSpec = {
         global: "{base}/opencode{ext}",
       },
     },
-    "opencode-tui-config": {
-      path: {
-        project: "{base}/tui{ext}",
-        global: "{base}/tui{ext}",
-      },
+    "opencode-cli-config": {
+      // Global-only: OpenCode V2's cli.json has no project-local equivalent.
+      path: "{base}/cli{ext}",
+      scopes: ["global"],
     },
     "opencode-plugin": { path: "{base}/plugins/{stem}{ext}" },
     "opencode-plugin-dir": { path: "{base}/plugins/{name}", mode: "copy" },

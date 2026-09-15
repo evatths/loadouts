@@ -35767,11 +35767,13 @@ var opencodeConfigKind = {
   defaultTargets: {}
 };
 
-// src/builtins/kinds/opencode-tui-config.ts
-var opencodeTuiConfigKind = {
-  id: "opencode-tui-config",
-  description: "Whole-file OpenCode TUI configuration.",
-  detect: (rel) => rel === "opencode/tui.json" || rel === "opencode/tui.jsonc",
+// src/builtins/kinds/opencode-cli-config.ts
+var opencodeCliConfigKind = {
+  id: "opencode-cli-config",
+  // OpenCode V2 renamed this file to cli.json; it is global-only, with no
+  // project-local equivalent (opencode.ai/v2/docs/cli/config).
+  description: "Whole-file OpenCode CLI configuration (global-only).",
+  detect: (rel) => rel === "opencode/cli.json" || rel === "opencode/cli.jsonc",
   layout: "file",
   defaultTargets: {}
 };
@@ -35810,7 +35812,13 @@ import * as os from "node:os";
 // src/builtins/agent-transforms.ts
 import * as path3 from "node:path";
 var MARKDOWN_NATIVE_KEYS = {
-  opencode: /* @__PURE__ */ new Set(["description", "mode", "model", "variant", "reasoningEffort", "temperature", "top_p", "steps", "disable", "hidden", "color", "permission"]),
+  // OpenCode V2 native agent fields (opencode.ai/v2/docs/agents):
+  // description, mode, model (provider/model#variant), steps, disabled,
+  // hidden, color, permissions (rule array). V1-shaped fields —
+  // `permission`, `disable`, `temperature`, `top_p` — are intentionally
+  // absent; `variant` and `reasoningEffort` are folded into the `model`
+  // selector by buildOpenCodeFrontmatter instead of passing through.
+  opencode: /* @__PURE__ */ new Set(["description", "mode", "model", "steps", "disabled", "hidden", "color", "permissions"]),
   cursor: /* @__PURE__ */ new Set(["name", "description", "model", "readonly", "is_background"]),
   "claude-code": /* @__PURE__ */ new Set(["name", "description", "tools", "disallowedTools", "model", "permissionMode", "maxTurns", "skills", "mcpServers", "hooks", "memory", "background", "effort", "isolation", "color", "initialPrompt"])
 };
@@ -35839,12 +35847,9 @@ function omitLoadoutsOnlyFields(frontmatter) {
   delete result3.targets;
   return result3;
 }
-function mergePermission(frontmatter, permission) {
-  const existing = isRecord(frontmatter.permission) ? frontmatter.permission : {};
-  frontmatter.permission = {
-    ...existing,
-    ...permission
-  };
+function mergePermission(frontmatter, rule) {
+  const existing = Array.isArray(frontmatter.permissions) ? frontmatter.permissions : [];
+  frontmatter.permissions = [...existing, rule];
 }
 function removeUndefined(frontmatter) {
   return Object.fromEntries(Object.entries(frontmatter).filter(([, value3]) => value3 !== void 0));
@@ -35885,9 +35890,17 @@ function buildOpenCodeFrontmatter(frontmatter, item) {
     ...result3,
     ...overlay
   };
+  const variant = typeof overlay.variant === "string" ? overlay.variant : typeof overlay.reasoningEffort === "string" ? overlay.reasoningEffort : void 0;
+  if (typeof merged.model === "string" && merged.model !== "inherit" && !merged.model.includes("#") && variant) {
+    merged.model = `${merged.model}#${variant}`;
+  }
+  delete merged.variant;
+  delete merged.reasoningEffort;
   if (frontmatter.readonly === true) {
     mergePermission(merged, {
-      edit: "deny"
+      action: "edit",
+      resource: "*",
+      effect: "deny"
     });
   }
   return removeUndefined(merged);
@@ -36105,7 +36118,7 @@ var opencodeTool = {
     global: path6.join(os3.homedir(), ".config", "opencode"),
     project: ".opencode"
   },
-  supports: ["rule", "skill", "instruction", "agent", "opencode-config", "opencode-tui-config", "opencode-plugin", "opencode-plugin-dir", "opencode-command"],
+  supports: ["rule", "skill", "instruction", "agent", "opencode-config", "opencode-cli-config", "opencode-plugin", "opencode-plugin-dir", "opencode-command"],
   targets: {
     rule: {
       path: "{base}/rules/{stem}.md",
@@ -36134,11 +36147,10 @@ var opencodeTool = {
         global: "{base}/opencode{ext}"
       }
     },
-    "opencode-tui-config": {
-      path: {
-        project: "{base}/tui{ext}",
-        global: "{base}/tui{ext}"
-      }
+    "opencode-cli-config": {
+      // Global-only: OpenCode V2's cli.json has no project-local equivalent.
+      path: "{base}/cli{ext}",
+      scopes: ["global"]
     },
     "opencode-plugin": {
       path: "{base}/plugins/{stem}{ext}"
@@ -36246,8 +36258,14 @@ function translateOpenCodeSkillFrontmatter(raw) {
     body
   } = parseMarkdownFrontmatter(raw);
   const modelInvocable = frontmatter["model-invocable"];
-  if (typeof modelInvocable === "boolean" && frontmatter["disable-model-invocation"] === void 0) {
-    frontmatter["disable-model-invocation"] = !modelInvocable;
+  if (typeof modelInvocable === "boolean") {
+    const metadata = frontmatter.metadata && typeof frontmatter.metadata === "object" && !Array.isArray(frontmatter.metadata) ? {
+      ...frontmatter.metadata
+    } : {};
+    if (metadata["opencode/autoinvoke"] === void 0) {
+      metadata["opencode/autoinvoke"] = modelInvocable;
+      frontmatter.metadata = metadata;
+    }
   }
   return serializeMarkdownFrontmatter(frontmatter, body);
 }
@@ -36261,7 +36279,7 @@ function registerBuiltins(api) {
   api.registerKind(extensionDirKind);
   api.registerKind(themeKind);
   api.registerKind(opencodeConfigKind);
-  api.registerKind(opencodeTuiConfigKind);
+  api.registerKind(opencodeCliConfigKind);
   api.registerKind(opencodePluginKind);
   api.registerKind(opencodePluginDirKind);
   api.registerKind(opencodeCommandKind);
@@ -36773,6 +36791,7 @@ function expandTemplate(template, scope3, vars) {
 function resolveOutputSpec(toolName, item, scope3) {
   const mapping = registry.resolveMapping(toolName, item.kind);
   if (!mapping) return null;
+  if (mapping.scopes && !mapping.scopes.includes(scope3)) return null;
   const tool = registry.getTool(toolName);
   const sourceExt = path12.extname(item.sourcePath);
   const ext = mapping.ext ?? sourceExt;
@@ -36850,6 +36869,7 @@ function expandDirItem(item, kind) {
 function resolveExpandedOutputSpec(toolName, baseItem, expandedItem, scope3) {
   const mapping = registry.resolveMapping(toolName, baseItem.kind);
   if (!mapping) return null;
+  if (mapping.scopes && !mapping.scopes.includes(scope3)) return null;
   const tool = registry.getTool(toolName);
   const sourceExt = path12.extname(expandedItem.sourcePath);
   const ext = mapping.ext ?? sourceExt;

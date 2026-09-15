@@ -165,6 +165,7 @@ function computeSourceArtifactGitignorePaths(
   for (const tool of registry.allTools()) {
     const mapping = registry.resolveMapping(tool.name, kindId);
     if (!mapping) continue;
+    if (mapping.scopes && !mapping.scopes.includes(scope)) continue;
 
     const targetBase = tool.basePath[scope];
     const sourceExt = path.extname(sourcePath);
@@ -519,7 +520,7 @@ function synthesizeArtifactRelativePath(
   if (kindId === "extension") return `extensions/${withDefaultExtension(artifactName, ".ts")}`;
   if (kindId === "theme") return `themes/${withDefaultExtension(artifactName, ".json")}`;
   if (kindId === "opencode-config") return `opencode/${withDefaultExtension(artifactName, ".jsonc")}`;
-  if (kindId === "opencode-tui-config") return `opencode/${withDefaultExtension(artifactName, ".jsonc")}`;
+  if (kindId === "opencode-cli-config") return `opencode/${withDefaultExtension(artifactName, ".jsonc")}`;
   if (kindId === "opencode-plugin") return `opencode/plugins/${withDefaultExtension(artifactName, ".ts")}`;
   return layout === "dir" ? `${kindId}s/${artifactName}` : `${kindId}s/${artifactName}.md`;
 }

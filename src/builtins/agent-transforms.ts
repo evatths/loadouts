@@ -10,19 +10,21 @@ import type { OutputMode, ResolvedItem } from "../core/types.js";
 type AgentTarget = "opencode" | "cursor" | "claude-code" | "codex";
 
 const MARKDOWN_NATIVE_KEYS: Record<Exclude<AgentTarget, "codex">, Set<string>> = {
+  // OpenCode V2 native agent fields (opencode.ai/v2/docs/agents):
+  // description, mode, model (provider/model#variant), steps, disabled,
+  // hidden, color, permissions (rule array). V1-shaped fields —
+  // `permission`, `disable`, `temperature`, `top_p` — are intentionally
+  // absent; `variant` and `reasoningEffort` are folded into the `model`
+  // selector by buildOpenCodeFrontmatter instead of passing through.
   opencode: new Set([
     "description",
     "mode",
     "model",
-    "variant",
-    "reasoningEffort",
-    "temperature",
-    "top_p",
     "steps",
-    "disable",
+    "disabled",
     "hidden",
     "color",
-    "permission",
+    "permissions",
   ]),
   cursor: new Set([
     "name",
@@ -85,10 +87,10 @@ function omitLoadoutsOnlyFields(frontmatter: RawFrontmatter): Record<string, unk
 
 function mergePermission(
   frontmatter: Record<string, unknown>,
-  permission: Record<string, unknown>
+  rule: Record<string, unknown>
 ): void {
-  const existing = isRecord(frontmatter.permission) ? frontmatter.permission : {};
-  frontmatter.permission = { ...existing, ...permission };
+  const existing = Array.isArray(frontmatter.permissions) ? frontmatter.permissions : [];
+  frontmatter.permissions = [...existing, rule];
 }
 
 function removeUndefined(frontmatter: Record<string, unknown>): Record<string, unknown> {
@@ -150,8 +152,32 @@ function buildOpenCodeFrontmatter(
   }
 
   const merged = { ...result, ...overlay };
+
+  // Fold reasoning-effort / variant into the V2 model selector
+  // (`provider/model#variant`) — V2 has no standalone `variant` or
+  // `reasoningEffort` agent fields.
+  const variant =
+    typeof overlay.variant === "string"
+      ? overlay.variant
+      : typeof overlay.reasoningEffort === "string"
+        ? overlay.reasoningEffort
+        : undefined;
+  if (
+    typeof merged.model === "string" &&
+    merged.model !== "inherit" &&
+    !merged.model.includes("#") &&
+    variant
+  ) {
+    merged.model = `${merged.model}#${variant}`;
+  }
+  delete merged.variant;
+  delete merged.reasoningEffort;
+
   if (frontmatter.readonly === true) {
-    mergePermission(merged, { edit: "deny" });
+    // V2 permission rules: last match wins, so appending enforces the
+    // canonical `readonly` portability contract while still letting a
+    // later user rule refine narrower paths.
+    mergePermission(merged, { action: "edit", resource: "*", effect: "deny" });
   }
 
   return removeUndefined(merged);
