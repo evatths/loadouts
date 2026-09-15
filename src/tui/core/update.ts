@@ -1,4 +1,4 @@
-import { buildSections, firstCursor, type Model, type ScopeFilter, type Section } from "./model.js";
+import { buildSections, firstCursor, type EquipLayer, type Model, type ScopeFilter, type Section } from "./model.js";
 import type { Effect, Intent } from "./intent.js";
 import type { LoadoutRow } from "./data.js";
 
@@ -18,19 +18,23 @@ export function update(model: Model, intent: Intent): UpdateResult {
   if (intent.t === "filterCommit") return { model: { ...model, filtering: false } };
   if (intent.t === "filterCancel") return cancelFilter(model);
   if (intent.t === "effectDone") return effectDone(model, intent);
+  if (model.busy) return { model };
   if (model.filtering) return { model };
   if (intent.t === "openHelp") return { model: { ...model, overlay: "help" } };
   if (intent.t === "quit") return { model: { ...model, quitRequested: true } };
   if (intent.t === "cycleScope") return withCursor({ ...model, filter: { ...model.filter, scope: nextScope(model.filter.scope) } });
   if (intent.t === "cycleTool") return withCursor({ ...model, filter: { ...model.filter, tool: nextTool(model) } });
-  if (intent.t === "cycleMode") return { model: { ...model, mode: model.mode === "filesystem" ? "runtime" : "filesystem" } };
+  if (intent.t === "cycleLayer") {
+    const layer = model.layers[(model.layers.indexOf(model.layer) + 1) % model.layers.length];
+    return { model: { ...model, layer, scope: layer === "session" ? model.scope : layer, undo: undefined } };
+  }
   if (intent.t === "move") return { model: move(model, intent.delta) };
   if (intent.t === "section") return { model: moveSection(model, intent.dir) };
   if (intent.t === "enter") return { model: toggleDetail(model) };
   if (intent.t === "refresh") return { model: { ...model, busy: { label: "Refreshing" } }, effect: { t: "reload" } };
   if (intent.t === "edit") return edit(model);
   if (intent.t === "diffPreview") return plan(model);
-  if (intent.t === "sync") return apply(model, activeNames(model, model.scope), "Syncing");
+  if (intent.t === "sync") return apply(model, activeNames(model, model.layer), "Syncing");
   if (intent.t === "clear") return clear(model);
   if (intent.t === "undo") return undo(model);
   if (intent.t === "activate" || intent.t === "deactivate" || intent.t === "toggle") return toggle(model, intent.t);
@@ -44,51 +48,62 @@ function cancelFilter(model: Model): UpdateResult {
 function toggle(model: Model, action: "activate" | "deactivate" | "toggle"): UpdateResult {
   const row = cursorRow(model);
   if (!row || row.status === "broken") return { model };
-  const shouldActivate = action === "activate" || (action === "toggle" && !row.activation);
-  if ((shouldActivate && row.activation) || (!shouldActivate && !row.activation)) return { model };
+  if (model.layer !== "session" && row.scope !== model.layer) {
+    return { model: { ...model, lastResult: { text: `Select the ${row.scope} equip layer with m for this loadout.`, variant: "error" } } };
+  }
+  const active = row.equipped.includes(model.layer);
+  const shouldActivate = action === "activate" || (action === "toggle" && !active);
+  if ((shouldActivate && active) || (!shouldActivate && !active)) return { model };
 
-  const nextRows: LoadoutRow[] = model.rows.map((candidate) => candidate.id === row.id
-    ? { ...candidate, status: shouldActivate ? "active" : "available", activation: shouldActivate ? model.mode : null, issue: undefined }
-    : candidate);
+  const nextRows: LoadoutRow[] = model.rows.map((candidate) => {
+    let equipped = candidate.equipped;
+    if (model.layer === "session" && candidate.scope !== row.scope) equipped = equipped.filter((layer) => layer !== "session");
+    if (candidate.id === row.id) equipped = shouldActivate ? [...equipped, model.layer] : equipped.filter((layer) => layer !== model.layer);
+    return { ...candidate, equipped, status: candidate.status === "broken" ? "broken" : equipped.length ? "active" : "available" };
+  });
   const sections = buildSections(nextRows);
-  const targetSet = activeNames({ ...model, rows: nextRows }, row.scope);
+  const targetSet = activeNames({ ...model, rows: nextRows }, model.layer);
   return {
     model: {
       ...model,
       rows: nextRows,
+      scope: row.scope,
       sections,
       cursor: cursorForId(sections, row.id),
       undo: snapshot(model),
       busy: { label: shouldActivate ? "Activating" : "Deactivating" },
       lastResult: undefined,
     },
-    effect: { t: "apply", targetSet, mode: model.mode, scope: row.scope },
+    effect: { t: "apply", targetSet, layer: model.layer, scope: row.scope },
   };
 }
 
 function undo(model: Model): UpdateResult {
   if (!model.undo) return { model };
   return {
-    model: { ...model, rows: model.undo.rows, sections: model.undo.sections, cursor: model.undo.cursor, undo: undefined, busy: { label: "Undoing" } },
-    effect: { t: "apply", targetSet: model.undo.targetSet, mode: model.mode, scope: model.undo.scope },
+    model: { ...model, rows: model.undo.rows, sections: model.undo.sections, cursor: model.undo.cursor, scope: model.undo.scope, layer: model.undo.layer, undo: undefined, busy: { label: "Undoing" } },
+    effect: { t: "apply", targetSet: model.undo.targetSet, layer: model.undo.layer, scope: model.undo.scope },
   };
 }
 
 function clear(model: Model): UpdateResult {
-  const nextRows = model.rows.map((row) => row.activation && row.scope === model.scope ? { ...row, status: "available" as const, activation: null, issue: undefined } : row);
+  const nextRows = model.rows.map((row) => {
+    const equipped = row.equipped.filter((layer) => layer !== model.layer);
+    return { ...row, equipped, status: row.status === "broken" ? "broken" as const : equipped.length ? "active" as const : "available" as const };
+  });
   return {
     model: { ...model, rows: nextRows, sections: buildSections(nextRows), cursor: firstCursor(buildSections(nextRows)), undo: snapshot(model), busy: { label: "Clearing" } },
-    effect: { t: "clear", mode: model.mode, scope: model.scope },
+    effect: { t: "clear", layer: model.layer, scope: model.scope },
   };
 }
 
 function apply(model: Model, targetSet: string[], label: string): UpdateResult {
-  return { model: { ...model, busy: { label }, undo: snapshot(model) }, effect: { t: "apply", targetSet, mode: model.mode, scope: model.scope } };
+  return { model: { ...model, busy: { label }, undo: snapshot(model) }, effect: { t: "apply", targetSet, layer: model.layer, scope: model.scope } };
 }
 
 function plan(model: Model): UpdateResult {
-  const targetSet = activeNames(model, model.scope);
-  return { model: { ...model, busy: { label: "Planning diff" }, overlay: "diff" }, effect: { t: "plan", targetSet, scope: model.scope } };
+  const targetSet = activeNames(model, model.layer);
+  return { model: { ...model, busy: { label: "Planning diff" }, overlay: "diff" }, effect: { t: "plan", targetSet, layer: model.layer, scope: model.scope } };
 }
 
 function edit(model: Model): UpdateResult {
@@ -98,9 +113,11 @@ function edit(model: Model): UpdateResult {
 }
 
 function effectDone(model: Model, intent: Extract<Intent, { t: "effectDone" }>): UpdateResult {
+  const rollback = !intent.ok && model.undo ? model.undo : undefined;
   return {
     model: {
       ...model,
+      ...(rollback ? { rows: rollback.rows, sections: rollback.sections, cursor: rollback.cursor, scope: rollback.scope, layer: rollback.layer, undo: undefined } : {}),
       busy: null,
       diffLines: intent.effect === "plan" ? intent.data ?? [intent.message ?? "No changes"] : model.diffLines,
       lastResult: intent.message ? { text: intent.message, variant: intent.ok ? "success" : "error" } : model.lastResult,
@@ -161,11 +178,11 @@ function cursorForId(sections: Record<Section, string[]>, id: string): Model["cu
 }
 
 function snapshot(model: Model) {
-  return { rows: model.rows, sections: model.sections, cursor: model.cursor, targetSet: activeNames(model, model.scope), scope: model.scope };
+  return { rows: model.rows, sections: model.sections, cursor: model.cursor, targetSet: activeNames(model, model.layer), scope: model.scope, layer: model.layer };
 }
 
-function activeNames(model: Pick<Model, "rows">, scope?: ScopeFilter): string[] {
-  return model.rows.filter((row) => row.activation && (!scope || row.scope === scope)).map((row) => row.name);
+function activeNames(model: Pick<Model, "rows">, layer: EquipLayer): string[] {
+  return model.rows.filter((row) => row.equipped.includes(layer)).map((row) => row.name);
 }
 
 function nextScope(scope?: ScopeFilter): ScopeFilter | undefined {

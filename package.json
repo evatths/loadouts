@@ -17,7 +17,7 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "tsc --noEmit -p tsconfig.lint.json",
+    "lint": "tsc --noEmit -p tsconfig.lint.json && tsc --noEmit -p tsconfig.tui.json",
     "loadouts": "node dist/index.js"
   },
   "keywords": [
@@ -37,20 +37,25 @@
     "url": "https://github.com/evatths/loadouts.git"
   },
   "devDependencies": {
+    "@babel/core": "7.28.0",
+    "@babel/preset-typescript": "7.27.1",
     "@earendil-works/pi-coding-agent": "^0.79.7",
-    "@opencode-ai/plugin": "^1.17.8",
-    "@opentui/core": "^0.4.1",
-    "@opentui/keymap": "^0.4.1",
-    "@opentui/solid": "^0.4.1",
+    "@opencode/plugin": "2.0.3",
+    "@opentui/core": "0.5.11",
+    "@opentui/keymap": "0.5.11",
+    "@opentui/solid": "0.5.11",
+    "@opencode/theme": "2.0.3",
     "@types/node": "^20.12.0",
     "@types/update-notifier": "^6.0.8",
+    "babel-preset-solid": "1.9.12",
     "esbuild": "^0.23.1",
-    "solid-js": "^1.9.12",
+    "solid-js": "1.9.15",
     "typescript": "^5.4.0",
     "vitest": "^1.5.0"
   },
   "dependencies": {
     "@earendil-works/pi-tui": "^0.79.7",
+    "@opencode/client": "2.0.3",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "update-notifier": "^7.3.1",

@@ -17,6 +17,7 @@ export const opencodeTool: ToolSpec = {
     "opencode-config",
     "opencode-tui-config",
     "opencode-plugin",
+    "opencode-plugin-dir",
     "opencode-command",
   ],
   targets: {
@@ -29,7 +30,9 @@ export const opencodeTool: ToolSpec = {
       transform: "opencode-skill-frontmatter",
     },
     instruction: {
-      path: { project: "AGENTS.md", global: "{home}/AGENTS.md" },
+      // OpenCode V2 resolves global instructions from the global config dir
+      // (core/src/config/plugin/instruction.ts: join(global.config, "AGENTS.md")).
+      path: { project: "AGENTS.md", global: "{base}/AGENTS.md" },
     },
     agent: {
       path: "{base}/agents/{stem}.md",
@@ -49,6 +52,7 @@ export const opencodeTool: ToolSpec = {
       },
     },
     "opencode-plugin": { path: "{base}/plugins/{stem}{ext}" },
+    "opencode-plugin-dir": { path: "{base}/plugins/{name}", mode: "copy" },
     "opencode-command": { path: "{base}/commands/{stem}.md" },
   },
 };

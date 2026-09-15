@@ -635,9 +635,9 @@ describe("full render pipeline compatibility", () => {
 
       expect(plan.errors).toEqual([]);
       expect(plan.outputs.map((o) => o.spec.targetPath).sort()).toEqual([
-        ".opencode/plugins/loadouts-runtime-tui.tsx",
-        ".opencode/plugins/loadouts-runtime.ts",
-        ".opencode/tui.jsonc",
+        ".opencode/plugins/loadouts/index.js",
+        ".opencode/plugins/loadouts/package.json",
+        ".opencode/plugins/loadouts/tui.js",
       ]);
 
       // Do not apply a plan with the real bundled root: applyPlan persists

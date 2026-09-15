@@ -61,6 +61,7 @@ export function resolveLoadout(
     tools: effectiveTools,
     items,
     rootPath,
+    ...(definition.opencode ? { opencode: definition.opencode } : {}),
   };
 }
 

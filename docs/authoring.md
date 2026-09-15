@@ -247,16 +247,15 @@ Project scope renders this to `.opencode/commands/loadouts.md`. Global scope ren
 **Local plugins:**
 ```ts
 // .loadouts/opencode/plugins/notify.ts
-import type { Plugin } from "@opencode-ai/plugin";
-
-export const Notify: Plugin = async ({ $ }) => ({
-  "session.idle": async () => {
-    await $`osascript -e 'display notification "Session completed" with title "opencode"`;
+export default {
+  id: "notify",
+  async setup(ctx) {
+    // register hooks here
   },
-});
+};
 ```
 
-Project scope renders this to `.opencode/plugins/notify.ts`. Global scope renders it to `~/.config/opencode/plugins/notify.ts`.
+Project scope renders this to `.opencode/plugins/notify.ts`. Global scope renders it to `~/.config/opencode/plugins/notify.ts`. A bare local server plugin file cannot resolve `@opencode/plugin` (local plugin directories do not install dependencies); reference it by path from `opencode.json(c)` `plugins`, or publish a package.
 
 **Include in a loadout:**
 ```yaml
@@ -266,48 +265,49 @@ include:
   - opencode/plugins/notify.ts
 ```
 
-NPM plugins belong in the managed `opencode.json(c)` `plugin` array. Local plugin source files belong in `.loadouts/opencode/plugins/`.
+NPM packages belong in the managed `opencode.json(c)` `plugins` array. Local plugin source files belong in `.loadouts/opencode/plugins/`.
 
 **TUI plugins:**
 
-OpenCode TUI plugins are local plugin modules loaded from `tui.json(c)`. They are useful for user-facing UI that should not be added to chat or model-visible prompt context.
+OpenCode V2 CLI plugins are a `./tui` module of a plugin directory, loaded alongside the server entry. The TUI host supplies `@opencode/plugin/tui`, `@opentui/solid`, and `solid-js`, so local TUI sources need no install. They are useful for user-facing UI that should not be added to chat or model-visible prompt context.
+
+**Local plugin directories** (kind `opencode-plugin-dir`) render every file in the directory:
+
+```yaml
+include:
+  - opencode/plugins/loadouts
+```
+
+The bundled `opencode-runtime` loadout renders a working package-directory example to `plugins/loadouts/` — see `loadouts docs runtime`.
 
 ```tsx
-// .loadouts/opencode/plugins/status-popup.tsx
+// .loadouts/opencode/plugins/status-popup/tui.tsx
 /** @jsxImportSource @opentui/solid */
 
-import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui";
+import { Plugin } from "@opencode/plugin/tui";
 
-const tui: TuiPlugin = async (api) => {
-  api.keymap.registerLayer({
-    commands: [
-      {
-        name: "status_popup_open",
-        title: "Open status popup",
-        category: "Plugin",
-        namespace: "palette",
-        slashName: "status-popup",
-        run() {
-          api.ui.dialog.setSize("medium");
-          api.ui.dialog.replace(() => <box border paddingLeft={2}>TUI-only popup</box>);
+export default Plugin.define({
+  id: "status-popup.tui",
+  setup(context) {
+    context.keymap.layer(() => ({
+      commands: [
+        {
+          id: "status_popup_open",
+          title: "Open status popup",
+          palette: true,
+          slash: { name: "status-popup" },
+          run() {
+            context.ui.dialog.set({ size: "medium" });
+            context.ui.dialog.show(() => <box border paddingLeft={2}>TUI-only popup</box>);
+          },
         },
-      },
-    ],
-  });
-};
-
-export default { id: "status-popup", tui } satisfies TuiPluginModule & { id: string };
+      ],
+    }));
+  },
+});
 ```
 
-```jsonc
-// .loadouts/opencode/tui.jsonc
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["./plugins/status-popup.tsx"]
-}
-```
-
-Project scope renders this config to `.opencode/tui.jsonc`. Global scope renders it to `~/.config/opencode/tui.jsonc`. This is whole-file ownership; if you already manage `tui.jsonc`, add the plugin entry there instead of including this artifact.
+The server entry (`index.ts` with `{ id, setup }`) sits beside this file in the same directory.
 
 ---
 

@@ -1,7 +1,5 @@
 name: opencode-runtime
-description: OpenCode runtime plugin and embedded dashboard for /loadouts
+description: OpenCode V2 runtime plugin package for /loadouts
 
 include:
-  - opencode/plugins/loadouts-runtime.ts
-  - opencode/plugins/loadouts-runtime-tui.tsx
-  - opencode/tui.jsonc
+  - opencode/plugins/loadouts

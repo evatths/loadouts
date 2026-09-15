@@ -22,6 +22,7 @@ import { themeKind } from "./kinds/theme.js";
 import { opencodeConfigKind } from "./kinds/opencode-config.js";
 import { opencodeTuiConfigKind } from "./kinds/opencode-tui-config.js";
 import { opencodePluginKind } from "./kinds/opencode-plugin.js";
+import { opencodePluginDirKind } from "./kinds/opencode-plugin-dir.js";
 import { opencodeCommandKind } from "./kinds/opencode-command.js";
 import { claudeCodeTool } from "./tools/claude-code.js";
 import { cursorTool } from "./tools/cursor.js";
@@ -90,6 +91,7 @@ export function registerBuiltins(api: PluginAPI): void {
   api.registerKind(opencodeConfigKind);
   api.registerKind(opencodeTuiConfigKind);
   api.registerKind(opencodePluginKind);
+  api.registerKind(opencodePluginDirKind);
   api.registerKind(opencodeCommandKind);
 
   // Named transforms — referenced by name in tool target specs.

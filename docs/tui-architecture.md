@@ -1,6 +1,8 @@
 # Loadouts TUI Architecture
 
-Status: **Design / RFC** (no implementation yet)
+Status: **Historical design / RFC**. The three-layer core/skin/host architecture is
+implemented. V1 runtime wiring and command names below are superseded by
+[the OpenCode V2 runtime](opencode-v2-runtime.md) and [usage](runtime.md).
 Author: design pass, June 2026
 
 A plan for turning the loadouts TUI from a passive popup into a beautiful, ergonomic,
@@ -133,14 +135,14 @@ src/tui/
       extension.ts    # default ExtensionAPI factory: command + inject + mount
       inject.ts       # before_agent_start system-prompt block
     opencode/
-      route.ts        # api.route.register("loadouts") mounting opentui skin
-      (reuses src/integrations/opencode-runtime/* for command + injection)
+      index.ts        # server entry: Plugin.define({ id, setup })
+      tui.tsx         # TUI entry: router page, slash, slots
 ```
 
-The existing `src/integrations/opencode-runtime/` (bridge, command parser, state,
-system-block injection) is reused as-is by the OpenCode host; the new TUI route is layered
-on top. A parallel `src/integrations/pi-runtime/` (or the `hosts/pi/` module above) provides
-the Pi equivalent.
+The V1-shaped `src/integrations/opencode-runtime/` was replaced by
+`src/integrations/opencode/` (session activator, instruction delta, service client,
+advertisement filter). The Pi equivalent lives in `hosts/pi/` and the shared
+`core/controller.ts` lifecycle.
 
 ---
 
@@ -300,7 +302,7 @@ skills/prompts/themes at runtime — a cleaner injection path than OpenCode's sy
 
 ### 6.2 OpenCode host (existing plugin, upgraded)
 
-Reuse `src/integrations/opencode-runtime/` (command parsing, session state, system-block
+Reuse the shared controller/lifecycle in `src/tui/core/controller.ts` (command parsing, session state, system-block
 injection). Add a TUI route:
 
 | Need                  | OpenCode API                                              |

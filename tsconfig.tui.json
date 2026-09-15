@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@opentui/solid"
+  },
+  "include": ["src/tui/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -13,7 +13,8 @@ import { resolveLoadout } from "../../core/resolve.js";
 import type { LoadoutRoot, Scope, Tool } from "../../core/types.js";
 import { getArtifactName, sortArtifacts } from "../../lib/artifact-table.js";
 import { fileExists } from "../../lib/fs.js";
-import type { ActivationMode } from "./model.js";
+import type { EquipLayer } from "./model.js";
+import type { SessionStatus } from "../../integrations/opencode/session.js";
 
 export type LoadoutStatus = "active" | "available" | "drift" | "broken";
 
@@ -37,7 +38,7 @@ export interface LoadoutRow {
   scope: Scope;
   description?: string;
   status: LoadoutStatus;
-  activation: ActivationMode | null;
+  equipped: EquipLayer[];
   counts: LoadoutCounts;
   tools: string[];
   issue?: string;
@@ -112,7 +113,7 @@ export async function loadDashboardData(cwd: string = process.cwd()): Promise<Da
           scope,
           description: definition.description,
           status,
-          activation: active ? "filesystem" : null,
+          equipped: active ? [scope] : [],
           counts: countSlots(slots),
           tools,
           issue,
@@ -128,7 +129,7 @@ export async function loadDashboardData(cwd: string = process.cwd()): Promise<Da
           name,
           scope,
           status: "broken",
-          activation: null,
+          equipped: [],
           counts: { rules: 0, skills: 0, instructions: 0, extensions: 0 },
           tools: [],
           issue: text,
@@ -142,10 +143,21 @@ export async function loadDashboardData(cwd: string = process.cwd()): Promise<Da
 
   return {
     rows: sortRows(rows),
-    active: rows.filter((row) => row.activation).map((row) => row.name),
+    active: rows.filter((row) => row.equipped.length).map((row) => row.name),
     tools: Array.from(new Set(rows.flatMap((row) => row.tools))).sort(),
     issues,
     warnings,
+  };
+}
+
+export function withSessionEquipment(data: DashboardData, status?: Pick<SessionStatus, "names" | "scope">): DashboardData {
+  return {
+    ...data,
+    rows: data.rows.map((row) => {
+      const equipped: EquipLayer[] = row.equipped.filter((layer) => layer !== "session");
+      if (status?.scope === row.scope && status.names.includes(row.name)) equipped.push("session");
+      return { ...row, equipped, status: row.status === "broken" || row.status === "drift" ? row.status : equipped.length ? "active" : "available" };
+    }),
   };
 }
 

@@ -1,151 +1,91 @@
 import { spawn } from "node:child_process";
 import { ProcessTerminal, TUI, type OverlayHandle } from "@earendil-works/pi-tui";
-import * as path from "node:path";
-import { getContext } from "../../core/discovery.js";
-import type { Scope } from "../../core/types.js";
-import { executeEffect } from "../core/actions.js";
-import { loadDashboardData } from "../core/data.js";
-import type { Effect, Intent } from "../core/intent.js";
-import { createInitialModel, type Model } from "../core/model.js";
+import { discoverClient, sessionsAt } from "../../integrations/opencode/client.js";
+import { SessionActivator } from "../../integrations/opencode/session.js";
+import { DashboardController } from "../core/controller.js";
+import type { Intent } from "../core/intent.js";
 import { defaultThemeTokens } from "../core/theme.js";
-import { update } from "../core/update.js";
-import { view } from "../core/view.js";
-import type { HostContext } from "../core/host.js";
 import { isCtrlC } from "../skins/pi-tui/input.js";
 import { PiTuiDashboard, PiTuiOverlay } from "../skins/pi-tui/render.js";
 import { defaultPiTuiTokens } from "../skins/pi-tui/theme.js";
 
-export async function runStandaloneTui(cwd: string = process.cwd()): Promise<void> {
-  const terminal = new ProcessTerminal();
-  const tui = new TUI(terminal);
+export async function runStandaloneTui(cwd = process.cwd()): Promise<void> {
+  const tui = new TUI(new ProcessTerminal());
+  const theme = { ...defaultThemeTokens, ...defaultPiTuiTokens() };
+  const connection = await discoverClient().catch(() => undefined);
+  const activator = connection ? new SessionActivator(connection.client) : undefined;
   let exited = false;
-  let overlayHandle: OverlayHandle | undefined;
-  let overlayComponent: PiTuiOverlay | undefined;
-
-  const host: HostContext = {
-    theme: () => ({ ...defaultThemeTokens, ...defaultPiTuiTokens() }),
-    requestRender: () => tui.requestRender(),
-    exit: () => stop(),
-    openEditor: async (filePath) => {
-      tui.stop();
-      await openEditor(filePath);
-      tui.start();
-      tui.requestRender(true);
-    },
-    data: await loadDashboardData(cwd),
-  };
-
-  let model: Model = createInitialModel(host.data, { mode: "filesystem", scope: "project" });
-  const dashboard = new PiTuiDashboard({ spec: view(model), theme: host.theme(), onIntent: dispatch });
-
+  let finish: () => void = () => {};
+  let overlay: OverlayHandle | undefined;
+  let picker: { sessions: Awaited<ReturnType<typeof sessionsAt>>; index: number } | undefined;
+  const controller = new DashboardController({ cwd, changed: render, exit: stop, edit: async (file) => {
+    tui.stop();
+    try { await openEditor(file); } finally { tui.start(); }
+  } });
+  const dashboard = new PiTuiDashboard({ spec: controller.spec, theme, onIntent: dispatch });
   tui.addChild(dashboard);
   tui.setFocus(dashboard);
-  tui.addInputListener((data) => {
-    if (isCtrlC(data)) {
-      stop();
-      return { consume: true };
-    }
-    return undefined;
-  });
-
-  renderNow();
+  tui.addInputListener((data) => { if (isCtrlC(data)) { stop(); return { consume: true }; } });
+  await controller.refresh();
+  if (connection?.warning) controller.model.lastResult = { text: connection.warning, variant: "info" };
+  if (connection) controller.model.lastResult = { text: "S: choose an OpenCode session", variant: "info" };
+  const completed = new Promise<void>((resolve) => { finish = resolve; });
+  render();
   tui.start();
+  await completed;
 
-  return new Promise((resolve) => {
-    const interval = setInterval(() => {
-      if (!exited) return;
-      clearInterval(interval);
-      resolve();
-    }, 20);
-  });
-
-  function dispatch(intent: Intent): void {
-    if (model.overlay && intent.t === "quit") intent = { t: "closeOverlay" };
-    if (intent.t === "cycleMode") return;
-
-    const result = update(model, intent);
-    model = { ...result.model, mode: "filesystem" };
-    if (model.quitRequested) {
-      stop();
+  function dispatch(intent: Intent) {
+    if (picker) {
+      if (intent.t === "move") picker.index = Math.max(0, Math.min(picker.sessions.length - 1, picker.index + intent.delta));
+      if (intent.t === "quit" || intent.t === "closeOverlay") picker = undefined;
+      if (intent.t === "enter" && picker) {
+        const selected = picker.sessions[picker.index];
+        picker = undefined;
+        if (selected && activator) void controller.selectSession({ id: selected.id, activator });
+      }
+      render();
       return;
     }
-    renderNow();
-    if (result.effect) void runEffect(result.effect);
-  }
-
-  async function runEffect(effect: Effect): Promise<void> {
-    let actionIntent: Intent;
-    try {
-      if (effect.t === "editFile") await host.openEditor(effect.path);
-      actionIntent = await executeEffect(effect, {
-        fs: await actionContext(effect, model.scope, cwd),
-      });
-    } catch (err) {
-      actionIntent = {
-        t: "effectDone",
-        effect: effect.t,
-        ok: false,
-        message: err instanceof Error ? err.message : String(err),
-      };
-    }
-
-    if (effect.t === "reload" || effect.t === "editFile") {
-      host.data = await loadDashboardData(cwd);
-      const next = createInitialModel(host.data, { mode: "filesystem", scope: model.scope });
-      model = { ...next, filter: model.filter, filtering: model.filtering, cursor: model.cursor, overlay: model.overlay, diffLines: model.diffLines };
-    }
-
-    const result = update(model, actionIntent);
-    model = { ...result.model, mode: "filesystem" };
-    renderNow();
-  }
-
-  function renderNow(): void {
-    const spec = view(model);
-    dashboard.setSpec(spec);
-    if (spec.overlay) {
-      if (overlayComponent) overlayComponent.setSpec(spec.overlay);
-      else {
-        overlayComponent = new PiTuiOverlay(spec.overlay, host.theme(), dispatch);
-        overlayHandle = tui.showOverlay(overlayComponent, { width: "72%", maxHeight: "70%", minWidth: 36, margin: 2 });
+    if (intent.t === "selectSession") {
+      if (!connection) {
+        controller.model.lastResult = { text: "No running OpenCode service", variant: "info" };
+        render();
+        return;
       }
-    } else if (overlayHandle) {
-      overlayHandle.hide();
-      overlayHandle = undefined;
-      overlayComponent = undefined;
-      tui.setFocus(dashboard);
+      void sessionsAt(connection.client, cwd).then((sessions) => { picker = { sessions, index: 0 }; render(); }).catch((error) => {
+        controller.model.lastResult = { text: String(error), variant: "error" }; render();
+      });
+      return;
     }
-    host.requestRender();
+    void controller.dispatch(intent);
   }
 
-  function stop(): void {
+  function render() {
     if (exited) return;
-    exited = true;
-    tui.stop();
+    const spec = controller.spec;
+    if (controller.session) spec.footer.equipped.push({ text: `  ${controller.session.id}`, style: "dim" });
+    dashboard.setSpec(spec);
+    overlay?.hide(); overlay = undefined;
+    const selection = picker ? {
+      kind: "help" as const, title: "Choose session · j/k, enter",
+      lines: picker.sessions.length ? picker.sessions.map((session, index) => [{ text: `${index === picker!.index ? "▸" : " "} ${session.title ?? session.id} (${session.id})`, style: "text" as const }]) : [[{ text: "No sessions at this location", style: "dim" as const }]],
+    } : spec.overlay;
+    if (selection) overlay = tui.showOverlay(new PiTuiOverlay(selection, theme, dispatch), { width: "90%", maxHeight: "75%", margin: 1 });
+    else tui.setFocus(dashboard);
+    tui.requestRender();
+  }
+
+  function stop() {
+    if (exited) return;
+    exited = true; controller.dispose(); tui.stop(); finish();
   }
 }
 
-async function actionContext(effect: Effect, fallbackScope: Scope, cwd: string) {
-  if (effect.t === "reload" || effect.t === "editFile") {
-    return {
-      scope: fallbackScope,
-      configPath: cwd,
-      statePath: path.join(cwd, ".state.json"),
-      projectRoot: cwd,
-    };
-  }
-  const scope = "scope" in effect ? effect.scope : fallbackScope;
-  return getContext(scope, cwd);
-}
-
-async function openEditor(filePath: string): Promise<void> {
+async function openEditor(file: string): Promise<void> {
   const editor = process.env.VISUAL || process.env.EDITOR || "vi";
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(editor, [filePath], { stdio: "inherit", shell: true });
+    const child = spawn(editor, [file], { stdio: "inherit", shell: true });
     child.on("error", reject);
-    child.on("exit", (code) => {
-      if (code && code !== 0) reject(new Error(`${editor} exited with code ${code}`));
-      else resolve();
-    });
+    child.on("exit", (code) => code ? reject(new Error(`Editor exited with ${code}`)) : resolve());
   });
 }

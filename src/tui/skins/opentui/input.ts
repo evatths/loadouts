@@ -1,4 +1,4 @@
-import type { KeyEvent } from "@opencode-ai/plugin/tui";
+import type { KeyEvent } from "@opentui/core";
 import { intentForKey } from "../../core/keymap.js";
 import type { Intent } from "../../core/intent.js";
 import type { ViewSpec } from "../../core/viewspec.js";
@@ -38,6 +38,7 @@ function normalizeKey(event: KeyEvent): string {
   if (name === "space" || event.sequence === " ") return "space";
   if (name === "up" || name === "down" || name === "tab" || name === "enter" || name === "esc" || name === "backspace") return name;
   if (event.shift && name === "d") return "D";
+  if (event.shift && name === "s") return "S";
 
   const printable = printableChar(event);
   return printable ?? name;

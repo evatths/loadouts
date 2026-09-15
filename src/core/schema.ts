@@ -26,6 +26,7 @@ export const RootConfigSchema = z.object({
   mode: OutputModeSchema.optional(),
   tools: z.array(ToolSchema).optional(),
   sources: z.array(SourceRefSchema).optional(),
+  opencode: z.object({ defaultSession: z.array(z.string()).optional() }).optional(),
 });
 
 export const LoadoutIncludeSchema = z.union([
@@ -41,6 +42,10 @@ export const LoadoutDefinitionSchema = z.object({
   description: z.string().optional(),
   tools: z.array(ToolSchema).optional(),
   include: z.array(LoadoutIncludeSchema),
+  opencode: z.object({
+    agent: z.string().min(1).optional(),
+    model: z.object({ providerID: z.string().min(1), id: z.string().min(1), variant: z.string().optional() }).optional(),
+  }).optional(),
 });
 
 export const ManifestEntrySchema = z.object({

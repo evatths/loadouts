@@ -51,24 +51,26 @@ loadouts sync      # Re-render if needed
 
 **Cursor:** Rules need `.mdc` extension — loadouts handles this automatically. Restart Cursor if rules don't appear immediately.
 
-**OpenCode:** Rules render to `.opencode/rules/`, commands to `.opencode/commands/`, local plugins to `.opencode/plugins/`, and NPM plugins are configured with the `plugin` array in `opencode.json(c)`.
+**OpenCode V2:** Rules render to `.opencode/rules/`, commands to `.opencode/commands/`, local plugins to `.opencode/plugins/`, and NPM plugins are configured with the `plugins` array in `opencode.json(c)`. Global instructions render to `~/.config/opencode/AGENTS.md`. OpenCode hot-reloads these sources.
 
 ### `/loadouts` not working in OpenCode runtime
 
-If `/loadouts` exists but does not activate runtime behavior, verify the full chain:
+1. Verify `plugins/loadouts/{package.json,index.js,tui.js}` exists under the
+   project's `.opencode/` or global `~/.config/opencode/` directory.
+2. Check `loadouts info -l` or `loadouts info -g` for `opencode-runtime` and
+   `loadouts status` for shadowed/missing output. A source checkout needs
+   `npm run build` before activation.
+3. Open OpenCode's Plugins dialog and inspect the server/TUI entries. Local
+   plugin directories do not install server dependencies; use the built,
+   self-contained artifact rather than copying `src/tui/hosts/opencode/`.
+4. Test the independent HTTP path with
+   `loadouts session status --session ses_...`.
+5. `/loadouts` and `ctrl+l` are client-side commands. The server entry is needed
+   for clean per-session skill advertisements; native permission denies alone
+   still leave skills listed on OpenCode 2.0.3.
 
-1. Runtime artifacts are rendered in the expected scope:
-   - Local server plugin: `.opencode/plugins/loadouts-runtime.ts`
-   - Local TUI plugin/config: `.opencode/plugins/loadouts-runtime-tui.tsx` and `.opencode/tui.jsonc`
-   - Global server plugin: `~/.config/opencode/plugins/loadouts-runtime.ts`
-   - Global TUI plugin/config: `~/.config/opencode/plugins/loadouts-runtime-tui.tsx` and `~/.config/opencode/tui.jsonc`
-2. Runtime scaffold is active in the same scope (`loadouts info -l` or `loadouts info -g`).
-3. Restart OpenCode after activation or plugin/TUI config changes (startup-time plugin loading).
-4. Check the `loadouts` binary on OpenCode's `PATH` supports runtime:
-```bash
-loadouts runtime base --tool opencode --json
-```
-5. In interactive OpenCode, the server plugin owns `/loadouts` and the TUI plugin listens for server events to render a user-only dialog. If command acknowledgment text looks model-generated, the TUI plugin is probably not loaded; the deterministic fallback is still server plugin state update and runtime system injection.
+If permissions were edited after equip, unequip preserves those edits and reports
+it. See [runtime ownership and recovery](opencode-v2-runtime.md#persistence-and-ownership).
 
 **Claude Code:** Verify rules exist in `.claude/rules/`. May require restarting the session.
 

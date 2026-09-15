@@ -107,9 +107,10 @@ describe("runtime compiler", () => {
     expect(instructionComponent.content.length).toBeGreaterThan(0);
     expect(instructionComponent.contentHash.startsWith("sha256:")).toBe(true);
     expect(instructionComponent.tokenEstimate).toBeGreaterThan(0);
-    expect(bundle.capabilities.runtimeMode).toBe("experimental-runtime");
+    expect(bundle.capabilities.runtimeMode).toBe("native-runtime");
     expect(bundle.capabilities.modelInjection.instructions).toBe(true);
     expect(bundle.capabilities.skillPathDiscovery).toBe(true);
+    expect(bundle.capabilities.nativeSkillHotSwap).toBe(true);
   });
 
   it("uses conservative tool capability flags for filesystem-first tools", () => {
@@ -187,7 +188,7 @@ describe("runtime compiler", () => {
     expect(block).toContain("## Instructions (Model Injection Ready)");
     expect(block).toContain("## Rules (Model Injection Ready)");
     expect(block).toContain("## Skills (Path Discovery Only)");
-    expect(block).toContain("Native skill hot-swap is disabled in runtime v1");
+    expect(block).toContain("nativeSkillHotSwap=true");
     expect(block).toContain("path: skills/diagnose");
   });
 });

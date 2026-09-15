@@ -3,36 +3,44 @@ import { applyMultiPlan, planRender, removeManaged } from "../../core/render.js"
 import { loadResolvedLoadouts } from "../../core/resolve.js";
 import { parseRootConfig } from "../../core/config.js";
 import type { CommandContext, RenderPlan, ResolvedLoadout } from "../../core/types.js";
-import type { RuntimeInjector } from "./host.js";
+import type { HostContext } from "./host.js";
+import { getContext } from "../../core/discovery.js";
+import { compileSession } from "../../integrations/opencode/delta.js";
 import type { Effect, Intent } from "./intent.js";
 
 export interface ActionContext {
-  fs: CommandContext;
-  runtime?: RuntimeInjector;
+  cwd: string;
+  session?: HostContext["session"];
 }
 
 export async function executeEffect(effect: Effect, ctx: ActionContext): Promise<Intent> {
   try {
     if (effect.t === "reload") return done(effect.t, true, "Reload requested");
     if (effect.t === "editFile") return done(effect.t, true, effect.path);
-    if (effect.t === "plan") return done(effect.t, true, "Diff ready", await planLines(ctx.fs, effect.targetSet));
-
-    if (effect.mode === "runtime") {
-      if (!ctx.runtime) return done(effect.t, false, "Runtime activation is unavailable");
-      if (effect.t === "clear" || effect.targetSet.length === 0) await ctx.runtime.deactivate();
-      else await ctx.runtime.activate(effect.targetSet, effect.scope === "project" ? "local" : "global");
-      return done(effect.t, true, effect.t === "clear" ? "Runtime loadouts cleared" : "Runtime loadouts activated");
+    if (effect.layer === "session") {
+      if (!ctx.session) return done(effect.t, false, "Select a session first");
+      if (effect.t === "plan") {
+        const compiled = await compileSession(ctx.cwd, effect.targetSet, { scope: effect.scope });
+        return done(effect.t, true, "Session delta", [...compiled.bundle.components.map((item) => `+ ${item.kind} ${item.relativePath}`), ...compiled.warnings.map((warning) => `! ${warning}`)]);
+      }
+      const result = effect.t === "clear" || effect.targetSet.length === 0
+        ? await ctx.session.activator.unequip(ctx.session.id)
+        : await ctx.session.activator.equip(ctx.session.id, effect.targetSet, { scope: effect.scope });
+      return done(effect.t, true, ["Session equipment updated", ...result.warnings].join("; "));
     }
 
+    const fs = await getContext(effect.layer, ctx.cwd);
+    if (effect.t === "plan") return done(effect.t, true, "Diff ready", await planLines(fs, effect.targetSet));
+
     if (effect.t === "clear" || effect.targetSet.length === 0) {
-      const { removed } = await removeManaged(ctx.fs.configPath, ctx.fs.projectRoot, ctx.fs.scope);
-      clearState(ctx.fs.configPath);
+      const { removed } = await removeManaged(fs.configPath, fs.projectRoot, fs.scope);
+      clearState(fs.configPath);
       return done(effect.t, true, `${removed.length} output(s) removed`);
     }
 
-    const plans = await resolvePlans(ctx.fs, effect.targetSet);
-    const mode = parseRootConfig(ctx.fs.configPath).mode;
-    const result = await applyMultiPlan(plans, ctx.fs.configPath, ctx.fs.projectRoot, mode, ctx.fs.scope);
+    const plans = await resolvePlans(fs, effect.targetSet);
+    const mode = parseRootConfig(fs.configPath).mode;
+    const result = await applyMultiPlan(plans, fs.configPath, fs.projectRoot, mode, fs.scope);
     return done(effect.t, true, `${result.totalOutputs} output(s) applied`);
   } catch (err) {
     return done(effect.t, false, err instanceof Error ? err.message : String(err));

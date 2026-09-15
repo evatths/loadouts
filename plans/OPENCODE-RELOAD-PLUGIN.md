@@ -1,5 +1,10 @@
 # OpenCode `/reload` Plugin Implementation Plan
 
+> **Superseded (2026-09-14).** OpenCode V2 hot-reloads config, `AGENTS.md`,
+> skills, commands, agents, plugins, MCP and references natively, and running
+> sessions pick changes up on their next model call. See
+> `plans/OPENCODE-V2-RUNTIME.md`. Kept for the V1 event/API archaeology only.
+
 ## Goal
 
 Add a sensibly scoped `/reload` capability for OpenCode users through a bundled, standalone plugin and command artifact.

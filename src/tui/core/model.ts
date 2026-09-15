@@ -1,7 +1,7 @@
 import type { DashboardData, LoadoutRow } from "./data.js";
 
 export type Section = "active" | "available" | "issues";
-export type ActivationMode = "filesystem" | "runtime";
+export type EquipLayer = "global" | "project" | "session";
 export type ScopeFilter = "global" | "project";
 
 export interface DetailModel {
@@ -14,6 +14,7 @@ export interface UndoSnapshot {
   cursor: { section: Section; index: number };
   targetSet: string[];
   scope: ScopeFilter;
+  layer: EquipLayer;
 }
 
 export interface Model {
@@ -22,7 +23,8 @@ export interface Model {
   cursor: { section: Section; index: number };
   filter: { text: string; scope?: ScopeFilter; tool?: string };
   filtering: boolean;
-  mode: ActivationMode;
+  layer: EquipLayer;
+  layers: EquipLayer[];
   scope: ScopeFilter;
   staged?: Set<string>;
   undo?: UndoSnapshot;
@@ -36,7 +38,7 @@ export interface Model {
 
 export function createInitialModel(
   data: DashboardData,
-  options: { mode?: ActivationMode; scope?: ScopeFilter } = {}
+  options: { layer?: EquipLayer; layers?: EquipLayer[]; scope?: ScopeFilter } = {}
 ): Model {
   const sections = buildSections(data.rows);
   return {
@@ -45,7 +47,8 @@ export function createInitialModel(
     cursor: firstCursor(sections),
     filter: { text: "" },
     filtering: false,
-    mode: options.mode ?? "filesystem",
+    layer: options.layer ?? "project",
+    layers: options.layers ?? ["global", "project"],
     scope: options.scope ?? "project",
     staged: new Set(),
     overlay: null,

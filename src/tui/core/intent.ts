@@ -1,4 +1,4 @@
-import type { ActivationMode, ScopeFilter } from "./model.js";
+import type { EquipLayer, ScopeFilter } from "./model.js";
 
 export type Intent =
   | { t: "move"; delta: number }
@@ -19,7 +19,8 @@ export type Intent =
   | { t: "filterCancel" }
   | { t: "cycleScope" }
   | { t: "cycleTool" }
-  | { t: "cycleMode" }
+  | { t: "cycleLayer" }
+  | { t: "selectSession" }
   | { t: "undo" }
   | { t: "refresh" }
   | { t: "openHelp" }
@@ -34,8 +35,8 @@ export type Intent =
     };
 
 export type Effect =
-  | { t: "apply"; targetSet: string[]; mode: ActivationMode; scope: ScopeFilter }
-  | { t: "clear"; mode: ActivationMode; scope: ScopeFilter }
-  | { t: "plan"; targetSet: string[]; scope: ScopeFilter }
+  | { t: "apply"; targetSet: string[]; layer: EquipLayer; scope: ScopeFilter }
+  | { t: "clear"; layer: EquipLayer; scope: ScopeFilter }
+  | { t: "plan"; targetSet: string[]; layer: EquipLayer; scope: ScopeFilter }
   | { t: "reload" }
   | { t: "editFile"; path: string };

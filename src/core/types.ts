@@ -31,6 +31,7 @@ export interface RootConfig {
   mode?: OutputMode;
   tools?: Tool[];
   sources?: SourceRef[];  // Paths to other .loadouts/ directories
+  opencode?: { defaultSession?: string[] };
 }
 
 // Loadout definition (.loadouts/loadouts/<name>.yaml)
@@ -39,6 +40,12 @@ export interface LoadoutDefinition {
   description?: string;
   tools?: Tool[];
   include: LoadoutInclude[];
+  opencode?: OpenCodeSelection;
+}
+
+export interface OpenCodeSelection {
+  agent?: string;
+  model?: { providerID: string; id: string; variant?: string };
 }
 
 // Include entry — either a plain path string or a path with per-include tool override
@@ -61,6 +68,7 @@ export interface ResolvedLoadout {
   tools: Tool[];
   items: ResolvedItem[];
   rootPath: string;        // Absolute path to the owning .loadouts/ directory
+  opencode?: OpenCodeSelection;
 }
 
 // Output spec produced by the renderer for one (item, tool) pair

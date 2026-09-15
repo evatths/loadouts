@@ -17,6 +17,8 @@ export interface RuntimeCapabilities {
   };
   skillPathDiscovery: boolean;
   nativeSkillHotSwap: boolean;
+  sessionInstructionEntries?: boolean;
+  sessionSkillGating?: boolean;
   supportedKinds: RuntimeSupportedKind[];
 }
 
@@ -88,17 +90,21 @@ export interface RuntimeBundle {
 
 export interface CompileRuntimeBundleOptions {
   generatedAt?: string;
+  /** Canonical source paths already rendered to this tool on disk. */
+  exclude?: ReadonlySet<string>;
 }
 
 const RUNTIME_CAPABILITY_MATRIX: Record<string, RuntimeCapabilities> = {
   opencode: {
-    runtimeMode: "experimental-runtime",
+    runtimeMode: "native-runtime",
     modelInjection: {
       instructions: true,
       rules: true,
     },
     skillPathDiscovery: true,
-    nativeSkillHotSwap: false,
+    nativeSkillHotSwap: true,
+    sessionInstructionEntries: true,
+    sessionSkillGating: true,
     supportedKinds: ["instruction", "rule", "skill"],
   },
   pi: {
@@ -152,10 +158,14 @@ export function compileRuntimeBundle(
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   const components: RuntimeComponent[] = [];
   const diagnostics: RuntimeDiagnostic[] = [];
+  const seen = new Set<string>();
 
   for (const loadout of loadouts) {
     for (const item of loadout.items) {
       if (!item.tools.includes(tool)) continue;
+      const identity = `${item.kind}:${path.resolve(item.sourcePath)}`;
+      if (options.exclude?.has(path.resolve(item.sourcePath)) || seen.has(identity)) continue;
+      seen.add(identity);
 
       if (item.kind === "instruction" || item.kind === "rule") {
         const textComponent = compileTextComponent(loadout.name, item as ResolvedItem & {
@@ -290,7 +300,7 @@ export function renderRuntimeSystemBlock(bundle: RuntimeBundle): string {
   }
 
   lines.push("## Skills (Path Discovery Only)");
-  lines.push("These are references for discovery. Native skill hot-swap is disabled in runtime v1.");
+  lines.push("Read these skill entrypoints when needed; discovery references do not install native skills.");
   if (bundle.injection.skills.length === 0) {
     lines.push("(none)");
   } else {

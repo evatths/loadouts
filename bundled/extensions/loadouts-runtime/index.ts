@@ -49,7 +49,7 @@ var require_identity = __commonJS({
     var isDocument = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === DOC;
     var isMap = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === MAP;
     var isPair = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === PAIR;
-    var isScalar = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === SCALAR;
+    var isScalar2 = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === SCALAR;
     var isSeq = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === SEQ;
     function isCollection(node) {
       if (node && typeof node === "object")
@@ -71,7 +71,7 @@ var require_identity = __commonJS({
         }
       return false;
     }
-    var hasAnchor = (node) => (isScalar(node) || isCollection(node)) && !!node.anchor;
+    var hasAnchor = (node) => (isScalar2(node) || isCollection(node)) && !!node.anchor;
     exports.ALIAS = ALIAS;
     exports.DOC = DOC;
     exports.MAP = MAP;
@@ -86,7 +86,7 @@ var require_identity = __commonJS({
     exports.isMap = isMap;
     exports.isNode = isNode;
     exports.isPair = isPair;
-    exports.isScalar = isScalar;
+    exports.isScalar = isScalar2;
     exports.isSeq = isSeq;
   }
 });
@@ -1754,7 +1754,7 @@ var require_merge = __commonJS({
 var require_addPairToJSMap = __commonJS({
   "node_modules/yaml/dist/nodes/addPairToJSMap.js"(exports) {
     "use strict";
-    var log = require_log();
+    var log2 = require_log();
     var merge = require_merge();
     var stringify2 = require_stringify();
     var identity2 = require_identity();
@@ -1803,7 +1803,7 @@ var require_addPairToJSMap = __commonJS({
           let jsonStr = JSON.stringify(strKey);
           if (jsonStr.length > 40)
             jsonStr = jsonStr.substring(0, 36) + '..."';
-          log.warn(ctx.doc.options.logLevel, `Keys with collection values will be stringified due to JS Object restrictions: ${jsonStr}. Set mapAsMap: true to use object keys.`);
+          log2.warn(ctx.doc.options.logLevel, `Keys with collection values will be stringified due to JS Object restrictions: ${jsonStr}. Set mapAsMap: true to use object keys.`);
           ctx.mapKeyWarned = true;
         }
         return strKey;
@@ -5628,7 +5628,7 @@ var require_cst = __commonJS({
     var FLOW_END = "";
     var SCALAR = "";
     var isCollection = (token) => !!token && "items" in token;
-    var isScalar = (token) => !!token && (token.type === "scalar" || token.type === "single-quoted-scalar" || token.type === "double-quoted-scalar" || token.type === "block-scalar");
+    var isScalar2 = (token) => !!token && (token.type === "scalar" || token.type === "single-quoted-scalar" || token.type === "double-quoted-scalar" || token.type === "block-scalar");
     function prettyToken(token) {
       switch (token) {
         case BOM:
@@ -5712,7 +5712,7 @@ var require_cst = __commonJS({
     exports.FLOW_END = FLOW_END;
     exports.SCALAR = SCALAR;
     exports.isCollection = isCollection;
-    exports.isScalar = isScalar;
+    exports.isScalar = isScalar2;
     exports.prettyToken = prettyToken;
     exports.tokenType = tokenType;
   }
@@ -6345,15 +6345,15 @@ var require_parser = __commonJS({
     var node_process = __require("process");
     var cst = require_cst();
     var lexer = require_lexer();
-    function includesToken(list, type) {
-      for (let i = 0; i < list.length; ++i)
-        if (list[i].type === type)
+    function includesToken(list2, type) {
+      for (let i = 0; i < list2.length; ++i)
+        if (list2[i].type === type)
           return true;
       return false;
     }
-    function findNonEmptyIndex(list) {
-      for (let i = 0; i < list.length; ++i) {
-        switch (list[i].type) {
+    function findNonEmptyIndex(list2) {
+      for (let i = 0; i < list2.length; ++i) {
+        switch (list2[i].type) {
           case "space":
           case "comment":
           case "newline":
@@ -7219,7 +7219,7 @@ var require_public_api = __commonJS({
     var composer = require_composer();
     var Document = require_Document();
     var errors = require_errors();
-    var log = require_log();
+    var log2 = require_log();
     var identity2 = require_identity();
     var lineCounter = require_line_counter();
     var parser = require_parser();
@@ -7271,7 +7271,7 @@ var require_public_api = __commonJS({
       const doc = parseDocument(src, options);
       if (!doc)
         return null;
-      doc.warnings.forEach((warning) => log.warn(doc.options.logLevel, warning));
+      doc.warnings.forEach((warning) => log2.warn(doc.options.logLevel, warning));
       if (doc.errors.length > 0) {
         if (doc.options.logLevel !== "silent")
           throw doc.errors[0];
@@ -7361,160 +7361,2998 @@ var require_dist = __commonJS({
   }
 });
 
-// src/tui/hosts/pi/embed-entry.ts
-import * as path19 from "node:path";
-
-// src/core/discovery.ts
-var yaml2 = __toESM(require_dist(), 1);
-import * as fs2 from "node:fs";
-import * as path3 from "node:path";
-import * as os from "node:os";
-import { fileURLToPath } from "node:url";
-
-// src/lib/git.ts
-import { exec } from "node:child_process";
-import { promisify } from "node:util";
-var execAsync = promisify(exec);
-async function findGitRoot(cwd) {
-  try {
-    const { stdout } = await execAsync("git rev-parse --show-toplevel", {
-      cwd
-    });
-    return stdout.trim();
-  } catch {
-    return null;
-  }
-}
-
-// src/core/config.ts
-var yaml = __toESM(require_dist(), 1);
-import * as path2 from "node:path";
-
-// src/lib/fs.ts
-import * as fs from "node:fs";
-import * as path from "node:path";
-import * as crypto from "node:crypto";
-function ensureDir(dirPath) {
-  fs.mkdirSync(dirPath, { recursive: true });
-}
-function writeFile(filePath, content) {
-  ensureDir(path.dirname(filePath));
-  fs.writeFileSync(filePath, content, "utf-8");
-}
-function readFile(filePath) {
-  return fs.readFileSync(filePath, "utf-8");
-}
-function fileExists(filePath) {
-  return fs.existsSync(filePath);
-}
-function isDirectory(filePath) {
-  return fs.existsSync(filePath) && fs.statSync(filePath).isDirectory();
-}
-function isSymlink(filePath) {
-  try {
-    return fs.lstatSync(filePath).isSymbolicLink();
-  } catch {
-    return false;
-  }
-}
-function readSymlinkTarget(linkPath) {
-  try {
-    if (!isSymlink(linkPath)) return null;
-    const target = fs.readlinkSync(linkPath);
-    if (path.isAbsolute(target)) {
-      return target;
-    }
-    const realLinkDir = fs.realpathSync(path.dirname(linkPath));
-    return path.resolve(realLinkDir, target);
-  } catch {
-    return null;
-  }
-}
-function createSymlink(target, linkPath) {
-  ensureDir(path.dirname(linkPath));
-  const linkDir = path.dirname(linkPath);
-  const realLinkDir = fs.realpathSync(linkDir);
-  const relativeTarget = path.relative(realLinkDir, target);
-  if (isSymlink(linkPath)) {
-    const existingTarget = fs.readlinkSync(linkPath);
-    if (existingTarget === relativeTarget) {
-      return;
-    }
-    fs.unlinkSync(linkPath);
-  } else if (fs.existsSync(linkPath)) {
-    fs.unlinkSync(linkPath);
-  }
-  fs.symlinkSync(relativeTarget, linkPath);
-}
-function removeFile(filePath) {
-  try {
-    fs.unlinkSync(filePath);
-  } catch (error) {
-    if (error.code !== "ENOENT") {
-      throw error;
-    }
-  }
-}
-function removeDir(dirPath) {
-  if (fs.existsSync(dirPath)) {
-    fs.rmSync(dirPath, { recursive: true });
-  }
-}
-function removePath(targetPath) {
-  if (isSymlink(targetPath)) {
-    removeFile(targetPath);
-    return;
-  }
-  if (isDirectory(targetPath)) {
-    removeDir(targetPath);
-    return;
-  }
-  removeFile(targetPath);
-}
-function hashContent(content) {
-  return `sha256:${crypto.createHash("sha256").update(content).digest("hex")}`;
-}
-function hashFile(filePath) {
-  const content = readFile(filePath);
-  return hashContent(content);
-}
-function hashDir(dirPath) {
-  const hashes = [];
-  function walk(dir) {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(fullPath);
-      } else {
-        hashes.push(hashFile(fullPath));
+// node_modules/commander/lib/error.js
+var require_error = __commonJS({
+  "node_modules/commander/lib/error.js"(exports) {
+    var CommanderError2 = class extends Error {
+      /**
+       * Constructs the CommanderError class
+       * @param {number} exitCode suggested exit code which could be used with process.exit
+       * @param {string} code an id string representing the error
+       * @param {string} message human-readable description of the error
+       */
+      constructor(exitCode, code, message) {
+        super(message);
+        Error.captureStackTrace(this, this.constructor);
+        this.name = this.constructor.name;
+        this.code = code;
+        this.exitCode = exitCode;
+        this.nestedError = void 0;
       }
-    }
-  }
-  walk(dirPath);
-  return hashContent(hashes.join("\n"));
-}
-function listFiles(dirPath) {
-  if (!isDirectory(dirPath)) return [];
-  return fs.readdirSync(dirPath);
-}
-function walkDir(dirPath) {
-  const results = [];
-  function walk(dir, prefix) {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-      const fullPath = path.join(dir, entry.name);
-      const relativePath = prefix ? path.join(prefix, entry.name) : entry.name;
-      if (entry.isDirectory()) {
-        walk(fullPath, relativePath);
-      } else {
-        results.push(relativePath);
+    };
+    var InvalidArgumentError2 = class extends CommanderError2 {
+      /**
+       * Constructs the InvalidArgumentError class
+       * @param {string} [message] explanation of why argument is invalid
+       */
+      constructor(message) {
+        super(1, "commander.invalidArgument", message);
+        Error.captureStackTrace(this, this.constructor);
+        this.name = this.constructor.name;
       }
-    }
+    };
+    exports.CommanderError = CommanderError2;
+    exports.InvalidArgumentError = InvalidArgumentError2;
   }
-  walk(dirPath, "");
-  return results;
-}
+});
+
+// node_modules/commander/lib/argument.js
+var require_argument = __commonJS({
+  "node_modules/commander/lib/argument.js"(exports) {
+    var { InvalidArgumentError: InvalidArgumentError2 } = require_error();
+    var Argument2 = class {
+      /**
+       * Initialize a new command argument with the given name and description.
+       * The default is that the argument is required, and you can explicitly
+       * indicate this with <> around the name. Put [] around the name for an optional argument.
+       *
+       * @param {string} name
+       * @param {string} [description]
+       */
+      constructor(name, description) {
+        this.description = description || "";
+        this.variadic = false;
+        this.parseArg = void 0;
+        this.defaultValue = void 0;
+        this.defaultValueDescription = void 0;
+        this.argChoices = void 0;
+        switch (name[0]) {
+          case "<":
+            this.required = true;
+            this._name = name.slice(1, -1);
+            break;
+          case "[":
+            this.required = false;
+            this._name = name.slice(1, -1);
+            break;
+          default:
+            this.required = true;
+            this._name = name;
+            break;
+        }
+        if (this._name.length > 3 && this._name.slice(-3) === "...") {
+          this.variadic = true;
+          this._name = this._name.slice(0, -3);
+        }
+      }
+      /**
+       * Return argument name.
+       *
+       * @return {string}
+       */
+      name() {
+        return this._name;
+      }
+      /**
+       * @package
+       */
+      _concatValue(value, previous) {
+        if (previous === this.defaultValue || !Array.isArray(previous)) {
+          return [value];
+        }
+        return previous.concat(value);
+      }
+      /**
+       * Set the default value, and optionally supply the description to be displayed in the help.
+       *
+       * @param {*} value
+       * @param {string} [description]
+       * @return {Argument}
+       */
+      default(value, description) {
+        this.defaultValue = value;
+        this.defaultValueDescription = description;
+        return this;
+      }
+      /**
+       * Set the custom handler for processing CLI command arguments into argument values.
+       *
+       * @param {Function} [fn]
+       * @return {Argument}
+       */
+      argParser(fn) {
+        this.parseArg = fn;
+        return this;
+      }
+      /**
+       * Only allow argument value to be one of choices.
+       *
+       * @param {string[]} values
+       * @return {Argument}
+       */
+      choices(values) {
+        this.argChoices = values.slice();
+        this.parseArg = (arg, previous) => {
+          if (!this.argChoices.includes(arg)) {
+            throw new InvalidArgumentError2(
+              `Allowed choices are ${this.argChoices.join(", ")}.`
+            );
+          }
+          if (this.variadic) {
+            return this._concatValue(arg, previous);
+          }
+          return arg;
+        };
+        return this;
+      }
+      /**
+       * Make argument required.
+       *
+       * @returns {Argument}
+       */
+      argRequired() {
+        this.required = true;
+        return this;
+      }
+      /**
+       * Make argument optional.
+       *
+       * @returns {Argument}
+       */
+      argOptional() {
+        this.required = false;
+        return this;
+      }
+    };
+    function humanReadableArgName(arg) {
+      const nameOutput = arg.name() + (arg.variadic === true ? "..." : "");
+      return arg.required ? "<" + nameOutput + ">" : "[" + nameOutput + "]";
+    }
+    exports.Argument = Argument2;
+    exports.humanReadableArgName = humanReadableArgName;
+  }
+});
+
+// node_modules/commander/lib/help.js
+var require_help = __commonJS({
+  "node_modules/commander/lib/help.js"(exports) {
+    var { humanReadableArgName } = require_argument();
+    var Help2 = class {
+      constructor() {
+        this.helpWidth = void 0;
+        this.sortSubcommands = false;
+        this.sortOptions = false;
+        this.showGlobalOptions = false;
+      }
+      /**
+       * Get an array of the visible subcommands. Includes a placeholder for the implicit help command, if there is one.
+       *
+       * @param {Command} cmd
+       * @returns {Command[]}
+       */
+      visibleCommands(cmd) {
+        const visibleCommands = cmd.commands.filter((cmd2) => !cmd2._hidden);
+        const helpCommand = cmd._getHelpCommand();
+        if (helpCommand && !helpCommand._hidden) {
+          visibleCommands.push(helpCommand);
+        }
+        if (this.sortSubcommands) {
+          visibleCommands.sort((a, b) => {
+            return a.name().localeCompare(b.name());
+          });
+        }
+        return visibleCommands;
+      }
+      /**
+       * Compare options for sort.
+       *
+       * @param {Option} a
+       * @param {Option} b
+       * @returns {number}
+       */
+      compareOptions(a, b) {
+        const getSortKey = (option) => {
+          return option.short ? option.short.replace(/^-/, "") : option.long.replace(/^--/, "");
+        };
+        return getSortKey(a).localeCompare(getSortKey(b));
+      }
+      /**
+       * Get an array of the visible options. Includes a placeholder for the implicit help option, if there is one.
+       *
+       * @param {Command} cmd
+       * @returns {Option[]}
+       */
+      visibleOptions(cmd) {
+        const visibleOptions = cmd.options.filter((option) => !option.hidden);
+        const helpOption = cmd._getHelpOption();
+        if (helpOption && !helpOption.hidden) {
+          const removeShort = helpOption.short && cmd._findOption(helpOption.short);
+          const removeLong = helpOption.long && cmd._findOption(helpOption.long);
+          if (!removeShort && !removeLong) {
+            visibleOptions.push(helpOption);
+          } else if (helpOption.long && !removeLong) {
+            visibleOptions.push(
+              cmd.createOption(helpOption.long, helpOption.description)
+            );
+          } else if (helpOption.short && !removeShort) {
+            visibleOptions.push(
+              cmd.createOption(helpOption.short, helpOption.description)
+            );
+          }
+        }
+        if (this.sortOptions) {
+          visibleOptions.sort(this.compareOptions);
+        }
+        return visibleOptions;
+      }
+      /**
+       * Get an array of the visible global options. (Not including help.)
+       *
+       * @param {Command} cmd
+       * @returns {Option[]}
+       */
+      visibleGlobalOptions(cmd) {
+        if (!this.showGlobalOptions) return [];
+        const globalOptions = [];
+        for (let ancestorCmd = cmd.parent; ancestorCmd; ancestorCmd = ancestorCmd.parent) {
+          const visibleOptions = ancestorCmd.options.filter(
+            (option) => !option.hidden
+          );
+          globalOptions.push(...visibleOptions);
+        }
+        if (this.sortOptions) {
+          globalOptions.sort(this.compareOptions);
+        }
+        return globalOptions;
+      }
+      /**
+       * Get an array of the arguments if any have a description.
+       *
+       * @param {Command} cmd
+       * @returns {Argument[]}
+       */
+      visibleArguments(cmd) {
+        if (cmd._argsDescription) {
+          cmd.registeredArguments.forEach((argument) => {
+            argument.description = argument.description || cmd._argsDescription[argument.name()] || "";
+          });
+        }
+        if (cmd.registeredArguments.find((argument) => argument.description)) {
+          return cmd.registeredArguments;
+        }
+        return [];
+      }
+      /**
+       * Get the command term to show in the list of subcommands.
+       *
+       * @param {Command} cmd
+       * @returns {string}
+       */
+      subcommandTerm(cmd) {
+        const args = cmd.registeredArguments.map((arg) => humanReadableArgName(arg)).join(" ");
+        return cmd._name + (cmd._aliases[0] ? "|" + cmd._aliases[0] : "") + (cmd.options.length ? " [options]" : "") + // simplistic check for non-help option
+        (args ? " " + args : "");
+      }
+      /**
+       * Get the option term to show in the list of options.
+       *
+       * @param {Option} option
+       * @returns {string}
+       */
+      optionTerm(option) {
+        return option.flags;
+      }
+      /**
+       * Get the argument term to show in the list of arguments.
+       *
+       * @param {Argument} argument
+       * @returns {string}
+       */
+      argumentTerm(argument) {
+        return argument.name();
+      }
+      /**
+       * Get the longest command term length.
+       *
+       * @param {Command} cmd
+       * @param {Help} helper
+       * @returns {number}
+       */
+      longestSubcommandTermLength(cmd, helper) {
+        return helper.visibleCommands(cmd).reduce((max, command) => {
+          return Math.max(max, helper.subcommandTerm(command).length);
+        }, 0);
+      }
+      /**
+       * Get the longest option term length.
+       *
+       * @param {Command} cmd
+       * @param {Help} helper
+       * @returns {number}
+       */
+      longestOptionTermLength(cmd, helper) {
+        return helper.visibleOptions(cmd).reduce((max, option) => {
+          return Math.max(max, helper.optionTerm(option).length);
+        }, 0);
+      }
+      /**
+       * Get the longest global option term length.
+       *
+       * @param {Command} cmd
+       * @param {Help} helper
+       * @returns {number}
+       */
+      longestGlobalOptionTermLength(cmd, helper) {
+        return helper.visibleGlobalOptions(cmd).reduce((max, option) => {
+          return Math.max(max, helper.optionTerm(option).length);
+        }, 0);
+      }
+      /**
+       * Get the longest argument term length.
+       *
+       * @param {Command} cmd
+       * @param {Help} helper
+       * @returns {number}
+       */
+      longestArgumentTermLength(cmd, helper) {
+        return helper.visibleArguments(cmd).reduce((max, argument) => {
+          return Math.max(max, helper.argumentTerm(argument).length);
+        }, 0);
+      }
+      /**
+       * Get the command usage to be displayed at the top of the built-in help.
+       *
+       * @param {Command} cmd
+       * @returns {string}
+       */
+      commandUsage(cmd) {
+        let cmdName = cmd._name;
+        if (cmd._aliases[0]) {
+          cmdName = cmdName + "|" + cmd._aliases[0];
+        }
+        let ancestorCmdNames = "";
+        for (let ancestorCmd = cmd.parent; ancestorCmd; ancestorCmd = ancestorCmd.parent) {
+          ancestorCmdNames = ancestorCmd.name() + " " + ancestorCmdNames;
+        }
+        return ancestorCmdNames + cmdName + " " + cmd.usage();
+      }
+      /**
+       * Get the description for the command.
+       *
+       * @param {Command} cmd
+       * @returns {string}
+       */
+      commandDescription(cmd) {
+        return cmd.description();
+      }
+      /**
+       * Get the subcommand summary to show in the list of subcommands.
+       * (Fallback to description for backwards compatibility.)
+       *
+       * @param {Command} cmd
+       * @returns {string}
+       */
+      subcommandDescription(cmd) {
+        return cmd.summary() || cmd.description();
+      }
+      /**
+       * Get the option description to show in the list of options.
+       *
+       * @param {Option} option
+       * @return {string}
+       */
+      optionDescription(option) {
+        const extraInfo = [];
+        if (option.argChoices) {
+          extraInfo.push(
+            // use stringify to match the display of the default value
+            `choices: ${option.argChoices.map((choice) => JSON.stringify(choice)).join(", ")}`
+          );
+        }
+        if (option.defaultValue !== void 0) {
+          const showDefault = option.required || option.optional || option.isBoolean() && typeof option.defaultValue === "boolean";
+          if (showDefault) {
+            extraInfo.push(
+              `default: ${option.defaultValueDescription || JSON.stringify(option.defaultValue)}`
+            );
+          }
+        }
+        if (option.presetArg !== void 0 && option.optional) {
+          extraInfo.push(`preset: ${JSON.stringify(option.presetArg)}`);
+        }
+        if (option.envVar !== void 0) {
+          extraInfo.push(`env: ${option.envVar}`);
+        }
+        if (extraInfo.length > 0) {
+          return `${option.description} (${extraInfo.join(", ")})`;
+        }
+        return option.description;
+      }
+      /**
+       * Get the argument description to show in the list of arguments.
+       *
+       * @param {Argument} argument
+       * @return {string}
+       */
+      argumentDescription(argument) {
+        const extraInfo = [];
+        if (argument.argChoices) {
+          extraInfo.push(
+            // use stringify to match the display of the default value
+            `choices: ${argument.argChoices.map((choice) => JSON.stringify(choice)).join(", ")}`
+          );
+        }
+        if (argument.defaultValue !== void 0) {
+          extraInfo.push(
+            `default: ${argument.defaultValueDescription || JSON.stringify(argument.defaultValue)}`
+          );
+        }
+        if (extraInfo.length > 0) {
+          const extraDescripton = `(${extraInfo.join(", ")})`;
+          if (argument.description) {
+            return `${argument.description} ${extraDescripton}`;
+          }
+          return extraDescripton;
+        }
+        return argument.description;
+      }
+      /**
+       * Generate the built-in help text.
+       *
+       * @param {Command} cmd
+       * @param {Help} helper
+       * @returns {string}
+       */
+      formatHelp(cmd, helper) {
+        const termWidth = helper.padWidth(cmd, helper);
+        const helpWidth = helper.helpWidth || 80;
+        const itemIndentWidth = 2;
+        const itemSeparatorWidth = 2;
+        function formatItem(term, description) {
+          if (description) {
+            const fullText = `${term.padEnd(termWidth + itemSeparatorWidth)}${description}`;
+            return helper.wrap(
+              fullText,
+              helpWidth - itemIndentWidth,
+              termWidth + itemSeparatorWidth
+            );
+          }
+          return term;
+        }
+        function formatList(textArray) {
+          return textArray.join("\n").replace(/^/gm, " ".repeat(itemIndentWidth));
+        }
+        let output = [`Usage: ${helper.commandUsage(cmd)}`, ""];
+        const commandDescription = helper.commandDescription(cmd);
+        if (commandDescription.length > 0) {
+          output = output.concat([
+            helper.wrap(commandDescription, helpWidth, 0),
+            ""
+          ]);
+        }
+        const argumentList = helper.visibleArguments(cmd).map((argument) => {
+          return formatItem(
+            helper.argumentTerm(argument),
+            helper.argumentDescription(argument)
+          );
+        });
+        if (argumentList.length > 0) {
+          output = output.concat(["Arguments:", formatList(argumentList), ""]);
+        }
+        const optionList = helper.visibleOptions(cmd).map((option) => {
+          return formatItem(
+            helper.optionTerm(option),
+            helper.optionDescription(option)
+          );
+        });
+        if (optionList.length > 0) {
+          output = output.concat(["Options:", formatList(optionList), ""]);
+        }
+        if (this.showGlobalOptions) {
+          const globalOptionList = helper.visibleGlobalOptions(cmd).map((option) => {
+            return formatItem(
+              helper.optionTerm(option),
+              helper.optionDescription(option)
+            );
+          });
+          if (globalOptionList.length > 0) {
+            output = output.concat([
+              "Global Options:",
+              formatList(globalOptionList),
+              ""
+            ]);
+          }
+        }
+        const commandList = helper.visibleCommands(cmd).map((cmd2) => {
+          return formatItem(
+            helper.subcommandTerm(cmd2),
+            helper.subcommandDescription(cmd2)
+          );
+        });
+        if (commandList.length > 0) {
+          output = output.concat(["Commands:", formatList(commandList), ""]);
+        }
+        return output.join("\n");
+      }
+      /**
+       * Calculate the pad width from the maximum term length.
+       *
+       * @param {Command} cmd
+       * @param {Help} helper
+       * @returns {number}
+       */
+      padWidth(cmd, helper) {
+        return Math.max(
+          helper.longestOptionTermLength(cmd, helper),
+          helper.longestGlobalOptionTermLength(cmd, helper),
+          helper.longestSubcommandTermLength(cmd, helper),
+          helper.longestArgumentTermLength(cmd, helper)
+        );
+      }
+      /**
+       * Wrap the given string to width characters per line, with lines after the first indented.
+       * Do not wrap if insufficient room for wrapping (minColumnWidth), or string is manually formatted.
+       *
+       * @param {string} str
+       * @param {number} width
+       * @param {number} indent
+       * @param {number} [minColumnWidth=40]
+       * @return {string}
+       *
+       */
+      wrap(str, width, indent, minColumnWidth = 40) {
+        const indents = " \\f\\t\\v\xA0\u1680\u2000-\u200A\u202F\u205F\u3000\uFEFF";
+        const manualIndent = new RegExp(`[\\n][${indents}]+`);
+        if (str.match(manualIndent)) return str;
+        const columnWidth = width - indent;
+        if (columnWidth < minColumnWidth) return str;
+        const leadingStr = str.slice(0, indent);
+        const columnText = str.slice(indent).replace("\r\n", "\n");
+        const indentString = " ".repeat(indent);
+        const zeroWidthSpace = "\u200B";
+        const breaks = `\\s${zeroWidthSpace}`;
+        const regex = new RegExp(
+          `
+|.{1,${columnWidth - 1}}([${breaks}]|$)|[^${breaks}]+?([${breaks}]|$)`,
+          "g"
+        );
+        const lines = columnText.match(regex) || [];
+        return leadingStr + lines.map((line, i) => {
+          if (line === "\n") return "";
+          return (i > 0 ? indentString : "") + line.trimEnd();
+        }).join("\n");
+      }
+    };
+    exports.Help = Help2;
+  }
+});
+
+// node_modules/commander/lib/option.js
+var require_option = __commonJS({
+  "node_modules/commander/lib/option.js"(exports) {
+    var { InvalidArgumentError: InvalidArgumentError2 } = require_error();
+    var Option2 = class {
+      /**
+       * Initialize a new `Option` with the given `flags` and `description`.
+       *
+       * @param {string} flags
+       * @param {string} [description]
+       */
+      constructor(flags, description) {
+        this.flags = flags;
+        this.description = description || "";
+        this.required = flags.includes("<");
+        this.optional = flags.includes("[");
+        this.variadic = /\w\.\.\.[>\]]$/.test(flags);
+        this.mandatory = false;
+        const optionFlags = splitOptionFlags(flags);
+        this.short = optionFlags.shortFlag;
+        this.long = optionFlags.longFlag;
+        this.negate = false;
+        if (this.long) {
+          this.negate = this.long.startsWith("--no-");
+        }
+        this.defaultValue = void 0;
+        this.defaultValueDescription = void 0;
+        this.presetArg = void 0;
+        this.envVar = void 0;
+        this.parseArg = void 0;
+        this.hidden = false;
+        this.argChoices = void 0;
+        this.conflictsWith = [];
+        this.implied = void 0;
+      }
+      /**
+       * Set the default value, and optionally supply the description to be displayed in the help.
+       *
+       * @param {*} value
+       * @param {string} [description]
+       * @return {Option}
+       */
+      default(value, description) {
+        this.defaultValue = value;
+        this.defaultValueDescription = description;
+        return this;
+      }
+      /**
+       * Preset to use when option used without option-argument, especially optional but also boolean and negated.
+       * The custom processing (parseArg) is called.
+       *
+       * @example
+       * new Option('--color').default('GREYSCALE').preset('RGB');
+       * new Option('--donate [amount]').preset('20').argParser(parseFloat);
+       *
+       * @param {*} arg
+       * @return {Option}
+       */
+      preset(arg) {
+        this.presetArg = arg;
+        return this;
+      }
+      /**
+       * Add option name(s) that conflict with this option.
+       * An error will be displayed if conflicting options are found during parsing.
+       *
+       * @example
+       * new Option('--rgb').conflicts('cmyk');
+       * new Option('--js').conflicts(['ts', 'jsx']);
+       *
+       * @param {(string | string[])} names
+       * @return {Option}
+       */
+      conflicts(names) {
+        this.conflictsWith = this.conflictsWith.concat(names);
+        return this;
+      }
+      /**
+       * Specify implied option values for when this option is set and the implied options are not.
+       *
+       * The custom processing (parseArg) is not called on the implied values.
+       *
+       * @example
+       * program
+       *   .addOption(new Option('--log', 'write logging information to file'))
+       *   .addOption(new Option('--trace', 'log extra details').implies({ log: 'trace.txt' }));
+       *
+       * @param {object} impliedOptionValues
+       * @return {Option}
+       */
+      implies(impliedOptionValues) {
+        let newImplied = impliedOptionValues;
+        if (typeof impliedOptionValues === "string") {
+          newImplied = { [impliedOptionValues]: true };
+        }
+        this.implied = Object.assign(this.implied || {}, newImplied);
+        return this;
+      }
+      /**
+       * Set environment variable to check for option value.
+       *
+       * An environment variable is only used if when processed the current option value is
+       * undefined, or the source of the current value is 'default' or 'config' or 'env'.
+       *
+       * @param {string} name
+       * @return {Option}
+       */
+      env(name) {
+        this.envVar = name;
+        return this;
+      }
+      /**
+       * Set the custom handler for processing CLI option arguments into option values.
+       *
+       * @param {Function} [fn]
+       * @return {Option}
+       */
+      argParser(fn) {
+        this.parseArg = fn;
+        return this;
+      }
+      /**
+       * Whether the option is mandatory and must have a value after parsing.
+       *
+       * @param {boolean} [mandatory=true]
+       * @return {Option}
+       */
+      makeOptionMandatory(mandatory = true) {
+        this.mandatory = !!mandatory;
+        return this;
+      }
+      /**
+       * Hide option in help.
+       *
+       * @param {boolean} [hide=true]
+       * @return {Option}
+       */
+      hideHelp(hide = true) {
+        this.hidden = !!hide;
+        return this;
+      }
+      /**
+       * @package
+       */
+      _concatValue(value, previous) {
+        if (previous === this.defaultValue || !Array.isArray(previous)) {
+          return [value];
+        }
+        return previous.concat(value);
+      }
+      /**
+       * Only allow option value to be one of choices.
+       *
+       * @param {string[]} values
+       * @return {Option}
+       */
+      choices(values) {
+        this.argChoices = values.slice();
+        this.parseArg = (arg, previous) => {
+          if (!this.argChoices.includes(arg)) {
+            throw new InvalidArgumentError2(
+              `Allowed choices are ${this.argChoices.join(", ")}.`
+            );
+          }
+          if (this.variadic) {
+            return this._concatValue(arg, previous);
+          }
+          return arg;
+        };
+        return this;
+      }
+      /**
+       * Return option name.
+       *
+       * @return {string}
+       */
+      name() {
+        if (this.long) {
+          return this.long.replace(/^--/, "");
+        }
+        return this.short.replace(/^-/, "");
+      }
+      /**
+       * Return option name, in a camelcase format that can be used
+       * as a object attribute key.
+       *
+       * @return {string}
+       */
+      attributeName() {
+        return camelcase(this.name().replace(/^no-/, ""));
+      }
+      /**
+       * Check if `arg` matches the short or long flag.
+       *
+       * @param {string} arg
+       * @return {boolean}
+       * @package
+       */
+      is(arg) {
+        return this.short === arg || this.long === arg;
+      }
+      /**
+       * Return whether a boolean option.
+       *
+       * Options are one of boolean, negated, required argument, or optional argument.
+       *
+       * @return {boolean}
+       * @package
+       */
+      isBoolean() {
+        return !this.required && !this.optional && !this.negate;
+      }
+    };
+    var DualOptions = class {
+      /**
+       * @param {Option[]} options
+       */
+      constructor(options) {
+        this.positiveOptions = /* @__PURE__ */ new Map();
+        this.negativeOptions = /* @__PURE__ */ new Map();
+        this.dualOptions = /* @__PURE__ */ new Set();
+        options.forEach((option) => {
+          if (option.negate) {
+            this.negativeOptions.set(option.attributeName(), option);
+          } else {
+            this.positiveOptions.set(option.attributeName(), option);
+          }
+        });
+        this.negativeOptions.forEach((value, key) => {
+          if (this.positiveOptions.has(key)) {
+            this.dualOptions.add(key);
+          }
+        });
+      }
+      /**
+       * Did the value come from the option, and not from possible matching dual option?
+       *
+       * @param {*} value
+       * @param {Option} option
+       * @returns {boolean}
+       */
+      valueFromOption(value, option) {
+        const optionKey = option.attributeName();
+        if (!this.dualOptions.has(optionKey)) return true;
+        const preset = this.negativeOptions.get(optionKey).presetArg;
+        const negativeValue = preset !== void 0 ? preset : false;
+        return option.negate === (negativeValue === value);
+      }
+    };
+    function camelcase(str) {
+      return str.split("-").reduce((str2, word) => {
+        return str2 + word[0].toUpperCase() + word.slice(1);
+      });
+    }
+    function splitOptionFlags(flags) {
+      let shortFlag;
+      let longFlag;
+      const flagParts = flags.split(/[ |,]+/);
+      if (flagParts.length > 1 && !/^[[<]/.test(flagParts[1]))
+        shortFlag = flagParts.shift();
+      longFlag = flagParts.shift();
+      if (!shortFlag && /^-[^-]$/.test(longFlag)) {
+        shortFlag = longFlag;
+        longFlag = void 0;
+      }
+      return { shortFlag, longFlag };
+    }
+    exports.Option = Option2;
+    exports.DualOptions = DualOptions;
+  }
+});
+
+// node_modules/commander/lib/suggestSimilar.js
+var require_suggestSimilar = __commonJS({
+  "node_modules/commander/lib/suggestSimilar.js"(exports) {
+    var maxDistance = 3;
+    function editDistance(a, b) {
+      if (Math.abs(a.length - b.length) > maxDistance)
+        return Math.max(a.length, b.length);
+      const d = [];
+      for (let i = 0; i <= a.length; i++) {
+        d[i] = [i];
+      }
+      for (let j = 0; j <= b.length; j++) {
+        d[0][j] = j;
+      }
+      for (let j = 1; j <= b.length; j++) {
+        for (let i = 1; i <= a.length; i++) {
+          let cost = 1;
+          if (a[i - 1] === b[j - 1]) {
+            cost = 0;
+          } else {
+            cost = 1;
+          }
+          d[i][j] = Math.min(
+            d[i - 1][j] + 1,
+            // deletion
+            d[i][j - 1] + 1,
+            // insertion
+            d[i - 1][j - 1] + cost
+            // substitution
+          );
+          if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+            d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+          }
+        }
+      }
+      return d[a.length][b.length];
+    }
+    function suggestSimilar(word, candidates) {
+      if (!candidates || candidates.length === 0) return "";
+      candidates = Array.from(new Set(candidates));
+      const searchingOptions = word.startsWith("--");
+      if (searchingOptions) {
+        word = word.slice(2);
+        candidates = candidates.map((candidate) => candidate.slice(2));
+      }
+      let similar = [];
+      let bestDistance = maxDistance;
+      const minSimilarity = 0.4;
+      candidates.forEach((candidate) => {
+        if (candidate.length <= 1) return;
+        const distance = editDistance(word, candidate);
+        const length = Math.max(word.length, candidate.length);
+        const similarity = (length - distance) / length;
+        if (similarity > minSimilarity) {
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            similar = [candidate];
+          } else if (distance === bestDistance) {
+            similar.push(candidate);
+          }
+        }
+      });
+      similar.sort((a, b) => a.localeCompare(b));
+      if (searchingOptions) {
+        similar = similar.map((candidate) => `--${candidate}`);
+      }
+      if (similar.length > 1) {
+        return `
+(Did you mean one of ${similar.join(", ")}?)`;
+      }
+      if (similar.length === 1) {
+        return `
+(Did you mean ${similar[0]}?)`;
+      }
+      return "";
+    }
+    exports.suggestSimilar = suggestSimilar;
+  }
+});
+
+// node_modules/commander/lib/command.js
+var require_command = __commonJS({
+  "node_modules/commander/lib/command.js"(exports) {
+    var EventEmitter = __require("node:events").EventEmitter;
+    var childProcess = __require("node:child_process");
+    var path20 = __require("node:path");
+    var fs3 = __require("node:fs");
+    var process3 = __require("node:process");
+    var { Argument: Argument2, humanReadableArgName } = require_argument();
+    var { CommanderError: CommanderError2 } = require_error();
+    var { Help: Help2 } = require_help();
+    var { Option: Option2, DualOptions } = require_option();
+    var { suggestSimilar } = require_suggestSimilar();
+    var Command2 = class _Command extends EventEmitter {
+      /**
+       * Initialize a new `Command`.
+       *
+       * @param {string} [name]
+       */
+      constructor(name) {
+        super();
+        this.commands = [];
+        this.options = [];
+        this.parent = null;
+        this._allowUnknownOption = false;
+        this._allowExcessArguments = true;
+        this.registeredArguments = [];
+        this._args = this.registeredArguments;
+        this.args = [];
+        this.rawArgs = [];
+        this.processedArgs = [];
+        this._scriptPath = null;
+        this._name = name || "";
+        this._optionValues = {};
+        this._optionValueSources = {};
+        this._storeOptionsAsProperties = false;
+        this._actionHandler = null;
+        this._executableHandler = false;
+        this._executableFile = null;
+        this._executableDir = null;
+        this._defaultCommandName = null;
+        this._exitCallback = null;
+        this._aliases = [];
+        this._combineFlagAndOptionalValue = true;
+        this._description = "";
+        this._summary = "";
+        this._argsDescription = void 0;
+        this._enablePositionalOptions = false;
+        this._passThroughOptions = false;
+        this._lifeCycleHooks = {};
+        this._showHelpAfterError = false;
+        this._showSuggestionAfterError = true;
+        this._outputConfiguration = {
+          writeOut: (str) => process3.stdout.write(str),
+          writeErr: (str) => process3.stderr.write(str),
+          getOutHelpWidth: () => process3.stdout.isTTY ? process3.stdout.columns : void 0,
+          getErrHelpWidth: () => process3.stderr.isTTY ? process3.stderr.columns : void 0,
+          outputError: (str, write) => write(str)
+        };
+        this._hidden = false;
+        this._helpOption = void 0;
+        this._addImplicitHelpCommand = void 0;
+        this._helpCommand = void 0;
+        this._helpConfiguration = {};
+      }
+      /**
+       * Copy settings that are useful to have in common across root command and subcommands.
+       *
+       * (Used internally when adding a command using `.command()` so subcommands inherit parent settings.)
+       *
+       * @param {Command} sourceCommand
+       * @return {Command} `this` command for chaining
+       */
+      copyInheritedSettings(sourceCommand) {
+        this._outputConfiguration = sourceCommand._outputConfiguration;
+        this._helpOption = sourceCommand._helpOption;
+        this._helpCommand = sourceCommand._helpCommand;
+        this._helpConfiguration = sourceCommand._helpConfiguration;
+        this._exitCallback = sourceCommand._exitCallback;
+        this._storeOptionsAsProperties = sourceCommand._storeOptionsAsProperties;
+        this._combineFlagAndOptionalValue = sourceCommand._combineFlagAndOptionalValue;
+        this._allowExcessArguments = sourceCommand._allowExcessArguments;
+        this._enablePositionalOptions = sourceCommand._enablePositionalOptions;
+        this._showHelpAfterError = sourceCommand._showHelpAfterError;
+        this._showSuggestionAfterError = sourceCommand._showSuggestionAfterError;
+        return this;
+      }
+      /**
+       * @returns {Command[]}
+       * @private
+       */
+      _getCommandAndAncestors() {
+        const result = [];
+        for (let command = this; command; command = command.parent) {
+          result.push(command);
+        }
+        return result;
+      }
+      /**
+       * Define a command.
+       *
+       * There are two styles of command: pay attention to where to put the description.
+       *
+       * @example
+       * // Command implemented using action handler (description is supplied separately to `.command`)
+       * program
+       *   .command('clone <source> [destination]')
+       *   .description('clone a repository into a newly created directory')
+       *   .action((source, destination) => {
+       *     console.log('clone command called');
+       *   });
+       *
+       * // Command implemented using separate executable file (description is second parameter to `.command`)
+       * program
+       *   .command('start <service>', 'start named service')
+       *   .command('stop [service]', 'stop named service, or all if no name supplied');
+       *
+       * @param {string} nameAndArgs - command name and arguments, args are `<required>` or `[optional]` and last may also be `variadic...`
+       * @param {(object | string)} [actionOptsOrExecDesc] - configuration options (for action), or description (for executable)
+       * @param {object} [execOpts] - configuration options (for executable)
+       * @return {Command} returns new command for action handler, or `this` for executable command
+       */
+      command(nameAndArgs, actionOptsOrExecDesc, execOpts) {
+        let desc = actionOptsOrExecDesc;
+        let opts = execOpts;
+        if (typeof desc === "object" && desc !== null) {
+          opts = desc;
+          desc = null;
+        }
+        opts = opts || {};
+        const [, name, args] = nameAndArgs.match(/([^ ]+) *(.*)/);
+        const cmd = this.createCommand(name);
+        if (desc) {
+          cmd.description(desc);
+          cmd._executableHandler = true;
+        }
+        if (opts.isDefault) this._defaultCommandName = cmd._name;
+        cmd._hidden = !!(opts.noHelp || opts.hidden);
+        cmd._executableFile = opts.executableFile || null;
+        if (args) cmd.arguments(args);
+        this._registerCommand(cmd);
+        cmd.parent = this;
+        cmd.copyInheritedSettings(this);
+        if (desc) return this;
+        return cmd;
+      }
+      /**
+       * Factory routine to create a new unattached command.
+       *
+       * See .command() for creating an attached subcommand, which uses this routine to
+       * create the command. You can override createCommand to customise subcommands.
+       *
+       * @param {string} [name]
+       * @return {Command} new command
+       */
+      createCommand(name) {
+        return new _Command(name);
+      }
+      /**
+       * You can customise the help with a subclass of Help by overriding createHelp,
+       * or by overriding Help properties using configureHelp().
+       *
+       * @return {Help}
+       */
+      createHelp() {
+        return Object.assign(new Help2(), this.configureHelp());
+      }
+      /**
+       * You can customise the help by overriding Help properties using configureHelp(),
+       * or with a subclass of Help by overriding createHelp().
+       *
+       * @param {object} [configuration] - configuration options
+       * @return {(Command | object)} `this` command for chaining, or stored configuration
+       */
+      configureHelp(configuration) {
+        if (configuration === void 0) return this._helpConfiguration;
+        this._helpConfiguration = configuration;
+        return this;
+      }
+      /**
+       * The default output goes to stdout and stderr. You can customise this for special
+       * applications. You can also customise the display of errors by overriding outputError.
+       *
+       * The configuration properties are all functions:
+       *
+       *     // functions to change where being written, stdout and stderr
+       *     writeOut(str)
+       *     writeErr(str)
+       *     // matching functions to specify width for wrapping help
+       *     getOutHelpWidth()
+       *     getErrHelpWidth()
+       *     // functions based on what is being written out
+       *     outputError(str, write) // used for displaying errors, and not used for displaying help
+       *
+       * @param {object} [configuration] - configuration options
+       * @return {(Command | object)} `this` command for chaining, or stored configuration
+       */
+      configureOutput(configuration) {
+        if (configuration === void 0) return this._outputConfiguration;
+        Object.assign(this._outputConfiguration, configuration);
+        return this;
+      }
+      /**
+       * Display the help or a custom message after an error occurs.
+       *
+       * @param {(boolean|string)} [displayHelp]
+       * @return {Command} `this` command for chaining
+       */
+      showHelpAfterError(displayHelp = true) {
+        if (typeof displayHelp !== "string") displayHelp = !!displayHelp;
+        this._showHelpAfterError = displayHelp;
+        return this;
+      }
+      /**
+       * Display suggestion of similar commands for unknown commands, or options for unknown options.
+       *
+       * @param {boolean} [displaySuggestion]
+       * @return {Command} `this` command for chaining
+       */
+      showSuggestionAfterError(displaySuggestion = true) {
+        this._showSuggestionAfterError = !!displaySuggestion;
+        return this;
+      }
+      /**
+       * Add a prepared subcommand.
+       *
+       * See .command() for creating an attached subcommand which inherits settings from its parent.
+       *
+       * @param {Command} cmd - new subcommand
+       * @param {object} [opts] - configuration options
+       * @return {Command} `this` command for chaining
+       */
+      addCommand(cmd, opts) {
+        if (!cmd._name) {
+          throw new Error(`Command passed to .addCommand() must have a name
+- specify the name in Command constructor or using .name()`);
+        }
+        opts = opts || {};
+        if (opts.isDefault) this._defaultCommandName = cmd._name;
+        if (opts.noHelp || opts.hidden) cmd._hidden = true;
+        this._registerCommand(cmd);
+        cmd.parent = this;
+        cmd._checkForBrokenPassThrough();
+        return this;
+      }
+      /**
+       * Factory routine to create a new unattached argument.
+       *
+       * See .argument() for creating an attached argument, which uses this routine to
+       * create the argument. You can override createArgument to return a custom argument.
+       *
+       * @param {string} name
+       * @param {string} [description]
+       * @return {Argument} new argument
+       */
+      createArgument(name, description) {
+        return new Argument2(name, description);
+      }
+      /**
+       * Define argument syntax for command.
+       *
+       * The default is that the argument is required, and you can explicitly
+       * indicate this with <> around the name. Put [] around the name for an optional argument.
+       *
+       * @example
+       * program.argument('<input-file>');
+       * program.argument('[output-file]');
+       *
+       * @param {string} name
+       * @param {string} [description]
+       * @param {(Function|*)} [fn] - custom argument processing function
+       * @param {*} [defaultValue]
+       * @return {Command} `this` command for chaining
+       */
+      argument(name, description, fn, defaultValue) {
+        const argument = this.createArgument(name, description);
+        if (typeof fn === "function") {
+          argument.default(defaultValue).argParser(fn);
+        } else {
+          argument.default(fn);
+        }
+        this.addArgument(argument);
+        return this;
+      }
+      /**
+       * Define argument syntax for command, adding multiple at once (without descriptions).
+       *
+       * See also .argument().
+       *
+       * @example
+       * program.arguments('<cmd> [env]');
+       *
+       * @param {string} names
+       * @return {Command} `this` command for chaining
+       */
+      arguments(names) {
+        names.trim().split(/ +/).forEach((detail2) => {
+          this.argument(detail2);
+        });
+        return this;
+      }
+      /**
+       * Define argument syntax for command, adding a prepared argument.
+       *
+       * @param {Argument} argument
+       * @return {Command} `this` command for chaining
+       */
+      addArgument(argument) {
+        const previousArgument = this.registeredArguments.slice(-1)[0];
+        if (previousArgument && previousArgument.variadic) {
+          throw new Error(
+            `only the last argument can be variadic '${previousArgument.name()}'`
+          );
+        }
+        if (argument.required && argument.defaultValue !== void 0 && argument.parseArg === void 0) {
+          throw new Error(
+            `a default value for a required argument is never used: '${argument.name()}'`
+          );
+        }
+        this.registeredArguments.push(argument);
+        return this;
+      }
+      /**
+       * Customise or override default help command. By default a help command is automatically added if your command has subcommands.
+       *
+       * @example
+       *    program.helpCommand('help [cmd]');
+       *    program.helpCommand('help [cmd]', 'show help');
+       *    program.helpCommand(false); // suppress default help command
+       *    program.helpCommand(true); // add help command even if no subcommands
+       *
+       * @param {string|boolean} enableOrNameAndArgs - enable with custom name and/or arguments, or boolean to override whether added
+       * @param {string} [description] - custom description
+       * @return {Command} `this` command for chaining
+       */
+      helpCommand(enableOrNameAndArgs, description) {
+        if (typeof enableOrNameAndArgs === "boolean") {
+          this._addImplicitHelpCommand = enableOrNameAndArgs;
+          return this;
+        }
+        enableOrNameAndArgs = enableOrNameAndArgs ?? "help [command]";
+        const [, helpName, helpArgs] = enableOrNameAndArgs.match(/([^ ]+) *(.*)/);
+        const helpDescription = description ?? "display help for command";
+        const helpCommand = this.createCommand(helpName);
+        helpCommand.helpOption(false);
+        if (helpArgs) helpCommand.arguments(helpArgs);
+        if (helpDescription) helpCommand.description(helpDescription);
+        this._addImplicitHelpCommand = true;
+        this._helpCommand = helpCommand;
+        return this;
+      }
+      /**
+       * Add prepared custom help command.
+       *
+       * @param {(Command|string|boolean)} helpCommand - custom help command, or deprecated enableOrNameAndArgs as for `.helpCommand()`
+       * @param {string} [deprecatedDescription] - deprecated custom description used with custom name only
+       * @return {Command} `this` command for chaining
+       */
+      addHelpCommand(helpCommand, deprecatedDescription) {
+        if (typeof helpCommand !== "object") {
+          this.helpCommand(helpCommand, deprecatedDescription);
+          return this;
+        }
+        this._addImplicitHelpCommand = true;
+        this._helpCommand = helpCommand;
+        return this;
+      }
+      /**
+       * Lazy create help command.
+       *
+       * @return {(Command|null)}
+       * @package
+       */
+      _getHelpCommand() {
+        const hasImplicitHelpCommand = this._addImplicitHelpCommand ?? (this.commands.length && !this._actionHandler && !this._findCommand("help"));
+        if (hasImplicitHelpCommand) {
+          if (this._helpCommand === void 0) {
+            this.helpCommand(void 0, void 0);
+          }
+          return this._helpCommand;
+        }
+        return null;
+      }
+      /**
+       * Add hook for life cycle event.
+       *
+       * @param {string} event
+       * @param {Function} listener
+       * @return {Command} `this` command for chaining
+       */
+      hook(event, listener) {
+        const allowedValues = ["preSubcommand", "preAction", "postAction"];
+        if (!allowedValues.includes(event)) {
+          throw new Error(`Unexpected value for event passed to hook : '${event}'.
+Expecting one of '${allowedValues.join("', '")}'`);
+        }
+        if (this._lifeCycleHooks[event]) {
+          this._lifeCycleHooks[event].push(listener);
+        } else {
+          this._lifeCycleHooks[event] = [listener];
+        }
+        return this;
+      }
+      /**
+       * Register callback to use as replacement for calling process.exit.
+       *
+       * @param {Function} [fn] optional callback which will be passed a CommanderError, defaults to throwing
+       * @return {Command} `this` command for chaining
+       */
+      exitOverride(fn) {
+        if (fn) {
+          this._exitCallback = fn;
+        } else {
+          this._exitCallback = (err) => {
+            if (err.code !== "commander.executeSubCommandAsync") {
+              throw err;
+            } else {
+            }
+          };
+        }
+        return this;
+      }
+      /**
+       * Call process.exit, and _exitCallback if defined.
+       *
+       * @param {number} exitCode exit code for using with process.exit
+       * @param {string} code an id string representing the error
+       * @param {string} message human-readable description of the error
+       * @return never
+       * @private
+       */
+      _exit(exitCode, code, message) {
+        if (this._exitCallback) {
+          this._exitCallback(new CommanderError2(exitCode, code, message));
+        }
+        process3.exit(exitCode);
+      }
+      /**
+       * Register callback `fn` for the command.
+       *
+       * @example
+       * program
+       *   .command('serve')
+       *   .description('start service')
+       *   .action(function() {
+       *      // do work here
+       *   });
+       *
+       * @param {Function} fn
+       * @return {Command} `this` command for chaining
+       */
+      action(fn) {
+        const listener = (args) => {
+          const expectedArgsCount = this.registeredArguments.length;
+          const actionArgs = args.slice(0, expectedArgsCount);
+          if (this._storeOptionsAsProperties) {
+            actionArgs[expectedArgsCount] = this;
+          } else {
+            actionArgs[expectedArgsCount] = this.opts();
+          }
+          actionArgs.push(this);
+          return fn.apply(this, actionArgs);
+        };
+        this._actionHandler = listener;
+        return this;
+      }
+      /**
+       * Factory routine to create a new unattached option.
+       *
+       * See .option() for creating an attached option, which uses this routine to
+       * create the option. You can override createOption to return a custom option.
+       *
+       * @param {string} flags
+       * @param {string} [description]
+       * @return {Option} new option
+       */
+      createOption(flags, description) {
+        return new Option2(flags, description);
+      }
+      /**
+       * Wrap parseArgs to catch 'commander.invalidArgument'.
+       *
+       * @param {(Option | Argument)} target
+       * @param {string} value
+       * @param {*} previous
+       * @param {string} invalidArgumentMessage
+       * @private
+       */
+      _callParseArg(target, value, previous, invalidArgumentMessage) {
+        try {
+          return target.parseArg(value, previous);
+        } catch (err) {
+          if (err.code === "commander.invalidArgument") {
+            const message = `${invalidArgumentMessage} ${err.message}`;
+            this.error(message, { exitCode: err.exitCode, code: err.code });
+          }
+          throw err;
+        }
+      }
+      /**
+       * Check for option flag conflicts.
+       * Register option if no conflicts found, or throw on conflict.
+       *
+       * @param {Option} option
+       * @private
+       */
+      _registerOption(option) {
+        const matchingOption = option.short && this._findOption(option.short) || option.long && this._findOption(option.long);
+        if (matchingOption) {
+          const matchingFlag = option.long && this._findOption(option.long) ? option.long : option.short;
+          throw new Error(`Cannot add option '${option.flags}'${this._name && ` to command '${this._name}'`} due to conflicting flag '${matchingFlag}'
+-  already used by option '${matchingOption.flags}'`);
+        }
+        this.options.push(option);
+      }
+      /**
+       * Check for command name and alias conflicts with existing commands.
+       * Register command if no conflicts found, or throw on conflict.
+       *
+       * @param {Command} command
+       * @private
+       */
+      _registerCommand(command) {
+        const knownBy = (cmd) => {
+          return [cmd.name()].concat(cmd.aliases());
+        };
+        const alreadyUsed = knownBy(command).find(
+          (name) => this._findCommand(name)
+        );
+        if (alreadyUsed) {
+          const existingCmd = knownBy(this._findCommand(alreadyUsed)).join("|");
+          const newCmd = knownBy(command).join("|");
+          throw new Error(
+            `cannot add command '${newCmd}' as already have command '${existingCmd}'`
+          );
+        }
+        this.commands.push(command);
+      }
+      /**
+       * Add an option.
+       *
+       * @param {Option} option
+       * @return {Command} `this` command for chaining
+       */
+      addOption(option) {
+        this._registerOption(option);
+        const oname = option.name();
+        const name = option.attributeName();
+        if (option.negate) {
+          const positiveLongFlag = option.long.replace(/^--no-/, "--");
+          if (!this._findOption(positiveLongFlag)) {
+            this.setOptionValueWithSource(
+              name,
+              option.defaultValue === void 0 ? true : option.defaultValue,
+              "default"
+            );
+          }
+        } else if (option.defaultValue !== void 0) {
+          this.setOptionValueWithSource(name, option.defaultValue, "default");
+        }
+        const handleOptionValue = (val, invalidValueMessage, valueSource) => {
+          if (val == null && option.presetArg !== void 0) {
+            val = option.presetArg;
+          }
+          const oldValue = this.getOptionValue(name);
+          if (val !== null && option.parseArg) {
+            val = this._callParseArg(option, val, oldValue, invalidValueMessage);
+          } else if (val !== null && option.variadic) {
+            val = option._concatValue(val, oldValue);
+          }
+          if (val == null) {
+            if (option.negate) {
+              val = false;
+            } else if (option.isBoolean() || option.optional) {
+              val = true;
+            } else {
+              val = "";
+            }
+          }
+          this.setOptionValueWithSource(name, val, valueSource);
+        };
+        this.on("option:" + oname, (val) => {
+          const invalidValueMessage = `error: option '${option.flags}' argument '${val}' is invalid.`;
+          handleOptionValue(val, invalidValueMessage, "cli");
+        });
+        if (option.envVar) {
+          this.on("optionEnv:" + oname, (val) => {
+            const invalidValueMessage = `error: option '${option.flags}' value '${val}' from env '${option.envVar}' is invalid.`;
+            handleOptionValue(val, invalidValueMessage, "env");
+          });
+        }
+        return this;
+      }
+      /**
+       * Internal implementation shared by .option() and .requiredOption()
+       *
+       * @return {Command} `this` command for chaining
+       * @private
+       */
+      _optionEx(config, flags, description, fn, defaultValue) {
+        if (typeof flags === "object" && flags instanceof Option2) {
+          throw new Error(
+            "To add an Option object use addOption() instead of option() or requiredOption()"
+          );
+        }
+        const option = this.createOption(flags, description);
+        option.makeOptionMandatory(!!config.mandatory);
+        if (typeof fn === "function") {
+          option.default(defaultValue).argParser(fn);
+        } else if (fn instanceof RegExp) {
+          const regex = fn;
+          fn = (val, def) => {
+            const m = regex.exec(val);
+            return m ? m[0] : def;
+          };
+          option.default(defaultValue).argParser(fn);
+        } else {
+          option.default(fn);
+        }
+        return this.addOption(option);
+      }
+      /**
+       * Define option with `flags`, `description`, and optional argument parsing function or `defaultValue` or both.
+       *
+       * The `flags` string contains the short and/or long flags, separated by comma, a pipe or space. A required
+       * option-argument is indicated by `<>` and an optional option-argument by `[]`.
+       *
+       * See the README for more details, and see also addOption() and requiredOption().
+       *
+       * @example
+       * program
+       *     .option('-p, --pepper', 'add pepper')
+       *     .option('-p, --pizza-type <TYPE>', 'type of pizza') // required option-argument
+       *     .option('-c, --cheese [CHEESE]', 'add extra cheese', 'mozzarella') // optional option-argument with default
+       *     .option('-t, --tip <VALUE>', 'add tip to purchase cost', parseFloat) // custom parse function
+       *
+       * @param {string} flags
+       * @param {string} [description]
+       * @param {(Function|*)} [parseArg] - custom option processing function or default value
+       * @param {*} [defaultValue]
+       * @return {Command} `this` command for chaining
+       */
+      option(flags, description, parseArg, defaultValue) {
+        return this._optionEx({}, flags, description, parseArg, defaultValue);
+      }
+      /**
+       * Add a required option which must have a value after parsing. This usually means
+       * the option must be specified on the command line. (Otherwise the same as .option().)
+       *
+       * The `flags` string contains the short and/or long flags, separated by comma, a pipe or space.
+       *
+       * @param {string} flags
+       * @param {string} [description]
+       * @param {(Function|*)} [parseArg] - custom option processing function or default value
+       * @param {*} [defaultValue]
+       * @return {Command} `this` command for chaining
+       */
+      requiredOption(flags, description, parseArg, defaultValue) {
+        return this._optionEx(
+          { mandatory: true },
+          flags,
+          description,
+          parseArg,
+          defaultValue
+        );
+      }
+      /**
+       * Alter parsing of short flags with optional values.
+       *
+       * @example
+       * // for `.option('-f,--flag [value]'):
+       * program.combineFlagAndOptionalValue(true);  // `-f80` is treated like `--flag=80`, this is the default behaviour
+       * program.combineFlagAndOptionalValue(false) // `-fb` is treated like `-f -b`
+       *
+       * @param {boolean} [combine] - if `true` or omitted, an optional value can be specified directly after the flag.
+       * @return {Command} `this` command for chaining
+       */
+      combineFlagAndOptionalValue(combine = true) {
+        this._combineFlagAndOptionalValue = !!combine;
+        return this;
+      }
+      /**
+       * Allow unknown options on the command line.
+       *
+       * @param {boolean} [allowUnknown] - if `true` or omitted, no error will be thrown for unknown options.
+       * @return {Command} `this` command for chaining
+       */
+      allowUnknownOption(allowUnknown = true) {
+        this._allowUnknownOption = !!allowUnknown;
+        return this;
+      }
+      /**
+       * Allow excess command-arguments on the command line. Pass false to make excess arguments an error.
+       *
+       * @param {boolean} [allowExcess] - if `true` or omitted, no error will be thrown for excess arguments.
+       * @return {Command} `this` command for chaining
+       */
+      allowExcessArguments(allowExcess = true) {
+        this._allowExcessArguments = !!allowExcess;
+        return this;
+      }
+      /**
+       * Enable positional options. Positional means global options are specified before subcommands which lets
+       * subcommands reuse the same option names, and also enables subcommands to turn on passThroughOptions.
+       * The default behaviour is non-positional and global options may appear anywhere on the command line.
+       *
+       * @param {boolean} [positional]
+       * @return {Command} `this` command for chaining
+       */
+      enablePositionalOptions(positional = true) {
+        this._enablePositionalOptions = !!positional;
+        return this;
+      }
+      /**
+       * Pass through options that come after command-arguments rather than treat them as command-options,
+       * so actual command-options come before command-arguments. Turning this on for a subcommand requires
+       * positional options to have been enabled on the program (parent commands).
+       * The default behaviour is non-positional and options may appear before or after command-arguments.
+       *
+       * @param {boolean} [passThrough] for unknown options.
+       * @return {Command} `this` command for chaining
+       */
+      passThroughOptions(passThrough = true) {
+        this._passThroughOptions = !!passThrough;
+        this._checkForBrokenPassThrough();
+        return this;
+      }
+      /**
+       * @private
+       */
+      _checkForBrokenPassThrough() {
+        if (this.parent && this._passThroughOptions && !this.parent._enablePositionalOptions) {
+          throw new Error(
+            `passThroughOptions cannot be used for '${this._name}' without turning on enablePositionalOptions for parent command(s)`
+          );
+        }
+      }
+      /**
+       * Whether to store option values as properties on command object,
+       * or store separately (specify false). In both cases the option values can be accessed using .opts().
+       *
+       * @param {boolean} [storeAsProperties=true]
+       * @return {Command} `this` command for chaining
+       */
+      storeOptionsAsProperties(storeAsProperties = true) {
+        if (this.options.length) {
+          throw new Error("call .storeOptionsAsProperties() before adding options");
+        }
+        if (Object.keys(this._optionValues).length) {
+          throw new Error(
+            "call .storeOptionsAsProperties() before setting option values"
+          );
+        }
+        this._storeOptionsAsProperties = !!storeAsProperties;
+        return this;
+      }
+      /**
+       * Retrieve option value.
+       *
+       * @param {string} key
+       * @return {object} value
+       */
+      getOptionValue(key) {
+        if (this._storeOptionsAsProperties) {
+          return this[key];
+        }
+        return this._optionValues[key];
+      }
+      /**
+       * Store option value.
+       *
+       * @param {string} key
+       * @param {object} value
+       * @return {Command} `this` command for chaining
+       */
+      setOptionValue(key, value) {
+        return this.setOptionValueWithSource(key, value, void 0);
+      }
+      /**
+       * Store option value and where the value came from.
+       *
+       * @param {string} key
+       * @param {object} value
+       * @param {string} source - expected values are default/config/env/cli/implied
+       * @return {Command} `this` command for chaining
+       */
+      setOptionValueWithSource(key, value, source) {
+        if (this._storeOptionsAsProperties) {
+          this[key] = value;
+        } else {
+          this._optionValues[key] = value;
+        }
+        this._optionValueSources[key] = source;
+        return this;
+      }
+      /**
+       * Get source of option value.
+       * Expected values are default | config | env | cli | implied
+       *
+       * @param {string} key
+       * @return {string}
+       */
+      getOptionValueSource(key) {
+        return this._optionValueSources[key];
+      }
+      /**
+       * Get source of option value. See also .optsWithGlobals().
+       * Expected values are default | config | env | cli | implied
+       *
+       * @param {string} key
+       * @return {string}
+       */
+      getOptionValueSourceWithGlobals(key) {
+        let source;
+        this._getCommandAndAncestors().forEach((cmd) => {
+          if (cmd.getOptionValueSource(key) !== void 0) {
+            source = cmd.getOptionValueSource(key);
+          }
+        });
+        return source;
+      }
+      /**
+       * Get user arguments from implied or explicit arguments.
+       * Side-effects: set _scriptPath if args included script. Used for default program name, and subcommand searches.
+       *
+       * @private
+       */
+      _prepareUserArgs(argv, parseOptions) {
+        if (argv !== void 0 && !Array.isArray(argv)) {
+          throw new Error("first parameter to parse must be array or undefined");
+        }
+        parseOptions = parseOptions || {};
+        if (argv === void 0 && parseOptions.from === void 0) {
+          if (process3.versions?.electron) {
+            parseOptions.from = "electron";
+          }
+          const execArgv = process3.execArgv ?? [];
+          if (execArgv.includes("-e") || execArgv.includes("--eval") || execArgv.includes("-p") || execArgv.includes("--print")) {
+            parseOptions.from = "eval";
+          }
+        }
+        if (argv === void 0) {
+          argv = process3.argv;
+        }
+        this.rawArgs = argv.slice();
+        let userArgs;
+        switch (parseOptions.from) {
+          case void 0:
+          case "node":
+            this._scriptPath = argv[1];
+            userArgs = argv.slice(2);
+            break;
+          case "electron":
+            if (process3.defaultApp) {
+              this._scriptPath = argv[1];
+              userArgs = argv.slice(2);
+            } else {
+              userArgs = argv.slice(1);
+            }
+            break;
+          case "user":
+            userArgs = argv.slice(0);
+            break;
+          case "eval":
+            userArgs = argv.slice(1);
+            break;
+          default:
+            throw new Error(
+              `unexpected parse option { from: '${parseOptions.from}' }`
+            );
+        }
+        if (!this._name && this._scriptPath)
+          this.nameFromFilename(this._scriptPath);
+        this._name = this._name || "program";
+        return userArgs;
+      }
+      /**
+       * Parse `argv`, setting options and invoking commands when defined.
+       *
+       * Use parseAsync instead of parse if any of your action handlers are async.
+       *
+       * Call with no parameters to parse `process.argv`. Detects Electron and special node options like `node --eval`. Easy mode!
+       *
+       * Or call with an array of strings to parse, and optionally where the user arguments start by specifying where the arguments are `from`:
+       * - `'node'`: default, `argv[0]` is the application and `argv[1]` is the script being run, with user arguments after that
+       * - `'electron'`: `argv[0]` is the application and `argv[1]` varies depending on whether the electron application is packaged
+       * - `'user'`: just user arguments
+       *
+       * @example
+       * program.parse(); // parse process.argv and auto-detect electron and special node flags
+       * program.parse(process.argv); // assume argv[0] is app and argv[1] is script
+       * program.parse(my-args, { from: 'user' }); // just user supplied arguments, nothing special about argv[0]
+       *
+       * @param {string[]} [argv] - optional, defaults to process.argv
+       * @param {object} [parseOptions] - optionally specify style of options with from: node/user/electron
+       * @param {string} [parseOptions.from] - where the args are from: 'node', 'user', 'electron'
+       * @return {Command} `this` command for chaining
+       */
+      parse(argv, parseOptions) {
+        const userArgs = this._prepareUserArgs(argv, parseOptions);
+        this._parseCommand([], userArgs);
+        return this;
+      }
+      /**
+       * Parse `argv`, setting options and invoking commands when defined.
+       *
+       * Call with no parameters to parse `process.argv`. Detects Electron and special node options like `node --eval`. Easy mode!
+       *
+       * Or call with an array of strings to parse, and optionally where the user arguments start by specifying where the arguments are `from`:
+       * - `'node'`: default, `argv[0]` is the application and `argv[1]` is the script being run, with user arguments after that
+       * - `'electron'`: `argv[0]` is the application and `argv[1]` varies depending on whether the electron application is packaged
+       * - `'user'`: just user arguments
+       *
+       * @example
+       * await program.parseAsync(); // parse process.argv and auto-detect electron and special node flags
+       * await program.parseAsync(process.argv); // assume argv[0] is app and argv[1] is script
+       * await program.parseAsync(my-args, { from: 'user' }); // just user supplied arguments, nothing special about argv[0]
+       *
+       * @param {string[]} [argv]
+       * @param {object} [parseOptions]
+       * @param {string} parseOptions.from - where the args are from: 'node', 'user', 'electron'
+       * @return {Promise}
+       */
+      async parseAsync(argv, parseOptions) {
+        const userArgs = this._prepareUserArgs(argv, parseOptions);
+        await this._parseCommand([], userArgs);
+        return this;
+      }
+      /**
+       * Execute a sub-command executable.
+       *
+       * @private
+       */
+      _executeSubCommand(subcommand, args) {
+        args = args.slice();
+        let launchWithNode = false;
+        const sourceExt = [".js", ".ts", ".tsx", ".mjs", ".cjs"];
+        function findFile(baseDir, baseName) {
+          const localBin = path20.resolve(baseDir, baseName);
+          if (fs3.existsSync(localBin)) return localBin;
+          if (sourceExt.includes(path20.extname(baseName))) return void 0;
+          const foundExt = sourceExt.find(
+            (ext) => fs3.existsSync(`${localBin}${ext}`)
+          );
+          if (foundExt) return `${localBin}${foundExt}`;
+          return void 0;
+        }
+        this._checkForMissingMandatoryOptions();
+        this._checkForConflictingOptions();
+        let executableFile = subcommand._executableFile || `${this._name}-${subcommand._name}`;
+        let executableDir = this._executableDir || "";
+        if (this._scriptPath) {
+          let resolvedScriptPath;
+          try {
+            resolvedScriptPath = fs3.realpathSync(this._scriptPath);
+          } catch (err) {
+            resolvedScriptPath = this._scriptPath;
+          }
+          executableDir = path20.resolve(
+            path20.dirname(resolvedScriptPath),
+            executableDir
+          );
+        }
+        if (executableDir) {
+          let localFile = findFile(executableDir, executableFile);
+          if (!localFile && !subcommand._executableFile && this._scriptPath) {
+            const legacyName = path20.basename(
+              this._scriptPath,
+              path20.extname(this._scriptPath)
+            );
+            if (legacyName !== this._name) {
+              localFile = findFile(
+                executableDir,
+                `${legacyName}-${subcommand._name}`
+              );
+            }
+          }
+          executableFile = localFile || executableFile;
+        }
+        launchWithNode = sourceExt.includes(path20.extname(executableFile));
+        let proc;
+        if (process3.platform !== "win32") {
+          if (launchWithNode) {
+            args.unshift(executableFile);
+            args = incrementNodeInspectorPort(process3.execArgv).concat(args);
+            proc = childProcess.spawn(process3.argv[0], args, { stdio: "inherit" });
+          } else {
+            proc = childProcess.spawn(executableFile, args, { stdio: "inherit" });
+          }
+        } else {
+          args.unshift(executableFile);
+          args = incrementNodeInspectorPort(process3.execArgv).concat(args);
+          proc = childProcess.spawn(process3.execPath, args, { stdio: "inherit" });
+        }
+        if (!proc.killed) {
+          const signals = ["SIGUSR1", "SIGUSR2", "SIGTERM", "SIGINT", "SIGHUP"];
+          signals.forEach((signal) => {
+            process3.on(signal, () => {
+              if (proc.killed === false && proc.exitCode === null) {
+                proc.kill(signal);
+              }
+            });
+          });
+        }
+        const exitCallback = this._exitCallback;
+        proc.on("close", (code) => {
+          code = code ?? 1;
+          if (!exitCallback) {
+            process3.exit(code);
+          } else {
+            exitCallback(
+              new CommanderError2(
+                code,
+                "commander.executeSubCommandAsync",
+                "(close)"
+              )
+            );
+          }
+        });
+        proc.on("error", (err) => {
+          if (err.code === "ENOENT") {
+            const executableDirMessage = executableDir ? `searched for local subcommand relative to directory '${executableDir}'` : "no directory for search for local subcommand, use .executableDir() to supply a custom directory";
+            const executableMissing = `'${executableFile}' does not exist
+ - if '${subcommand._name}' is not meant to be an executable command, remove description parameter from '.command()' and use '.description()' instead
+ - if the default executable name is not suitable, use the executableFile option to supply a custom name or path
+ - ${executableDirMessage}`;
+            throw new Error(executableMissing);
+          } else if (err.code === "EACCES") {
+            throw new Error(`'${executableFile}' not executable`);
+          }
+          if (!exitCallback) {
+            process3.exit(1);
+          } else {
+            const wrappedError = new CommanderError2(
+              1,
+              "commander.executeSubCommandAsync",
+              "(error)"
+            );
+            wrappedError.nestedError = err;
+            exitCallback(wrappedError);
+          }
+        });
+        this.runningCommand = proc;
+      }
+      /**
+       * @private
+       */
+      _dispatchSubcommand(commandName, operands, unknown) {
+        const subCommand = this._findCommand(commandName);
+        if (!subCommand) this.help({ error: true });
+        let promiseChain;
+        promiseChain = this._chainOrCallSubCommandHook(
+          promiseChain,
+          subCommand,
+          "preSubcommand"
+        );
+        promiseChain = this._chainOrCall(promiseChain, () => {
+          if (subCommand._executableHandler) {
+            this._executeSubCommand(subCommand, operands.concat(unknown));
+          } else {
+            return subCommand._parseCommand(operands, unknown);
+          }
+        });
+        return promiseChain;
+      }
+      /**
+       * Invoke help directly if possible, or dispatch if necessary.
+       * e.g. help foo
+       *
+       * @private
+       */
+      _dispatchHelpCommand(subcommandName) {
+        if (!subcommandName) {
+          this.help();
+        }
+        const subCommand = this._findCommand(subcommandName);
+        if (subCommand && !subCommand._executableHandler) {
+          subCommand.help();
+        }
+        return this._dispatchSubcommand(
+          subcommandName,
+          [],
+          [this._getHelpOption()?.long ?? this._getHelpOption()?.short ?? "--help"]
+        );
+      }
+      /**
+       * Check this.args against expected this.registeredArguments.
+       *
+       * @private
+       */
+      _checkNumberOfArguments() {
+        this.registeredArguments.forEach((arg, i) => {
+          if (arg.required && this.args[i] == null) {
+            this.missingArgument(arg.name());
+          }
+        });
+        if (this.registeredArguments.length > 0 && this.registeredArguments[this.registeredArguments.length - 1].variadic) {
+          return;
+        }
+        if (this.args.length > this.registeredArguments.length) {
+          this._excessArguments(this.args);
+        }
+      }
+      /**
+       * Process this.args using this.registeredArguments and save as this.processedArgs!
+       *
+       * @private
+       */
+      _processArguments() {
+        const myParseArg = (argument, value, previous) => {
+          let parsedValue = value;
+          if (value !== null && argument.parseArg) {
+            const invalidValueMessage = `error: command-argument value '${value}' is invalid for argument '${argument.name()}'.`;
+            parsedValue = this._callParseArg(
+              argument,
+              value,
+              previous,
+              invalidValueMessage
+            );
+          }
+          return parsedValue;
+        };
+        this._checkNumberOfArguments();
+        const processedArgs = [];
+        this.registeredArguments.forEach((declaredArg, index) => {
+          let value = declaredArg.defaultValue;
+          if (declaredArg.variadic) {
+            if (index < this.args.length) {
+              value = this.args.slice(index);
+              if (declaredArg.parseArg) {
+                value = value.reduce((processed, v) => {
+                  return myParseArg(declaredArg, v, processed);
+                }, declaredArg.defaultValue);
+              }
+            } else if (value === void 0) {
+              value = [];
+            }
+          } else if (index < this.args.length) {
+            value = this.args[index];
+            if (declaredArg.parseArg) {
+              value = myParseArg(declaredArg, value, declaredArg.defaultValue);
+            }
+          }
+          processedArgs[index] = value;
+        });
+        this.processedArgs = processedArgs;
+      }
+      /**
+       * Once we have a promise we chain, but call synchronously until then.
+       *
+       * @param {(Promise|undefined)} promise
+       * @param {Function} fn
+       * @return {(Promise|undefined)}
+       * @private
+       */
+      _chainOrCall(promise, fn) {
+        if (promise && promise.then && typeof promise.then === "function") {
+          return promise.then(() => fn());
+        }
+        return fn();
+      }
+      /**
+       *
+       * @param {(Promise|undefined)} promise
+       * @param {string} event
+       * @return {(Promise|undefined)}
+       * @private
+       */
+      _chainOrCallHooks(promise, event) {
+        let result = promise;
+        const hooks = [];
+        this._getCommandAndAncestors().reverse().filter((cmd) => cmd._lifeCycleHooks[event] !== void 0).forEach((hookedCommand) => {
+          hookedCommand._lifeCycleHooks[event].forEach((callback) => {
+            hooks.push({ hookedCommand, callback });
+          });
+        });
+        if (event === "postAction") {
+          hooks.reverse();
+        }
+        hooks.forEach((hookDetail) => {
+          result = this._chainOrCall(result, () => {
+            return hookDetail.callback(hookDetail.hookedCommand, this);
+          });
+        });
+        return result;
+      }
+      /**
+       *
+       * @param {(Promise|undefined)} promise
+       * @param {Command} subCommand
+       * @param {string} event
+       * @return {(Promise|undefined)}
+       * @private
+       */
+      _chainOrCallSubCommandHook(promise, subCommand, event) {
+        let result = promise;
+        if (this._lifeCycleHooks[event] !== void 0) {
+          this._lifeCycleHooks[event].forEach((hook) => {
+            result = this._chainOrCall(result, () => {
+              return hook(this, subCommand);
+            });
+          });
+        }
+        return result;
+      }
+      /**
+       * Process arguments in context of this command.
+       * Returns action result, in case it is a promise.
+       *
+       * @private
+       */
+      _parseCommand(operands, unknown) {
+        const parsed = this.parseOptions(unknown);
+        this._parseOptionsEnv();
+        this._parseOptionsImplied();
+        operands = operands.concat(parsed.operands);
+        unknown = parsed.unknown;
+        this.args = operands.concat(unknown);
+        if (operands && this._findCommand(operands[0])) {
+          return this._dispatchSubcommand(operands[0], operands.slice(1), unknown);
+        }
+        if (this._getHelpCommand() && operands[0] === this._getHelpCommand().name()) {
+          return this._dispatchHelpCommand(operands[1]);
+        }
+        if (this._defaultCommandName) {
+          this._outputHelpIfRequested(unknown);
+          return this._dispatchSubcommand(
+            this._defaultCommandName,
+            operands,
+            unknown
+          );
+        }
+        if (this.commands.length && this.args.length === 0 && !this._actionHandler && !this._defaultCommandName) {
+          this.help({ error: true });
+        }
+        this._outputHelpIfRequested(parsed.unknown);
+        this._checkForMissingMandatoryOptions();
+        this._checkForConflictingOptions();
+        const checkForUnknownOptions = () => {
+          if (parsed.unknown.length > 0) {
+            this.unknownOption(parsed.unknown[0]);
+          }
+        };
+        const commandEvent = `command:${this.name()}`;
+        if (this._actionHandler) {
+          checkForUnknownOptions();
+          this._processArguments();
+          let promiseChain;
+          promiseChain = this._chainOrCallHooks(promiseChain, "preAction");
+          promiseChain = this._chainOrCall(
+            promiseChain,
+            () => this._actionHandler(this.processedArgs)
+          );
+          if (this.parent) {
+            promiseChain = this._chainOrCall(promiseChain, () => {
+              this.parent.emit(commandEvent, operands, unknown);
+            });
+          }
+          promiseChain = this._chainOrCallHooks(promiseChain, "postAction");
+          return promiseChain;
+        }
+        if (this.parent && this.parent.listenerCount(commandEvent)) {
+          checkForUnknownOptions();
+          this._processArguments();
+          this.parent.emit(commandEvent, operands, unknown);
+        } else if (operands.length) {
+          if (this._findCommand("*")) {
+            return this._dispatchSubcommand("*", operands, unknown);
+          }
+          if (this.listenerCount("command:*")) {
+            this.emit("command:*", operands, unknown);
+          } else if (this.commands.length) {
+            this.unknownCommand();
+          } else {
+            checkForUnknownOptions();
+            this._processArguments();
+          }
+        } else if (this.commands.length) {
+          checkForUnknownOptions();
+          this.help({ error: true });
+        } else {
+          checkForUnknownOptions();
+          this._processArguments();
+        }
+      }
+      /**
+       * Find matching command.
+       *
+       * @private
+       * @return {Command | undefined}
+       */
+      _findCommand(name) {
+        if (!name) return void 0;
+        return this.commands.find(
+          (cmd) => cmd._name === name || cmd._aliases.includes(name)
+        );
+      }
+      /**
+       * Return an option matching `arg` if any.
+       *
+       * @param {string} arg
+       * @return {Option}
+       * @package
+       */
+      _findOption(arg) {
+        return this.options.find((option) => option.is(arg));
+      }
+      /**
+       * Display an error message if a mandatory option does not have a value.
+       * Called after checking for help flags in leaf subcommand.
+       *
+       * @private
+       */
+      _checkForMissingMandatoryOptions() {
+        this._getCommandAndAncestors().forEach((cmd) => {
+          cmd.options.forEach((anOption) => {
+            if (anOption.mandatory && cmd.getOptionValue(anOption.attributeName()) === void 0) {
+              cmd.missingMandatoryOptionValue(anOption);
+            }
+          });
+        });
+      }
+      /**
+       * Display an error message if conflicting options are used together in this.
+       *
+       * @private
+       */
+      _checkForConflictingLocalOptions() {
+        const definedNonDefaultOptions = this.options.filter((option) => {
+          const optionKey = option.attributeName();
+          if (this.getOptionValue(optionKey) === void 0) {
+            return false;
+          }
+          return this.getOptionValueSource(optionKey) !== "default";
+        });
+        const optionsWithConflicting = definedNonDefaultOptions.filter(
+          (option) => option.conflictsWith.length > 0
+        );
+        optionsWithConflicting.forEach((option) => {
+          const conflictingAndDefined = definedNonDefaultOptions.find(
+            (defined) => option.conflictsWith.includes(defined.attributeName())
+          );
+          if (conflictingAndDefined) {
+            this._conflictingOption(option, conflictingAndDefined);
+          }
+        });
+      }
+      /**
+       * Display an error message if conflicting options are used together.
+       * Called after checking for help flags in leaf subcommand.
+       *
+       * @private
+       */
+      _checkForConflictingOptions() {
+        this._getCommandAndAncestors().forEach((cmd) => {
+          cmd._checkForConflictingLocalOptions();
+        });
+      }
+      /**
+       * Parse options from `argv` removing known options,
+       * and return argv split into operands and unknown arguments.
+       *
+       * Examples:
+       *
+       *     argv => operands, unknown
+       *     --known kkk op => [op], []
+       *     op --known kkk => [op], []
+       *     sub --unknown uuu op => [sub], [--unknown uuu op]
+       *     sub -- --unknown uuu op => [sub --unknown uuu op], []
+       *
+       * @param {string[]} argv
+       * @return {{operands: string[], unknown: string[]}}
+       */
+      parseOptions(argv) {
+        const operands = [];
+        const unknown = [];
+        let dest = operands;
+        const args = argv.slice();
+        function maybeOption(arg) {
+          return arg.length > 1 && arg[0] === "-";
+        }
+        let activeVariadicOption = null;
+        while (args.length) {
+          const arg = args.shift();
+          if (arg === "--") {
+            if (dest === unknown) dest.push(arg);
+            dest.push(...args);
+            break;
+          }
+          if (activeVariadicOption && !maybeOption(arg)) {
+            this.emit(`option:${activeVariadicOption.name()}`, arg);
+            continue;
+          }
+          activeVariadicOption = null;
+          if (maybeOption(arg)) {
+            const option = this._findOption(arg);
+            if (option) {
+              if (option.required) {
+                const value = args.shift();
+                if (value === void 0) this.optionMissingArgument(option);
+                this.emit(`option:${option.name()}`, value);
+              } else if (option.optional) {
+                let value = null;
+                if (args.length > 0 && !maybeOption(args[0])) {
+                  value = args.shift();
+                }
+                this.emit(`option:${option.name()}`, value);
+              } else {
+                this.emit(`option:${option.name()}`);
+              }
+              activeVariadicOption = option.variadic ? option : null;
+              continue;
+            }
+          }
+          if (arg.length > 2 && arg[0] === "-" && arg[1] !== "-") {
+            const option = this._findOption(`-${arg[1]}`);
+            if (option) {
+              if (option.required || option.optional && this._combineFlagAndOptionalValue) {
+                this.emit(`option:${option.name()}`, arg.slice(2));
+              } else {
+                this.emit(`option:${option.name()}`);
+                args.unshift(`-${arg.slice(2)}`);
+              }
+              continue;
+            }
+          }
+          if (/^--[^=]+=/.test(arg)) {
+            const index = arg.indexOf("=");
+            const option = this._findOption(arg.slice(0, index));
+            if (option && (option.required || option.optional)) {
+              this.emit(`option:${option.name()}`, arg.slice(index + 1));
+              continue;
+            }
+          }
+          if (maybeOption(arg)) {
+            dest = unknown;
+          }
+          if ((this._enablePositionalOptions || this._passThroughOptions) && operands.length === 0 && unknown.length === 0) {
+            if (this._findCommand(arg)) {
+              operands.push(arg);
+              if (args.length > 0) unknown.push(...args);
+              break;
+            } else if (this._getHelpCommand() && arg === this._getHelpCommand().name()) {
+              operands.push(arg);
+              if (args.length > 0) operands.push(...args);
+              break;
+            } else if (this._defaultCommandName) {
+              unknown.push(arg);
+              if (args.length > 0) unknown.push(...args);
+              break;
+            }
+          }
+          if (this._passThroughOptions) {
+            dest.push(arg);
+            if (args.length > 0) dest.push(...args);
+            break;
+          }
+          dest.push(arg);
+        }
+        return { operands, unknown };
+      }
+      /**
+       * Return an object containing local option values as key-value pairs.
+       *
+       * @return {object}
+       */
+      opts() {
+        if (this._storeOptionsAsProperties) {
+          const result = {};
+          const len = this.options.length;
+          for (let i = 0; i < len; i++) {
+            const key = this.options[i].attributeName();
+            result[key] = key === this._versionOptionName ? this._version : this[key];
+          }
+          return result;
+        }
+        return this._optionValues;
+      }
+      /**
+       * Return an object containing merged local and global option values as key-value pairs.
+       *
+       * @return {object}
+       */
+      optsWithGlobals() {
+        return this._getCommandAndAncestors().reduce(
+          (combinedOptions, cmd) => Object.assign(combinedOptions, cmd.opts()),
+          {}
+        );
+      }
+      /**
+       * Display error message and exit (or call exitOverride).
+       *
+       * @param {string} message
+       * @param {object} [errorOptions]
+       * @param {string} [errorOptions.code] - an id string representing the error
+       * @param {number} [errorOptions.exitCode] - used with process.exit
+       */
+      error(message, errorOptions) {
+        this._outputConfiguration.outputError(
+          `${message}
+`,
+          this._outputConfiguration.writeErr
+        );
+        if (typeof this._showHelpAfterError === "string") {
+          this._outputConfiguration.writeErr(`${this._showHelpAfterError}
+`);
+        } else if (this._showHelpAfterError) {
+          this._outputConfiguration.writeErr("\n");
+          this.outputHelp({ error: true });
+        }
+        const config = errorOptions || {};
+        const exitCode = config.exitCode || 1;
+        const code = config.code || "commander.error";
+        this._exit(exitCode, code, message);
+      }
+      /**
+       * Apply any option related environment variables, if option does
+       * not have a value from cli or client code.
+       *
+       * @private
+       */
+      _parseOptionsEnv() {
+        this.options.forEach((option) => {
+          if (option.envVar && option.envVar in process3.env) {
+            const optionKey = option.attributeName();
+            if (this.getOptionValue(optionKey) === void 0 || ["default", "config", "env"].includes(
+              this.getOptionValueSource(optionKey)
+            )) {
+              if (option.required || option.optional) {
+                this.emit(`optionEnv:${option.name()}`, process3.env[option.envVar]);
+              } else {
+                this.emit(`optionEnv:${option.name()}`);
+              }
+            }
+          }
+        });
+      }
+      /**
+       * Apply any implied option values, if option is undefined or default value.
+       *
+       * @private
+       */
+      _parseOptionsImplied() {
+        const dualHelper = new DualOptions(this.options);
+        const hasCustomOptionValue = (optionKey) => {
+          return this.getOptionValue(optionKey) !== void 0 && !["default", "implied"].includes(this.getOptionValueSource(optionKey));
+        };
+        this.options.filter(
+          (option) => option.implied !== void 0 && hasCustomOptionValue(option.attributeName()) && dualHelper.valueFromOption(
+            this.getOptionValue(option.attributeName()),
+            option
+          )
+        ).forEach((option) => {
+          Object.keys(option.implied).filter((impliedKey) => !hasCustomOptionValue(impliedKey)).forEach((impliedKey) => {
+            this.setOptionValueWithSource(
+              impliedKey,
+              option.implied[impliedKey],
+              "implied"
+            );
+          });
+        });
+      }
+      /**
+       * Argument `name` is missing.
+       *
+       * @param {string} name
+       * @private
+       */
+      missingArgument(name) {
+        const message = `error: missing required argument '${name}'`;
+        this.error(message, { code: "commander.missingArgument" });
+      }
+      /**
+       * `Option` is missing an argument.
+       *
+       * @param {Option} option
+       * @private
+       */
+      optionMissingArgument(option) {
+        const message = `error: option '${option.flags}' argument missing`;
+        this.error(message, { code: "commander.optionMissingArgument" });
+      }
+      /**
+       * `Option` does not have a value, and is a mandatory option.
+       *
+       * @param {Option} option
+       * @private
+       */
+      missingMandatoryOptionValue(option) {
+        const message = `error: required option '${option.flags}' not specified`;
+        this.error(message, { code: "commander.missingMandatoryOptionValue" });
+      }
+      /**
+       * `Option` conflicts with another option.
+       *
+       * @param {Option} option
+       * @param {Option} conflictingOption
+       * @private
+       */
+      _conflictingOption(option, conflictingOption) {
+        const findBestOptionFromValue = (option2) => {
+          const optionKey = option2.attributeName();
+          const optionValue = this.getOptionValue(optionKey);
+          const negativeOption = this.options.find(
+            (target) => target.negate && optionKey === target.attributeName()
+          );
+          const positiveOption = this.options.find(
+            (target) => !target.negate && optionKey === target.attributeName()
+          );
+          if (negativeOption && (negativeOption.presetArg === void 0 && optionValue === false || negativeOption.presetArg !== void 0 && optionValue === negativeOption.presetArg)) {
+            return negativeOption;
+          }
+          return positiveOption || option2;
+        };
+        const getErrorMessage = (option2) => {
+          const bestOption = findBestOptionFromValue(option2);
+          const optionKey = bestOption.attributeName();
+          const source = this.getOptionValueSource(optionKey);
+          if (source === "env") {
+            return `environment variable '${bestOption.envVar}'`;
+          }
+          return `option '${bestOption.flags}'`;
+        };
+        const message = `error: ${getErrorMessage(option)} cannot be used with ${getErrorMessage(conflictingOption)}`;
+        this.error(message, { code: "commander.conflictingOption" });
+      }
+      /**
+       * Unknown option `flag`.
+       *
+       * @param {string} flag
+       * @private
+       */
+      unknownOption(flag) {
+        if (this._allowUnknownOption) return;
+        let suggestion = "";
+        if (flag.startsWith("--") && this._showSuggestionAfterError) {
+          let candidateFlags = [];
+          let command = this;
+          do {
+            const moreFlags = command.createHelp().visibleOptions(command).filter((option) => option.long).map((option) => option.long);
+            candidateFlags = candidateFlags.concat(moreFlags);
+            command = command.parent;
+          } while (command && !command._enablePositionalOptions);
+          suggestion = suggestSimilar(flag, candidateFlags);
+        }
+        const message = `error: unknown option '${flag}'${suggestion}`;
+        this.error(message, { code: "commander.unknownOption" });
+      }
+      /**
+       * Excess arguments, more than expected.
+       *
+       * @param {string[]} receivedArgs
+       * @private
+       */
+      _excessArguments(receivedArgs) {
+        if (this._allowExcessArguments) return;
+        const expected = this.registeredArguments.length;
+        const s = expected === 1 ? "" : "s";
+        const forSubcommand = this.parent ? ` for '${this.name()}'` : "";
+        const message = `error: too many arguments${forSubcommand}. Expected ${expected} argument${s} but got ${receivedArgs.length}.`;
+        this.error(message, { code: "commander.excessArguments" });
+      }
+      /**
+       * Unknown command.
+       *
+       * @private
+       */
+      unknownCommand() {
+        const unknownName = this.args[0];
+        let suggestion = "";
+        if (this._showSuggestionAfterError) {
+          const candidateNames = [];
+          this.createHelp().visibleCommands(this).forEach((command) => {
+            candidateNames.push(command.name());
+            if (command.alias()) candidateNames.push(command.alias());
+          });
+          suggestion = suggestSimilar(unknownName, candidateNames);
+        }
+        const message = `error: unknown command '${unknownName}'${suggestion}`;
+        this.error(message, { code: "commander.unknownCommand" });
+      }
+      /**
+       * Get or set the program version.
+       *
+       * This method auto-registers the "-V, --version" option which will print the version number.
+       *
+       * You can optionally supply the flags and description to override the defaults.
+       *
+       * @param {string} [str]
+       * @param {string} [flags]
+       * @param {string} [description]
+       * @return {(this | string | undefined)} `this` command for chaining, or version string if no arguments
+       */
+      version(str, flags, description) {
+        if (str === void 0) return this._version;
+        this._version = str;
+        flags = flags || "-V, --version";
+        description = description || "output the version number";
+        const versionOption = this.createOption(flags, description);
+        this._versionOptionName = versionOption.attributeName();
+        this._registerOption(versionOption);
+        this.on("option:" + versionOption.name(), () => {
+          this._outputConfiguration.writeOut(`${str}
+`);
+          this._exit(0, "commander.version", str);
+        });
+        return this;
+      }
+      /**
+       * Set the description.
+       *
+       * @param {string} [str]
+       * @param {object} [argsDescription]
+       * @return {(string|Command)}
+       */
+      description(str, argsDescription) {
+        if (str === void 0 && argsDescription === void 0)
+          return this._description;
+        this._description = str;
+        if (argsDescription) {
+          this._argsDescription = argsDescription;
+        }
+        return this;
+      }
+      /**
+       * Set the summary. Used when listed as subcommand of parent.
+       *
+       * @param {string} [str]
+       * @return {(string|Command)}
+       */
+      summary(str) {
+        if (str === void 0) return this._summary;
+        this._summary = str;
+        return this;
+      }
+      /**
+       * Set an alias for the command.
+       *
+       * You may call more than once to add multiple aliases. Only the first alias is shown in the auto-generated help.
+       *
+       * @param {string} [alias]
+       * @return {(string|Command)}
+       */
+      alias(alias) {
+        if (alias === void 0) return this._aliases[0];
+        let command = this;
+        if (this.commands.length !== 0 && this.commands[this.commands.length - 1]._executableHandler) {
+          command = this.commands[this.commands.length - 1];
+        }
+        if (alias === command._name)
+          throw new Error("Command alias can't be the same as its name");
+        const matchingCommand = this.parent?._findCommand(alias);
+        if (matchingCommand) {
+          const existingCmd = [matchingCommand.name()].concat(matchingCommand.aliases()).join("|");
+          throw new Error(
+            `cannot add alias '${alias}' to command '${this.name()}' as already have command '${existingCmd}'`
+          );
+        }
+        command._aliases.push(alias);
+        return this;
+      }
+      /**
+       * Set aliases for the command.
+       *
+       * Only the first alias is shown in the auto-generated help.
+       *
+       * @param {string[]} [aliases]
+       * @return {(string[]|Command)}
+       */
+      aliases(aliases) {
+        if (aliases === void 0) return this._aliases;
+        aliases.forEach((alias) => this.alias(alias));
+        return this;
+      }
+      /**
+       * Set / get the command usage `str`.
+       *
+       * @param {string} [str]
+       * @return {(string|Command)}
+       */
+      usage(str) {
+        if (str === void 0) {
+          if (this._usage) return this._usage;
+          const args = this.registeredArguments.map((arg) => {
+            return humanReadableArgName(arg);
+          });
+          return [].concat(
+            this.options.length || this._helpOption !== null ? "[options]" : [],
+            this.commands.length ? "[command]" : [],
+            this.registeredArguments.length ? args : []
+          ).join(" ");
+        }
+        this._usage = str;
+        return this;
+      }
+      /**
+       * Get or set the name of the command.
+       *
+       * @param {string} [str]
+       * @return {(string|Command)}
+       */
+      name(str) {
+        if (str === void 0) return this._name;
+        this._name = str;
+        return this;
+      }
+      /**
+       * Set the name of the command from script filename, such as process.argv[1],
+       * or require.main.filename, or __filename.
+       *
+       * (Used internally and public although not documented in README.)
+       *
+       * @example
+       * program.nameFromFilename(require.main.filename);
+       *
+       * @param {string} filename
+       * @return {Command}
+       */
+      nameFromFilename(filename) {
+        this._name = path20.basename(filename, path20.extname(filename));
+        return this;
+      }
+      /**
+       * Get or set the directory for searching for executable subcommands of this command.
+       *
+       * @example
+       * program.executableDir(__dirname);
+       * // or
+       * program.executableDir('subcommands');
+       *
+       * @param {string} [path]
+       * @return {(string|null|Command)}
+       */
+      executableDir(path21) {
+        if (path21 === void 0) return this._executableDir;
+        this._executableDir = path21;
+        return this;
+      }
+      /**
+       * Return program help documentation.
+       *
+       * @param {{ error: boolean }} [contextOptions] - pass {error:true} to wrap for stderr instead of stdout
+       * @return {string}
+       */
+      helpInformation(contextOptions) {
+        const helper = this.createHelp();
+        if (helper.helpWidth === void 0) {
+          helper.helpWidth = contextOptions && contextOptions.error ? this._outputConfiguration.getErrHelpWidth() : this._outputConfiguration.getOutHelpWidth();
+        }
+        return helper.formatHelp(this, helper);
+      }
+      /**
+       * @private
+       */
+      _getHelpContext(contextOptions) {
+        contextOptions = contextOptions || {};
+        const context = { error: !!contextOptions.error };
+        let write;
+        if (context.error) {
+          write = (arg) => this._outputConfiguration.writeErr(arg);
+        } else {
+          write = (arg) => this._outputConfiguration.writeOut(arg);
+        }
+        context.write = contextOptions.write || write;
+        context.command = this;
+        return context;
+      }
+      /**
+       * Output help information for this command.
+       *
+       * Outputs built-in help, and custom text added using `.addHelpText()`.
+       *
+       * @param {{ error: boolean } | Function} [contextOptions] - pass {error:true} to write to stderr instead of stdout
+       */
+      outputHelp(contextOptions) {
+        let deprecatedCallback;
+        if (typeof contextOptions === "function") {
+          deprecatedCallback = contextOptions;
+          contextOptions = void 0;
+        }
+        const context = this._getHelpContext(contextOptions);
+        this._getCommandAndAncestors().reverse().forEach((command) => command.emit("beforeAllHelp", context));
+        this.emit("beforeHelp", context);
+        let helpInformation = this.helpInformation(context);
+        if (deprecatedCallback) {
+          helpInformation = deprecatedCallback(helpInformation);
+          if (typeof helpInformation !== "string" && !Buffer.isBuffer(helpInformation)) {
+            throw new Error("outputHelp callback must return a string or a Buffer");
+          }
+        }
+        context.write(helpInformation);
+        if (this._getHelpOption()?.long) {
+          this.emit(this._getHelpOption().long);
+        }
+        this.emit("afterHelp", context);
+        this._getCommandAndAncestors().forEach(
+          (command) => command.emit("afterAllHelp", context)
+        );
+      }
+      /**
+       * You can pass in flags and a description to customise the built-in help option.
+       * Pass in false to disable the built-in help option.
+       *
+       * @example
+       * program.helpOption('-?, --help' 'show help'); // customise
+       * program.helpOption(false); // disable
+       *
+       * @param {(string | boolean)} flags
+       * @param {string} [description]
+       * @return {Command} `this` command for chaining
+       */
+      helpOption(flags, description) {
+        if (typeof flags === "boolean") {
+          if (flags) {
+            this._helpOption = this._helpOption ?? void 0;
+          } else {
+            this._helpOption = null;
+          }
+          return this;
+        }
+        flags = flags ?? "-h, --help";
+        description = description ?? "display help for command";
+        this._helpOption = this.createOption(flags, description);
+        return this;
+      }
+      /**
+       * Lazy create help option.
+       * Returns null if has been disabled with .helpOption(false).
+       *
+       * @returns {(Option | null)} the help option
+       * @package
+       */
+      _getHelpOption() {
+        if (this._helpOption === void 0) {
+          this.helpOption(void 0, void 0);
+        }
+        return this._helpOption;
+      }
+      /**
+       * Supply your own option to use for the built-in help option.
+       * This is an alternative to using helpOption() to customise the flags and description etc.
+       *
+       * @param {Option} option
+       * @return {Command} `this` command for chaining
+       */
+      addHelpOption(option) {
+        this._helpOption = option;
+        return this;
+      }
+      /**
+       * Output help information and exit.
+       *
+       * Outputs built-in help, and custom text added using `.addHelpText()`.
+       *
+       * @param {{ error: boolean }} [contextOptions] - pass {error:true} to write to stderr instead of stdout
+       */
+      help(contextOptions) {
+        this.outputHelp(contextOptions);
+        let exitCode = process3.exitCode || 0;
+        if (exitCode === 0 && contextOptions && typeof contextOptions !== "function" && contextOptions.error) {
+          exitCode = 1;
+        }
+        this._exit(exitCode, "commander.help", "(outputHelp)");
+      }
+      /**
+       * Add additional text to be displayed with the built-in help.
+       *
+       * Position is 'before' or 'after' to affect just this command,
+       * and 'beforeAll' or 'afterAll' to affect this command and all its subcommands.
+       *
+       * @param {string} position - before or after built-in help
+       * @param {(string | Function)} text - string to add, or a function returning a string
+       * @return {Command} `this` command for chaining
+       */
+      addHelpText(position, text) {
+        const allowedValues = ["beforeAll", "before", "after", "afterAll"];
+        if (!allowedValues.includes(position)) {
+          throw new Error(`Unexpected value for position to addHelpText.
+Expecting one of '${allowedValues.join("', '")}'`);
+        }
+        const helpEvent = `${position}Help`;
+        this.on(helpEvent, (context) => {
+          let helpStr;
+          if (typeof text === "function") {
+            helpStr = text({ error: context.error, command: context.command });
+          } else {
+            helpStr = text;
+          }
+          if (helpStr) {
+            context.write(`${helpStr}
+`);
+          }
+        });
+        return this;
+      }
+      /**
+       * Output help information if help flags specified
+       *
+       * @param {Array} args - array of options to search for help flags
+       * @private
+       */
+      _outputHelpIfRequested(args) {
+        const helpOption = this._getHelpOption();
+        const helpRequested = helpOption && args.find((arg) => helpOption.is(arg));
+        if (helpRequested) {
+          this.outputHelp();
+          this._exit(0, "commander.helpDisplayed", "(outputHelp)");
+        }
+      }
+    };
+    function incrementNodeInspectorPort(args) {
+      return args.map((arg) => {
+        if (!arg.startsWith("--inspect")) {
+          return arg;
+        }
+        let debugOption;
+        let debugHost = "127.0.0.1";
+        let debugPort = "9229";
+        let match;
+        if ((match = arg.match(/^(--inspect(-brk)?)$/)) !== null) {
+          debugOption = match[1];
+        } else if ((match = arg.match(/^(--inspect(-brk|-port)?)=([^:]+)$/)) !== null) {
+          debugOption = match[1];
+          if (/^\d+$/.test(match[3])) {
+            debugPort = match[3];
+          } else {
+            debugHost = match[3];
+          }
+        } else if ((match = arg.match(/^(--inspect(-brk|-port)?)=([^:]+):(\d+)$/)) !== null) {
+          debugOption = match[1];
+          debugHost = match[3];
+          debugPort = match[4];
+        }
+        if (debugOption && debugPort !== "0") {
+          return `${debugOption}=${debugHost}:${parseInt(debugPort) + 1}`;
+        }
+        return arg;
+      });
+    }
+    exports.Command = Command2;
+  }
+});
+
+// node_modules/commander/index.js
+var require_commander = __commonJS({
+  "node_modules/commander/index.js"(exports) {
+    var { Argument: Argument2 } = require_argument();
+    var { Command: Command2 } = require_command();
+    var { CommanderError: CommanderError2, InvalidArgumentError: InvalidArgumentError2 } = require_error();
+    var { Help: Help2 } = require_help();
+    var { Option: Option2 } = require_option();
+    exports.program = new Command2();
+    exports.createCommand = (name) => new Command2(name);
+    exports.createOption = (flags, description) => new Option2(flags, description);
+    exports.createArgument = (name, description) => new Argument2(name, description);
+    exports.Command = Command2;
+    exports.Option = Option2;
+    exports.Argument = Argument2;
+    exports.Help = Help2;
+    exports.CommanderError = CommanderError2;
+    exports.InvalidArgumentError = InvalidArgumentError2;
+    exports.InvalidOptionArgumentError = InvalidArgumentError2;
+  }
+});
 
 // node_modules/zod/v3/external.js
 var external_exports = {};
@@ -11557,6 +14395,143 @@ var coerce = {
 };
 var NEVER = INVALID;
 
+// src/core/manifest.ts
+import * as path2 from "node:path";
+
+// src/lib/fs.ts
+import * as fs from "node:fs";
+import * as path from "node:path";
+import * as crypto from "node:crypto";
+function ensureDir(dirPath) {
+  fs.mkdirSync(dirPath, {
+    recursive: true
+  });
+}
+function writeFile(filePath, content) {
+  ensureDir(path.dirname(filePath));
+  fs.writeFileSync(filePath, content, "utf-8");
+}
+function readFile(filePath) {
+  return fs.readFileSync(filePath, "utf-8");
+}
+function fileExists(filePath) {
+  return fs.existsSync(filePath);
+}
+function isDirectory(filePath) {
+  return fs.existsSync(filePath) && fs.statSync(filePath).isDirectory();
+}
+function isSymlink(filePath) {
+  try {
+    return fs.lstatSync(filePath).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+function readSymlinkTarget(linkPath) {
+  try {
+    if (!isSymlink(linkPath)) return null;
+    const target = fs.readlinkSync(linkPath);
+    if (path.isAbsolute(target)) {
+      return target;
+    }
+    const realLinkDir = fs.realpathSync(path.dirname(linkPath));
+    return path.resolve(realLinkDir, target);
+  } catch {
+    return null;
+  }
+}
+function createSymlink(target, linkPath) {
+  ensureDir(path.dirname(linkPath));
+  const linkDir = path.dirname(linkPath);
+  const realLinkDir = fs.realpathSync(linkDir);
+  const relativeTarget = path.relative(realLinkDir, target);
+  if (isSymlink(linkPath)) {
+    const existingTarget = fs.readlinkSync(linkPath);
+    if (existingTarget === relativeTarget) {
+      return;
+    }
+    fs.unlinkSync(linkPath);
+  } else if (fs.existsSync(linkPath)) {
+    fs.unlinkSync(linkPath);
+  }
+  fs.symlinkSync(relativeTarget, linkPath);
+}
+function removeFile(filePath) {
+  try {
+    fs.unlinkSync(filePath);
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+  }
+}
+function removeDir(dirPath) {
+  if (fs.existsSync(dirPath)) {
+    fs.rmSync(dirPath, {
+      recursive: true
+    });
+  }
+}
+function removePath(targetPath) {
+  if (isSymlink(targetPath)) {
+    removeFile(targetPath);
+    return;
+  }
+  if (isDirectory(targetPath)) {
+    removeDir(targetPath);
+    return;
+  }
+  removeFile(targetPath);
+}
+function hashContent(content) {
+  return `sha256:${crypto.createHash("sha256").update(content).digest("hex")}`;
+}
+function hashFile(filePath) {
+  const content = readFile(filePath);
+  return hashContent(content);
+}
+function hashDir(dirPath) {
+  const hashes = [];
+  function walk(dir) {
+    const entries = fs.readdirSync(dir, {
+      withFileTypes: true
+    });
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+      } else {
+        hashes.push(hashFile(fullPath));
+      }
+    }
+  }
+  walk(dirPath);
+  return hashContent(hashes.join("\n"));
+}
+function listFiles(dirPath) {
+  if (!isDirectory(dirPath)) return [];
+  return fs.readdirSync(dirPath);
+}
+function walkDir(dirPath) {
+  const results = [];
+  function walk(dir, prefix) {
+    const entries = fs.readdirSync(dir, {
+      withFileTypes: true
+    });
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = prefix ? path.join(prefix, entry.name) : entry.name;
+      if (entry.isDirectory()) {
+        walk(fullPath, relativePath);
+      } else {
+        results.push(relativePath);
+      }
+    }
+  }
+  walk(dirPath, "");
+  return results;
+}
+
 // src/core/schema.ts
 var ToolSchema = external_exports.string().min(1);
 var ArtifactKindSchema = external_exports.string().min(1);
@@ -11568,20 +14543,28 @@ var RootConfigSchema = external_exports.object({
   default: external_exports.string().optional(),
   mode: OutputModeSchema.optional(),
   tools: external_exports.array(ToolSchema).optional(),
-  sources: external_exports.array(SourceRefSchema).optional()
+  sources: external_exports.array(SourceRefSchema).optional(),
+  opencode: external_exports.object({
+    defaultSession: external_exports.array(external_exports.string()).optional()
+  }).optional()
 });
-var LoadoutIncludeSchema = external_exports.union([
-  external_exports.string(),
-  external_exports.object({
-    path: external_exports.string(),
-    tools: external_exports.array(ToolSchema).optional()
-  })
-]);
+var LoadoutIncludeSchema = external_exports.union([external_exports.string(), external_exports.object({
+  path: external_exports.string(),
+  tools: external_exports.array(ToolSchema).optional()
+})]);
 var LoadoutDefinitionSchema = external_exports.object({
   name: external_exports.string(),
   description: external_exports.string().optional(),
   tools: external_exports.array(ToolSchema).optional(),
-  include: external_exports.array(LoadoutIncludeSchema)
+  include: external_exports.array(LoadoutIncludeSchema),
+  opencode: external_exports.object({
+    agent: external_exports.string().min(1).optional(),
+    model: external_exports.object({
+      providerID: external_exports.string().min(1),
+      id: external_exports.string().min(1),
+      variant: external_exports.string().optional()
+    }).optional()
+  }).optional()
 });
 var ManifestEntrySchema = external_exports.object({
   tools: external_exports.array(ToolSchema),
@@ -11652,615 +14635,10 @@ var FrontmatterSchema = external_exports.object({
   "disable-model-invocation": external_exports.boolean().optional()
 }).passthrough();
 
-// src/core/config.ts
-var ROOT_CONFIG_FILE = "loadouts.yaml";
-var LOADOUTS_DIR = "loadouts";
-function parseMarkdownFrontmatter(content) {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-  if (!match) {
-    return { frontmatter: {}, body: content };
-  }
-  const [, frontmatterStr, body] = match;
-  const parsed = yaml.parse(frontmatterStr);
-  const frontmatter = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-  return { frontmatter, body };
-}
-function parseRootConfig(loadoutRoot) {
-  const configPath = path2.join(loadoutRoot, ROOT_CONFIG_FILE);
-  if (!fileExists(configPath)) {
-    return { version: "1" };
-  }
-  const content = readFile(configPath);
-  const parsed = yaml.parse(content);
-  return RootConfigSchema.parse(parsed);
-}
-function parseLoadoutDefinition(filePath) {
-  const content = readFile(filePath);
-  const parsed = yaml.parse(content);
-  return LoadoutDefinitionSchema.parse(parsed);
-}
-function listLoadouts(loadoutRoot) {
-  const loadoutsDir = path2.join(loadoutRoot, LOADOUTS_DIR);
-  if (!isDirectory(loadoutsDir)) {
-    return [];
-  }
-  return listFiles(loadoutsDir).filter((f) => f.endsWith(".yaml") || f.endsWith(".yml")).map((f) => f.replace(/\.ya?ml$/, ""));
-}
-function findLoadoutDefinition(name, roots) {
-  for (const root of roots) {
-    const yamlPath = path2.join(root.path, LOADOUTS_DIR, `${name}.yaml`);
-    const ymlPath = path2.join(root.path, LOADOUTS_DIR, `${name}.yml`);
-    const filePath = fileExists(yamlPath) ? yamlPath : fileExists(ymlPath) ? ymlPath : null;
-    if (filePath) {
-      return {
-        definition: parseLoadoutDefinition(filePath),
-        rootPath: root.path
-      };
-    }
-  }
-  return null;
-}
-
-// src/core/discovery.ts
-var __dirname = path3.dirname(fileURLToPath(import.meta.url));
-var LOADOUT_DIR = ".loadouts";
-var STATE_FILE = ".state.json";
-function getGlobalConfigPath() {
-  return path3.join(os.homedir(), ".config", "loadouts");
-}
-var GLOBAL_CONFIG_PATH = getGlobalConfigPath();
-async function discoverLoadoutRoots(cwd = process.cwd()) {
-  const roots = [];
-  const gitRoot = await findGitRoot(cwd);
-  const stopAt = gitRoot || path3.parse(cwd).root;
-  let current = path3.resolve(cwd);
-  let depth = 0;
-  while (true) {
-    const loadoutPath = path3.join(current, LOADOUT_DIR);
-    if (fs2.existsSync(loadoutPath) && fs2.statSync(loadoutPath).isDirectory()) {
-      roots.push({
-        path: loadoutPath,
-        level: "project",
-        depth
-      });
-    }
-    if (current === stopAt || current === path3.parse(current).root) {
-      break;
-    }
-    current = path3.dirname(current);
-    depth++;
-  }
-  if (fs2.existsSync(GLOBAL_CONFIG_PATH) && fs2.statSync(GLOBAL_CONFIG_PATH).isDirectory()) {
-    roots.push({
-      path: GLOBAL_CONFIG_PATH,
-      level: "global",
-      depth: Infinity
-    });
-  }
-  return roots;
-}
-async function findNearestLoadoutRoot(cwd = process.cwd()) {
-  const roots = await discoverLoadoutRoots(cwd);
-  return roots.length > 0 ? roots[0] : null;
-}
-async function getContext(scope, cwd = process.cwd()) {
-  if (scope === "global") {
-    const configPath = getGlobalConfigPath();
-    return {
-      scope: "global",
-      configPath,
-      statePath: path3.join(configPath, STATE_FILE),
-      projectRoot: os.homedir()
-    };
-  } else {
-    const nearestRoot = await findNearestLoadoutRoot(cwd);
-    if (!nearestRoot) {
-      throw new Error("No .loadouts/ directory found. Run 'loadouts init' first.");
-    }
-    const projectRoot = path3.dirname(nearestRoot.path);
-    return {
-      scope: "project",
-      configPath: nearestRoot.path,
-      statePath: path3.join(nearestRoot.path, STATE_FILE),
-      projectRoot
-    };
-  }
-}
-function getGlobalRoot() {
-  if (fs2.existsSync(GLOBAL_CONFIG_PATH) && fs2.statSync(GLOBAL_CONFIG_PATH).isDirectory()) {
-    return {
-      path: GLOBAL_CONFIG_PATH,
-      level: "global",
-      depth: Infinity
-    };
-  }
-  return null;
-}
-function findBundledPath() {
-  const candidates = [
-    // Development: relative to src/core/
-    path3.resolve(__dirname, "../../bundled"),
-    // Production: relative to dist/core/
-    path3.resolve(__dirname, "../../bundled")
-  ];
-  for (const candidate of candidates) {
-    if (fs2.existsSync(candidate) && fs2.statSync(candidate).isDirectory()) {
-      return candidate;
-    }
-  }
-  return null;
-}
-function getBundledRoot() {
-  const bundledPath = findBundledPath();
-  if (!bundledPath) return null;
-  return {
-    path: bundledPath,
-    level: "bundled",
-    depth: Infinity
-  };
-}
-function resolveSourcePath(sourceRef, fromLoadoutDir) {
-  let resolved = sourceRef.startsWith("~") ? path3.join(os.homedir(), sourceRef.slice(1)) : sourceRef;
-  if (!path3.isAbsolute(resolved)) {
-    const fromDir = path3.dirname(fromLoadoutDir);
-    resolved = path3.resolve(fromDir, resolved);
-  }
-  if (path3.basename(resolved) === ".loadouts" && fs2.existsSync(resolved)) {
-    return resolved;
-  }
-  const loadoutPath = path3.join(resolved, ".loadouts");
-  if (fs2.existsSync(loadoutPath) && fs2.statSync(loadoutPath).isDirectory()) {
-    return loadoutPath;
-  }
-  return null;
-}
-function parseSourcesFromConfig(loadoutDir) {
-  const configPath = path3.join(loadoutDir, "loadouts.yaml");
-  if (!fs2.existsSync(configPath)) return [];
-  try {
-    const content = fs2.readFileSync(configPath, "utf-8");
-    const config = yaml2.parse(content);
-    return config?.sources ?? [];
-  } catch {
-    return [];
-  }
-}
-function collectRootsWithSources(primaryRoot, includeGlobal = true, includeBundled = true) {
-  const roots = [primaryRoot];
-  const seen = /* @__PURE__ */ new Set([primaryRoot.path]);
-  const warnings = [];
-  const queue = [
-    { loadoutDir: primaryRoot.path, depth: 0 }
-  ];
-  while (queue.length > 0) {
-    const { loadoutDir, depth } = queue.shift();
-    const sources = parseSourcesFromConfig(loadoutDir);
-    for (const sourcePath of sources) {
-      const resolved = resolveSourcePath(sourcePath, loadoutDir);
-      if (!resolved) {
-        warnings.push(`Source not found: ${sourcePath} (from ${path3.basename(path3.dirname(loadoutDir))})`);
-        continue;
-      }
-      if (seen.has(resolved)) {
-        continue;
-      }
-      seen.add(resolved);
-      const sourceRoot = {
-        path: resolved,
-        level: "source",
-        depth: depth + 1,
-        sourceRef: sourcePath
-      };
-      roots.push(sourceRoot);
-      queue.push({ loadoutDir: resolved, depth: depth + 1 });
-    }
-  }
-  if (includeGlobal) {
-    const globalRoot = getGlobalRoot();
-    if (globalRoot && !seen.has(globalRoot.path)) {
-      roots.push(globalRoot);
-      seen.add(globalRoot.path);
-    }
-  }
-  if (includeBundled) {
-    const bundledRoot = getBundledRoot();
-    if (bundledRoot && !seen.has(bundledRoot.path)) {
-      roots.push(bundledRoot);
-    }
-  }
-  return { roots, warnings };
-}
-async function collectCatalogRoots(cwd = process.cwd()) {
-  const entries = [];
-  const seenRoots = /* @__PURE__ */ new Set();
-  const warningSet = /* @__PURE__ */ new Set();
-  const appendChain = (primaryRoot, owner) => {
-    const { roots, warnings } = collectRootsWithSources(primaryRoot, false, false);
-    for (const warning of warnings) {
-      warningSet.add(warning);
-    }
-    for (const root of roots) {
-      if (seenRoots.has(root.path)) continue;
-      seenRoots.add(root.path);
-      entries.push({ root, owner });
-    }
-  };
-  const discovered = await discoverLoadoutRoots(cwd);
-  const projectRoot = discovered.find((r) => r.level === "project");
-  if (projectRoot) {
-    appendChain(projectRoot, "project");
-  }
-  const globalRoot = getGlobalRoot();
-  if (globalRoot) {
-    appendChain(globalRoot, "global");
-  }
-  const bundledRoot = getBundledRoot();
-  if (bundledRoot && !seenRoots.has(bundledRoot.path)) {
-    entries.push({ root: bundledRoot, owner: "bundled" });
-  }
-  return {
-    entries,
-    warnings: Array.from(warningSet)
-  };
-}
-
-// src/integrations/opencode-runtime/bridge.ts
-import { spawn } from "node:child_process";
-
-// src/core/runtime.ts
-import * as path5 from "node:path";
-
-// src/core/tokens.ts
-import * as path4 from "node:path";
-
-// src/core/runtime.ts
-function renderRuntimeSystemBlock(bundle) {
-  const lines = [];
-  const instructionLabel = bundle.capabilities.modelInjection.instructions ? "Instructions (Model Injection Ready)" : "Instructions (Compiled)";
-  const ruleLabel = bundle.capabilities.modelInjection.rules ? "Rules (Model Injection Ready)" : "Rules (Compiled)";
-  lines.push("[loadout-runtime:v1]");
-  lines.push(`tool: ${bundle.tool}`);
-  lines.push(`fingerprint: ${bundle.fingerprint}`);
-  lines.push(`generatedAt: ${bundle.generatedAt}`);
-  lines.push(`loadouts: ${bundle.loadouts.map((l) => l.name).join(", ") || "(none)"}`);
-  lines.push(
-    `capabilities: mode=${bundle.capabilities.runtimeMode}, instructionInjection=${bundle.capabilities.modelInjection.instructions}, ruleInjection=${bundle.capabilities.modelInjection.rules}, skillPathDiscovery=${bundle.capabilities.skillPathDiscovery}, nativeSkillHotSwap=${bundle.capabilities.nativeSkillHotSwap}`
-  );
-  lines.push("");
-  lines.push(`## ${instructionLabel}`);
-  if (bundle.injection.instructions.length === 0) {
-    lines.push("(none)");
-  } else {
-    for (const item of bundle.injection.instructions) {
-      lines.push(`### ${item.relativePath}`);
-      lines.push(item.content);
-      lines.push("");
-    }
-  }
-  lines.push(`## ${ruleLabel}`);
-  if (bundle.injection.rules.length === 0) {
-    lines.push("(none)");
-  } else {
-    for (const item of bundle.injection.rules) {
-      lines.push(`### ${item.relativePath}`);
-      lines.push(item.content);
-      lines.push("");
-    }
-  }
-  lines.push("## Skills (Path Discovery Only)");
-  lines.push("These are references for discovery. Native skill hot-swap is disabled in runtime v1.");
-  if (bundle.injection.skills.length === 0) {
-    lines.push("(none)");
-  } else {
-    for (const skill of bundle.injection.skills) {
-      const description = skill.description ? ` - ${skill.description}` : "";
-      lines.push(`- ${skill.name}${description}`);
-      lines.push(`  path: ${skill.path}`);
-      lines.push(`  sourcePath: ${skill.sourcePath}`);
-    }
-  }
-  if (bundle.diagnostics.length > 0) {
-    lines.push("");
-    lines.push("## Diagnostics");
-    for (const diagnostic of bundle.diagnostics) {
-      lines.push(`- [${diagnostic.code}] ${diagnostic.message} (${diagnostic.relativePath})`);
-    }
-  }
-  return lines.join("\n").trimEnd() + "\n";
-}
-
-// src/integrations/opencode-runtime/bridge.ts
-function scopeFlag(scope) {
-  return scope === "global" ? "--global" : "--local";
-}
-var CliRuntimeBridge = class {
-  bin;
-  tool;
-  constructor(options = {}) {
-    this.bin = options.bin ?? "loadouts";
-    this.tool = options.tool ?? "opencode";
-  }
-  async compile(names, scope, cwd) {
-    const args = ["runtime", ...names, "--tool", this.tool, "--json", scopeFlag(scope)];
-    const { stdout } = await this.exec(args, cwd);
-    const bundle = JSON.parse(stdout);
-    return {
-      bundle,
-      systemBlock: renderRuntimeSystemBlock(bundle)
-    };
-  }
-  list(scope, cwd) {
-    return this.execText(["list", scopeFlag(scope)], cwd);
-  }
-  info(names, scope, cwd) {
-    return this.execText(["info", ...names, scopeFlag(scope)], cwd);
-  }
-  async execText(args, cwd) {
-    const { stdout } = await this.exec(args, cwd);
-    return stdout;
-  }
-  exec(args, cwd) {
-    return new Promise((resolve3, reject) => {
-      const child = spawn(this.bin, args, {
-        cwd,
-        stdio: ["ignore", "pipe", "pipe"]
-      });
-      let stdout = "";
-      let stderr = "";
-      child.stdout.setEncoding("utf-8");
-      child.stderr.setEncoding("utf-8");
-      child.stdout.on("data", (chunk) => {
-        stdout += chunk;
-      });
-      child.stderr.on("data", (chunk) => {
-        stderr += chunk;
-      });
-      child.on("error", (error) => reject(error));
-      child.on("close", (code) => {
-        if (code === 0) {
-          resolve3({ stdout, stderr });
-          return;
-        }
-        const detail2 = stderr.trim() || stdout.trim() || `process exited with code ${code}`;
-        reject(new Error(`loadouts command failed: ${detail2}`));
-      });
-    });
-  }
-};
-
-// src/integrations/opencode-runtime/state.ts
-function createRuntimeSessionStore() {
-  return /* @__PURE__ */ new Map();
-}
-function getRuntimeSessionState(store, sessionID) {
-  return store.get(sessionID);
-}
-function setRuntimeSessionState(store, sessionID, state) {
-  store.set(sessionID, state);
-}
-function clearRuntimeSessionState(store, sessionID) {
-  return store.delete(sessionID);
-}
-function renderInjectedSystemBlock(state) {
-  return state?.systemBlock ?? "";
-}
-function renderRuntimeStateSummary(state) {
-  const names = state.activeNames.join(", ");
-  const injected = state.bundle.injection;
-  return [
-    "runtime: active",
-    `loadouts: ${names}`,
-    `fingerprint: ${state.bundle.fingerprint}`,
-    `injected: instructions=${injected.instructions.length}, rules=${injected.rules.length}, skills=${injected.skills.length}`,
-    `activatedAt: ${state.activatedAt}`
-  ].join("\n");
-}
-
-// src/integrations/opencode-runtime/command.ts
-var COMMAND_ALIASES = {
-  status: "status",
-  s: "status",
-  activate: "activate",
-  a: "activate",
-  use: "activate",
-  deactivate: "deactivate",
-  d: "deactivate",
-  remove: "deactivate",
-  rm: "deactivate",
-  clear: "deactivate",
-  list: "list",
-  ls: "list",
-  info: "info",
-  i: "info",
-  show: "show",
-  "system-block": "system-block",
-  help: "help",
-  "-h": "help",
-  "--help": "help"
-};
-var SCOPE_COMMANDS = /* @__PURE__ */ new Set(["activate", "list", "info"]);
-function tokenize(text) {
-  const tokens = [];
-  let current = "";
-  let quote = null;
-  for (let i = 0; i < text.length; i += 1) {
-    const ch = text[i];
-    if (quote) {
-      if (ch === "\\" && i + 1 < text.length) {
-        current += text[i + 1];
-        i += 1;
-        continue;
-      }
-      if (ch === quote) {
-        quote = null;
-        continue;
-      }
-      current += ch;
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      quote = ch;
-      continue;
-    }
-    if (/\s/.test(ch)) {
-      if (current.length > 0) {
-        tokens.push(current);
-        current = "";
-      }
-      continue;
-    }
-    if (ch === "\\" && i + 1 < text.length) {
-      current += text[i + 1];
-      i += 1;
-      continue;
-    }
-    current += ch;
-  }
-  if (quote) {
-    throw new Error("Unterminated quote in runtime command arguments.");
-  }
-  if (current.length > 0) {
-    tokens.push(current);
-  }
-  return tokens;
-}
-function parseScope(tokens, action) {
-  let local = false;
-  let global = false;
-  const names = [];
-  for (const token of tokens) {
-    if (token === "-l" || token === "--local") {
-      local = true;
-      continue;
-    }
-    if (token === "-g" || token === "--global") {
-      global = true;
-      continue;
-    }
-    names.push(token);
-  }
-  if ((local || global) && !SCOPE_COMMANDS.has(action)) {
-    throw new Error("Scope flags are only supported for activate, list, and info.");
-  }
-  if (local && global) {
-    throw new Error("Use either --local or --global, not both.");
-  }
-  return {
-    scope: global ? "global" : "local",
-    names
-  };
-}
-function parseRuntimeCommand(argumentsText) {
-  const tokens = tokenize(argumentsText.trim());
-  if (tokens[0] === "/loadouts" || tokens[0] === "loadouts") {
-    tokens.shift();
-  }
-  if (tokens.length === 0) {
-    return { action: "help", names: [], scope: "local" };
-  }
-  const actionToken = tokens[0].toLowerCase();
-  const action = COMMAND_ALIASES[actionToken];
-  if (!action) {
-    throw new Error(`Unknown runtime command: ${tokens[0]}`);
-  }
-  const parsed = parseScope(tokens.slice(1), action);
-  if (action === "activate" && parsed.names.length === 0) {
-    throw new Error("activate requires at least one loadout name.");
-  }
-  if (action === "list" && parsed.names.length > 0) {
-    throw new Error("list does not accept loadout names.");
-  }
-  if ((action === "status" || action === "show" || action === "system-block" || action === "help") && parsed.names.length > 0) {
-    throw new Error(`${action} does not accept loadout names.`);
-  }
-  return {
-    action,
-    names: parsed.names,
-    scope: parsed.scope
-  };
-}
-function helpText() {
-  return [
-    "runtime commands:",
-    "  (empty|help|-h|--help)",
-    "  status|s",
-    "  activate|a|use <names...> [-l|--local|-g|--global]",
-    "  deactivate|d|remove|rm|clear",
-    "  list|ls [-l|--local|-g|--global]",
-    "  info|i [names...] [-l|--local|-g|--global]",
-    "  show",
-    "  system-block"
-  ].join("\n");
-}
-function shortFingerprint(fingerprint) {
-  return fingerprint.replace(/^sha256:/, "").slice(0, 12);
-}
-async function handleRuntimeCommand(options) {
-  const command = parseRuntimeCommand(options.argumentsText);
-  if (command.action === "help") {
-    return { command, text: helpText() };
-  }
-  if (command.action === "activate") {
-    const compiled = await options.bridge.compile(command.names, command.scope, options.cwd);
-    const activatedAt = options.now ? options.now() : (/* @__PURE__ */ new Date()).toISOString();
-    setRuntimeSessionState(options.store, options.sessionID, {
-      activeNames: command.names,
-      bundle: compiled.bundle,
-      systemBlock: compiled.systemBlock,
-      activatedAt,
-      scope: command.scope
-    });
-    return {
-      command,
-      text: `runtime: activated (${command.scope}) ${command.names.join(", ")} [${shortFingerprint(compiled.bundle.fingerprint)}]`
-    };
-  }
-  if (command.action === "deactivate") {
-    const hadState = clearRuntimeSessionState(options.store, options.sessionID);
-    return {
-      command,
-      text: hadState ? "runtime: deactivated" : "runtime: already inactive"
-    };
-  }
-  if (command.action === "list") {
-    const text = (await options.bridge.list(command.scope, options.cwd)).trim();
-    return { command, text: text || "runtime: no loadouts" };
-  }
-  if (command.action === "info") {
-    const text = (await options.bridge.info(command.names, command.scope, options.cwd)).trim();
-    return { command, text: text || "runtime: no info" };
-  }
-  const state = getRuntimeSessionState(options.store, options.sessionID);
-  if (command.action === "status") {
-    if (!state) {
-      return { command, text: "runtime: inactive" };
-    }
-    return {
-      command,
-      text: `runtime: active ${state.activeNames.join(", ")} [${shortFingerprint(state.bundle.fingerprint)}]`
-    };
-  }
-  if (command.action === "show") {
-    if (!state) {
-      return { command, text: "runtime: inactive" };
-    }
-    return { command, text: renderRuntimeStateSummary(state) };
-  }
-  if (command.action === "system-block") {
-    const block = renderInjectedSystemBlock(state);
-    return {
-      command,
-      text: block || "runtime: inactive (no system block)"
-    };
-  }
-  return { command, text: "runtime: unsupported command" };
-}
-
 // src/core/manifest.ts
-import * as path6 from "node:path";
-var STATE_FILE2 = ".state.json";
+var STATE_FILE = ".state.json";
 function getStatePath(loadoutRoot) {
-  return path6.join(loadoutRoot, STATE_FILE2);
+  return path2.join(loadoutRoot, STATE_FILE);
 }
 function loadState(loadoutRoot) {
   const statePath = getStatePath(loadoutRoot);
@@ -12329,7 +14707,7 @@ function isOwned(state, targetPath) {
   return state.entries.some((e) => e.targetPath === targetPath);
 }
 function isUnmanagedCollision(state, targetPath, projectRoot) {
-  const fullPath = path6.isAbsolute(targetPath) ? targetPath : path6.join(projectRoot, targetPath);
+  const fullPath = path2.isAbsolute(targetPath) ? targetPath : path2.join(projectRoot, targetPath);
   if (!fileExists(fullPath) && !isDirectory(fullPath)) {
     return false;
   }
@@ -12338,40 +14716,58 @@ function isUnmanagedCollision(state, targetPath, projectRoot) {
 function detectDrift(state, projectRoot) {
   const results = [];
   for (const entry of state.entries) {
-    const fullPath = path6.isAbsolute(entry.targetPath) ? entry.targetPath : path6.join(projectRoot, entry.targetPath);
+    const fullPath = path2.isAbsolute(entry.targetPath) ? entry.targetPath : path2.join(projectRoot, entry.targetPath);
     if (!fileExists(fullPath) && !isDirectory(fullPath)) {
-      results.push({ entry, status: "missing" });
+      results.push({
+        entry,
+        status: "missing"
+      });
       continue;
     }
     if (entry.mode === "symlink" && !isSymlink(fullPath)) {
-      results.push({ entry, status: "unlinked" });
+      results.push({
+        entry,
+        status: "unlinked"
+      });
       continue;
     }
     if (entry.mode === "symlink") {
       const actualTarget = readSymlinkTarget(fullPath);
       if (actualTarget !== entry.sourcePath) {
-        results.push({ entry, status: "misdirected" });
+        results.push({
+          entry,
+          status: "misdirected"
+        });
         continue;
       }
     }
     const hashPath = entry.mode === "symlink" ? entry.sourcePath : fullPath;
     if (entry.mode === "symlink" && !fileExists(hashPath) && !isDirectory(hashPath)) {
-      results.push({ entry, status: "broken" });
+      results.push({
+        entry,
+        status: "broken"
+      });
       continue;
     }
     const currentHash = isDirectory(hashPath) ? hashDir(hashPath) : hashFile(hashPath);
     if (currentHash !== entry.renderedHash) {
-      results.push({ entry, status: "modified" });
+      results.push({
+        entry,
+        status: "modified"
+      });
       continue;
     }
-    results.push({ entry, status: "ok" });
+    results.push({
+      entry,
+      status: "ok"
+    });
   }
   return results;
 }
 
 // src/core/render.ts
-import * as path8 from "node:path";
-import * as os2 from "node:os";
+import * as path4 from "node:path";
+import * as os from "node:os";
 
 // src/core/registry.ts
 var Registry = class {
@@ -12396,8 +14792,8 @@ var Registry = class {
     this._transforms.set(name, fn);
   }
   registerHook(event, fn) {
-    const list = this._hooks.get(event) ?? [];
-    this._hooks.set(event, [...list, fn]);
+    const list2 = this._hooks.get(event) ?? [];
+    this._hooks.set(event, [...list2, fn]);
   }
   // ── Lookup ────────────────────────────────────────────────────────────────
   getKind(id) {
@@ -12463,16 +14859,14 @@ var Registry = class {
 var registry = new Registry();
 
 // src/core/template.ts
-import * as path7 from "node:path";
+import * as path3 from "node:path";
 function expandTemplate(template, scope, vars) {
   const tpl = typeof template === "string" ? template : template[scope];
   const expanded = tpl.replace(/\{(\w+)\}/g, (match, key) => {
     if (key in vars) return vars[key];
-    throw new Error(
-      `Unknown path template token: {${key}} in "${tpl}". Valid tokens: ${Object.keys(vars).map((k) => `{${k}}`).join(", ")}`
-    );
+    throw new Error(`Unknown path template token: {${key}} in "${tpl}". Valid tokens: ${Object.keys(vars).map((k) => `{${k}}`).join(", ")}`);
   });
-  return path7.normalize(expanded);
+  return path3.normalize(expanded);
 }
 
 // src/core/render.ts
@@ -12480,14 +14874,14 @@ function resolveOutputSpec(toolName, item, scope) {
   const mapping = registry.resolveMapping(toolName, item.kind);
   if (!mapping) return null;
   const tool = registry.getTool(toolName);
-  const sourceExt = path8.extname(item.sourcePath);
+  const sourceExt = path4.extname(item.sourcePath);
   const ext = mapping.ext ?? sourceExt;
   const vars = {
     base: tool.basePath[scope],
-    home: os2.homedir(),
-    stem: path8.basename(item.sourcePath, sourceExt),
+    home: os.homedir(),
+    stem: path4.basename(item.sourcePath, sourceExt),
     ext,
-    name: path8.basename(item.sourcePath),
+    name: path4.basename(item.sourcePath),
     relative: item.relativePath,
     kind: item.kind
   };
@@ -12513,11 +14907,17 @@ async function renderOutput(item, spec) {
   const mapping = registry.resolveMapping(spec.tool, spec.kind);
   if (mapping?.generate && spec.mode !== "symlink") {
     const content = mapping.generate(item);
-    return { content, hash: hashContent(content) };
+    return {
+      content,
+      hash: hashContent(content)
+    };
   }
   const raw = readFile(item.sourcePath);
   if (spec.mode === "symlink") {
-    return { content: raw, hash: hashContent(raw) };
+    return {
+      content: raw,
+      hash: hashContent(raw)
+    };
   }
   if (mapping?.transform) {
     const transformFn = typeof mapping.transform === "string" ? registry.getTransform(mapping.transform) : mapping.transform;
@@ -12525,9 +14925,15 @@ async function renderOutput(item, spec) {
       throw new Error(`Transform "${mapping.transform}" is not registered.`);
     }
     const content = transformFn(raw, item);
-    return { content, hash: hashContent(content) };
+    return {
+      content,
+      hash: hashContent(content)
+    };
   }
-  return { content: raw, hash: hashContent(raw) };
+  return {
+    content: raw,
+    hash: hashContent(raw)
+  };
 }
 function expandDirItem(item, kind) {
   if (kind.layout !== "dir" || !isDirectory(item.sourcePath)) {
@@ -12536,8 +14942,8 @@ function expandDirItem(item, kind) {
   const files = walkDir(item.sourcePath);
   return files.map((relativeFile) => ({
     kind: item.kind,
-    sourcePath: path8.join(item.sourcePath, relativeFile),
-    relativePath: path8.join(item.relativePath, relativeFile),
+    sourcePath: path4.join(item.sourcePath, relativeFile),
+    relativePath: path4.join(item.relativePath, relativeFile),
     tools: item.tools
   }));
 }
@@ -12545,21 +14951,21 @@ function resolveExpandedOutputSpec(toolName, baseItem, expandedItem, scope) {
   const mapping = registry.resolveMapping(toolName, baseItem.kind);
   if (!mapping) return null;
   const tool = registry.getTool(toolName);
-  const sourceExt = path8.extname(expandedItem.sourcePath);
+  const sourceExt = path4.extname(expandedItem.sourcePath);
   const ext = mapping.ext ?? sourceExt;
-  const relativeWithinDir = path8.relative(baseItem.sourcePath, expandedItem.sourcePath);
+  const relativeWithinDir = path4.relative(baseItem.sourcePath, expandedItem.sourcePath);
   const vars = {
     base: tool.basePath[scope],
-    home: os2.homedir(),
-    stem: path8.basename(baseItem.sourcePath),
+    home: os.homedir(),
+    stem: path4.basename(baseItem.sourcePath),
     // Use the directory name as stem
     ext,
-    name: path8.basename(baseItem.sourcePath),
+    name: path4.basename(baseItem.sourcePath),
     relative: baseItem.relativePath,
     kind: baseItem.kind
   };
   const baseTargetPath = expandTemplate(mapping.path, scope, vars);
-  const targetPath = path8.join(baseTargetPath, relativeWithinDir);
+  const targetPath = path4.join(baseTargetPath, relativeWithinDir);
   const mode = resolveMappingMode(mapping, expandedItem);
   return {
     tool: toolName,
@@ -12601,7 +15007,11 @@ async function planRender(loadout, projectRoot, scope, statePath) {
             const fullPath = resolveTargetPath(spec.targetPath, projectRoot);
             const rendered2 = await renderOutput(expandedItem, spec);
             if (isAdoptableCollision(fullPath, spec, rendered2.content)) {
-              outputs.push({ spec, item: expandedItem, hash: rendered2.hash });
+              outputs.push({
+                spec,
+                item: expandedItem,
+                hash: rendered2.hash
+              });
             } else {
               shadowed.push({
                 tool: spec.tool,
@@ -12613,32 +15023,36 @@ async function planRender(loadout, projectRoot, scope, statePath) {
             continue;
           }
           const rendered = await renderOutput(expandedItem, spec);
-          outputs.push({ spec, item: expandedItem, hash: rendered.hash });
+          outputs.push({
+            spec,
+            item: expandedItem,
+            hash: rendered.hash
+          });
         } catch (err) {
-          errors.push(
-            `${expandedItem.relativePath} \u2192 ${toolName}: ${err instanceof Error ? err.message : String(err)}`
-          );
+          errors.push(`${expandedItem.relativePath} \u2192 ${toolName}: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
     }
   }
-  return { outputs, shadowed, errors };
+  return {
+    outputs,
+    shadowed,
+    errors
+  };
 }
 function resolveTargetPath(targetPath, projectRoot) {
-  return path8.isAbsolute(targetPath) ? targetPath : path8.join(projectRoot, targetPath);
+  return path4.isAbsolute(targetPath) ? targetPath : path4.join(projectRoot, targetPath);
 }
 function collectParentDirs(targetPaths, projectRoot) {
   const dirs = /* @__PURE__ */ new Set();
   for (const targetPath of targetPaths) {
-    let dir = path8.dirname(resolveTargetPath(targetPath, projectRoot));
-    while (dir !== projectRoot && dir !== path8.dirname(dir)) {
+    let dir = path4.dirname(resolveTargetPath(targetPath, projectRoot));
+    while (dir !== projectRoot && dir !== path4.dirname(dir)) {
       dirs.add(dir);
-      dir = path8.dirname(dir);
+      dir = path4.dirname(dir);
     }
   }
-  return [...dirs].sort(
-    (a, b) => b.split(path8.sep).length - a.split(path8.sep).length
-  );
+  return [...dirs].sort((a, b) => b.split(path4.sep).length - a.split(path4.sep).length);
 }
 async function removeEmptyParentDirs(targetPaths, projectRoot) {
   if (targetPaths.length === 0) return;
@@ -12654,13 +15068,15 @@ async function removeEmptyParentDirs(targetPaths, projectRoot) {
 }
 function prepareOutputTarget(targetPath) {
   removePath(targetPath);
-  ensureDir(path8.dirname(targetPath));
+  ensureDir(path4.dirname(targetPath));
 }
 async function applyMultiPlan(plans, loadoutRoot, projectRoot, mode = "symlink", scope = "project") {
   const outputsByTarget = /* @__PURE__ */ new Map();
   const mergedShadowed = [];
   const seenShadowedTargets = /* @__PURE__ */ new Set();
-  for (const { plan: plan2 } of plans) {
+  for (const {
+    plan: plan2
+  } of plans) {
     for (const output of plan2.outputs) {
       const existing = outputsByTarget.get(output.spec.targetPath);
       if (existing) {
@@ -12686,7 +15102,9 @@ async function applyMultiPlan(plans, loadoutRoot, projectRoot, mode = "symlink",
   const updated = [];
   const added = [];
   const removed = [];
-  for (const { output } of mergedOutputs) {
+  for (const {
+    output
+  } of mergedOutputs) {
     const oldEntry = oldEntries.get(output.spec.targetPath);
     if (!oldEntry) {
       added.push(output.spec.targetPath);
@@ -12706,7 +15124,12 @@ async function applyMultiPlan(plans, loadoutRoot, projectRoot, mode = "symlink",
   }
   await removeEmptyParentDirs(removed, projectRoot);
   const byTool = /* @__PURE__ */ new Map();
-  for (const { output: { spec, item } } of mergedOutputs) {
+  for (const {
+    output: {
+      spec,
+      item
+    }
+  } of mergedOutputs) {
     const targetPath = resolveTargetPath(spec.targetPath, projectRoot);
     prepareOutputTarget(targetPath);
     if (spec.mode === "symlink") {
@@ -12717,7 +15140,13 @@ async function applyMultiPlan(plans, loadoutRoot, projectRoot, mode = "symlink",
     }
     byTool.set(spec.tool, (byTool.get(spec.tool) || 0) + 1);
   }
-  const entries = mergedOutputs.map(({ output: { spec, hash }, tools }) => ({
+  const entries = mergedOutputs.map(({
+    output: {
+      spec,
+      hash
+    },
+    tools
+  }) => ({
     tools: Array.from(tools).sort(),
     kind: spec.kind,
     sourcePath: spec.sourcePath,
@@ -12734,21 +15163,28 @@ async function applyMultiPlan(plans, loadoutRoot, projectRoot, mode = "symlink",
     shadowed: mergedShadowed
   };
   saveState(loadoutRoot, newState);
-  const fallbackMarker = path8.join(loadoutRoot, ".fallback-applied");
+  const fallbackMarker = path4.join(loadoutRoot, ".fallback-applied");
   if (fileExists(fallbackMarker)) {
     removeFile(fallbackMarker);
   }
   return {
     totalOutputs: mergedOutputs.length,
     byTool,
-    changes: { updated, added, removed }
+    changes: {
+      updated,
+      added,
+      removed
+    }
   };
 }
 async function removeManaged(loadoutRoot, projectRoot, scope = "project") {
   const state = loadState(loadoutRoot);
   const removed = [];
   const missing = [];
-  if (!state) return { removed, missing };
+  if (!state) return {
+    removed,
+    missing
+  };
   for (const entry of state.entries) {
     const fullPath = resolveTargetPath(entry.targetPath, projectRoot);
     if (fileExists(fullPath) || isDirectory(fullPath) || isSymlink(fullPath)) {
@@ -12759,31 +15195,104 @@ async function removeManaged(loadoutRoot, projectRoot, scope = "project") {
     }
   }
   await removeEmptyParentDirs(state.entries.map((entry) => entry.targetPath), projectRoot);
-  return { removed, missing };
+  return {
+    removed,
+    missing
+  };
 }
 
 // src/core/resolve.ts
-import * as path16 from "node:path";
+import * as path14 from "node:path";
+
+// src/core/config.ts
+var yaml = __toESM(require_dist(), 1);
+import * as path5 from "node:path";
+var ROOT_CONFIG_FILE = "loadouts.yaml";
+var LOADOUTS_DIR = "loadouts";
+function parseMarkdownFrontmatter(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!match) {
+    return {
+      frontmatter: {},
+      body: content
+    };
+  }
+  const [, frontmatterStr, body] = match;
+  const parsed = yaml.parse(frontmatterStr);
+  const frontmatter = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  return {
+    frontmatter,
+    body
+  };
+}
+function parseRootConfig(loadoutRoot) {
+  const configPath = path5.join(loadoutRoot, ROOT_CONFIG_FILE);
+  if (!fileExists(configPath)) {
+    return {
+      version: "1"
+    };
+  }
+  const content = readFile(configPath);
+  const parsed = yaml.parse(content);
+  return RootConfigSchema.parse(parsed);
+}
+function parseLoadoutDefinition(filePath) {
+  const content = readFile(filePath);
+  const parsed = yaml.parse(content);
+  return LoadoutDefinitionSchema.parse(parsed);
+}
+function listLoadouts(loadoutRoot) {
+  const loadoutsDir = path5.join(loadoutRoot, LOADOUTS_DIR);
+  if (!isDirectory(loadoutsDir)) {
+    return [];
+  }
+  return listFiles(loadoutsDir).filter((f) => f.endsWith(".yaml") || f.endsWith(".yml")).map((f) => f.replace(/\.ya?ml$/, ""));
+}
+function findLoadoutDefinition(name, roots) {
+  for (const root of roots) {
+    const yamlPath = path5.join(root.path, LOADOUTS_DIR, `${name}.yaml`);
+    const ymlPath = path5.join(root.path, LOADOUTS_DIR, `${name}.yml`);
+    const filePath = fileExists(yamlPath) ? yamlPath : fileExists(ymlPath) ? ymlPath : null;
+    if (filePath) {
+      return {
+        definition: parseLoadoutDefinition(filePath),
+        rootPath: root.path
+      };
+    }
+  }
+  return null;
+}
+function serializeMarkdownFrontmatter(frontmatter, body) {
+  if (Object.keys(frontmatter).length === 0) {
+    return body;
+  }
+  const frontmatterStr = yaml.stringify(frontmatter).trim();
+  return `---
+${frontmatterStr}
+---
+${body}`;
+}
 
 // src/core/kindLoader.ts
-var yaml3 = __toESM(require_dist(), 1);
-import * as path9 from "node:path";
+var yaml2 = __toESM(require_dist(), 1);
+import * as path6 from "node:path";
 var yamlKindSources = /* @__PURE__ */ new Map();
 var YamlOutputMappingSchema = external_exports.object({
-  path: external_exports.union([
-    external_exports.string(),
-    external_exports.object({ project: external_exports.string(), global: external_exports.string() })
-  ]),
+  path: external_exports.union([external_exports.string(), external_exports.object({
+    project: external_exports.string(),
+    global: external_exports.string()
+  })]),
   ext: external_exports.string().optional(),
   // "generate" is code-only — YAML kinds cannot generate arbitrary content.
   mode: external_exports.enum(["symlink", "copy"]).optional(),
   // Inline transforms require code; YAML kinds can only reference a named transform.
   transform: external_exports.string().optional()
 });
-var YamlKindDetectSchema = external_exports.union([
-  external_exports.object({ pathPrefix: external_exports.string() }),
-  external_exports.object({ pathExact: external_exports.string() })
-]);
+var YamlKindDetectSchema = external_exports.union([external_exports.object({
+  pathPrefix: external_exports.string()
+}), external_exports.object({
+  pathExact: external_exports.string()
+})]);
 var YamlKindSchema = external_exports.object({
   /**
    * Unique kind identifier. Convention: namespace with a dot (e.g. "myteam.prompt")
@@ -12797,7 +15306,7 @@ var YamlKindSchema = external_exports.object({
 });
 function parseYamlKind(filePath) {
   const content = readFile(filePath);
-  const raw = yaml3.parse(content);
+  const raw = yaml2.parse(content);
   const def = YamlKindSchema.parse(raw);
   const detect = buildDetect(def.detect);
   const defaultTargets = {};
@@ -12831,13 +15340,11 @@ function buildDetect(spec) {
 }
 function loadYamlKindsFromRoots(roots, options = {}) {
   for (const root of roots) {
-    const kindsDir = path9.join(root.path, "kinds");
+    const kindsDir = path6.join(root.path, "kinds");
     if (!isDirectory(kindsDir)) continue;
-    const files = listFiles(kindsDir).filter(
-      (f) => f.endsWith(".yaml") || f.endsWith(".yml")
-    );
+    const files = listFiles(kindsDir).filter((f) => f.endsWith(".yaml") || f.endsWith(".yml"));
     for (const file of files) {
-      const filePath = path9.join(kindsDir, file);
+      const filePath = path6.join(kindsDir, file);
       if (!fileExists(filePath)) continue;
       try {
         const kind = parseYamlKind(filePath);
@@ -12846,27 +15353,19 @@ function loadYamlKindsFromRoots(roots, options = {}) {
           const source = yamlKindSources.get(kind.id);
           if (source === filePath) continue;
           const sourceDetail = source ? ` by ${source}` : "";
-          console.warn(
-            `[loadout] Warning: kind from ${filePath} was skipped \u2014 "${kind.id}" is already registered${sourceDetail}; existing definition takes precedence.`
-          );
+          console.warn(`[loadout] Warning: kind from ${filePath} was skipped \u2014 "${kind.id}" is already registered${sourceDetail}; existing definition takes precedence.`);
           continue;
         }
         if (options.showNamespaceNotes && !kind.id.includes(".")) {
-          console.warn(
-            `[loadout] Note: custom kind "${kind.id}" is unnamespaced. Consider "myteam.${kind.id}" to avoid future name collisions.`
-          );
+          console.warn(`[loadout] Note: custom kind "${kind.id}" is unnamespaced. Consider "myteam.${kind.id}" to avoid future name collisions.`);
         }
         registry.registerKind(kind);
         yamlKindSources.set(kind.id, filePath);
       } catch (err) {
         if (err instanceof Error && err.message.includes("already registered")) {
-          console.warn(
-            `[loadout] Warning: kind from ${filePath} was skipped \u2014 "${extractId(err.message)}" is already registered; existing definition takes precedence.`
-          );
+          console.warn(`[loadout] Warning: kind from ${filePath} was skipped \u2014 "${extractId(err.message)}" is already registered; existing definition takes precedence.`);
         } else {
-          console.warn(
-            `[loadout] Warning: could not load kind from ${filePath}: ` + (err instanceof Error ? err.message : String(err))
-          );
+          console.warn(`[loadout] Warning: could not load kind from ${filePath}: ` + (err instanceof Error ? err.message : String(err)));
         }
       }
     }
@@ -12877,61 +15376,425 @@ function extractId(errMsg) {
   return m ? m[1] : "unknown";
 }
 
+// src/core/discovery.ts
+var yaml3 = __toESM(require_dist(), 1);
+import * as fs2 from "node:fs";
+import * as path7 from "node:path";
+import * as os2 from "node:os";
+import { fileURLToPath } from "node:url";
+
+// src/lib/git.ts
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+var execAsync = promisify(exec);
+async function findGitRoot(cwd) {
+  try {
+    const {
+      stdout
+    } = await execAsync("git rev-parse --show-toplevel", {
+      cwd
+    });
+    return stdout.trim();
+  } catch {
+    return null;
+  }
+}
+
+// src/core/discovery.ts
+var __dirname = path7.dirname(fileURLToPath(import.meta.url));
+var LOADOUT_DIR = ".loadouts";
+var STATE_FILE2 = ".state.json";
+function getGlobalConfigPath() {
+  return path7.join(os2.homedir(), ".config", "loadouts");
+}
+var GLOBAL_CONFIG_PATH = getGlobalConfigPath();
+async function discoverLoadoutRoots(cwd = process.cwd()) {
+  const roots = [];
+  const gitRoot = await findGitRoot(cwd);
+  const stopAt = gitRoot || path7.parse(cwd).root;
+  let current = path7.resolve(cwd);
+  let depth = 0;
+  while (true) {
+    const loadoutPath = path7.join(current, LOADOUT_DIR);
+    if (fs2.existsSync(loadoutPath) && fs2.statSync(loadoutPath).isDirectory()) {
+      roots.push({
+        path: loadoutPath,
+        level: "project",
+        depth
+      });
+    }
+    if (current === stopAt || current === path7.parse(current).root) {
+      break;
+    }
+    current = path7.dirname(current);
+    depth++;
+  }
+  if (fs2.existsSync(GLOBAL_CONFIG_PATH) && fs2.statSync(GLOBAL_CONFIG_PATH).isDirectory()) {
+    roots.push({
+      path: GLOBAL_CONFIG_PATH,
+      level: "global",
+      depth: Infinity
+    });
+  }
+  return roots;
+}
+async function findNearestLoadoutRoot(cwd = process.cwd()) {
+  const roots = await discoverLoadoutRoots(cwd);
+  return roots.length > 0 ? roots[0] : null;
+}
+async function getContext(scope, cwd = process.cwd()) {
+  if (scope === "global") {
+    const configPath = getGlobalConfigPath();
+    return {
+      scope: "global",
+      configPath,
+      statePath: path7.join(configPath, STATE_FILE2),
+      projectRoot: os2.homedir()
+    };
+  } else {
+    const nearestRoot = await findNearestLoadoutRoot(cwd);
+    if (!nearestRoot || nearestRoot.level !== "project") {
+      throw new Error("No .loadouts/ directory found. Run 'loadouts init' first.");
+    }
+    const projectRoot = path7.dirname(nearestRoot.path);
+    return {
+      scope: "project",
+      configPath: nearestRoot.path,
+      statePath: path7.join(nearestRoot.path, STATE_FILE2),
+      projectRoot
+    };
+  }
+}
+function getGlobalRoot() {
+  if (fs2.existsSync(GLOBAL_CONFIG_PATH) && fs2.statSync(GLOBAL_CONFIG_PATH).isDirectory()) {
+    return {
+      path: GLOBAL_CONFIG_PATH,
+      level: "global",
+      depth: Infinity
+    };
+  }
+  return null;
+}
+function findBundledPath() {
+  const candidates = [
+    // Development: relative to src/core/
+    path7.resolve(__dirname, "../../bundled"),
+    // Production: relative to dist/core/
+    path7.resolve(__dirname, "../../bundled")
+  ];
+  for (const candidate of candidates) {
+    if (fs2.existsSync(candidate) && fs2.statSync(candidate).isDirectory()) {
+      return candidate;
+    }
+  }
+  return null;
+}
+function getBundledRoot() {
+  const bundledPath = findBundledPath();
+  if (!bundledPath) return null;
+  return {
+    path: bundledPath,
+    level: "bundled",
+    depth: Infinity
+  };
+}
+function resolveSourcePath(sourceRef, fromLoadoutDir) {
+  let resolved = sourceRef.startsWith("~") ? path7.join(os2.homedir(), sourceRef.slice(1)) : sourceRef;
+  if (!path7.isAbsolute(resolved)) {
+    const fromDir = path7.dirname(fromLoadoutDir);
+    resolved = path7.resolve(fromDir, resolved);
+  }
+  if (path7.basename(resolved) === ".loadouts" && fs2.existsSync(resolved)) {
+    return resolved;
+  }
+  const loadoutPath = path7.join(resolved, ".loadouts");
+  if (fs2.existsSync(loadoutPath) && fs2.statSync(loadoutPath).isDirectory()) {
+    return loadoutPath;
+  }
+  return null;
+}
+function parseSourcesFromConfig(loadoutDir) {
+  const configPath = path7.join(loadoutDir, "loadouts.yaml");
+  if (!fs2.existsSync(configPath)) return [];
+  try {
+    const content = fs2.readFileSync(configPath, "utf-8");
+    const config = yaml3.parse(content);
+    return config?.sources ?? [];
+  } catch {
+    return [];
+  }
+}
+function collectRootsWithSources(primaryRoot, includeGlobal = true, includeBundled = true) {
+  const roots = [primaryRoot];
+  const seen = /* @__PURE__ */ new Set([primaryRoot.path]);
+  const warnings = [];
+  const queue = [{
+    loadoutDir: primaryRoot.path,
+    depth: 0
+  }];
+  while (queue.length > 0) {
+    const {
+      loadoutDir,
+      depth
+    } = queue.shift();
+    const sources = parseSourcesFromConfig(loadoutDir);
+    for (const sourcePath of sources) {
+      const resolved = resolveSourcePath(sourcePath, loadoutDir);
+      if (!resolved) {
+        warnings.push(`Source not found: ${sourcePath} (from ${path7.basename(path7.dirname(loadoutDir))})`);
+        continue;
+      }
+      if (seen.has(resolved)) {
+        continue;
+      }
+      seen.add(resolved);
+      const sourceRoot = {
+        path: resolved,
+        level: "source",
+        depth: depth + 1,
+        sourceRef: sourcePath
+      };
+      roots.push(sourceRoot);
+      queue.push({
+        loadoutDir: resolved,
+        depth: depth + 1
+      });
+    }
+  }
+  if (includeGlobal) {
+    const globalRoot = getGlobalRoot();
+    if (globalRoot && !seen.has(globalRoot.path)) {
+      roots.push(globalRoot);
+      seen.add(globalRoot.path);
+    }
+  }
+  if (includeBundled) {
+    const bundledRoot = getBundledRoot();
+    if (bundledRoot && !seen.has(bundledRoot.path)) {
+      roots.push(bundledRoot);
+    }
+  }
+  return {
+    roots,
+    warnings
+  };
+}
+async function collectCatalogRoots(cwd = process.cwd()) {
+  const entries = [];
+  const seenRoots = /* @__PURE__ */ new Set();
+  const warningSet = /* @__PURE__ */ new Set();
+  const appendChain = (primaryRoot, owner) => {
+    const {
+      roots,
+      warnings
+    } = collectRootsWithSources(primaryRoot, false, false);
+    for (const warning of warnings) {
+      warningSet.add(warning);
+    }
+    for (const root of roots) {
+      if (seenRoots.has(root.path)) continue;
+      seenRoots.add(root.path);
+      entries.push({
+        root,
+        owner
+      });
+    }
+  };
+  const discovered = await discoverLoadoutRoots(cwd);
+  const projectRoot = discovered.find((r) => r.level === "project");
+  if (projectRoot) {
+    appendChain(projectRoot, "project");
+  }
+  const globalRoot = getGlobalRoot();
+  if (globalRoot) {
+    appendChain(globalRoot, "global");
+  }
+  const bundledRoot = getBundledRoot();
+  if (bundledRoot && !seenRoots.has(bundledRoot.path)) {
+    entries.push({
+      root: bundledRoot,
+      owner: "bundled"
+    });
+  }
+  return {
+    entries,
+    warnings: Array.from(warningSet)
+  };
+}
+
+// src/builtins/kinds/rule.ts
+var ruleKind = {
+  id: "rule",
+  description: "Scoped advisory rules for AI coding agents.",
+  detect: (rel) => rel.startsWith("rules/"),
+  layout: "file",
+  // defaultTargets intentionally empty — each built-in tool defines its own
+  // mapping via targets.rule so it can customise extension and transform.
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/skill.ts
+var skillKind = {
+  id: "skill",
+  description: "AgentSkill directories (reusable sub-agents).",
+  detect: (rel) => rel.startsWith("skills/"),
+  layout: "dir",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/instruction.ts
+var instructionKind = {
+  id: "instruction",
+  description: "Always-on project instructions (AGENTS.md).",
+  detect: (rel) => rel.startsWith("instructions/AGENTS.") && rel.endsWith(".md"),
+  layout: "file",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/agent.ts
+var agentKind = {
+  id: "agent",
+  description: "Specialized agent and subagent definitions.",
+  detect: (rel) => rel.startsWith("agents/") && rel.endsWith(".md"),
+  layout: "file",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/prompt.ts
+var promptKind = {
+  id: "prompt",
+  description: "Prompt templates that expand via /name commands.",
+  detect: (rel) => rel.startsWith("prompts/") && rel.endsWith(".md"),
+  layout: "file",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/extension.ts
+var extensionKind = {
+  id: "extension",
+  description: "TypeScript runtime extensions.",
+  detect: (rel) => rel.startsWith("extensions/") && (rel.endsWith(".ts") || rel.endsWith(".js")),
+  layout: "file",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/extension-dir.ts
+var extensionDirKind = {
+  id: "extension-dir",
+  description: "Directory-based runtime extensions with package metadata.",
+  detect: (rel) => rel.startsWith("extensions/") && !rel.endsWith(".ts") && !rel.endsWith(".js"),
+  layout: "dir",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/theme.ts
+var themeKind = {
+  id: "theme",
+  description: "TUI color themes (JSON).",
+  detect: (rel) => rel.startsWith("themes/") && rel.endsWith(".json"),
+  layout: "file",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/opencode-config.ts
+var opencodeConfigKind = {
+  id: "opencode-config",
+  description: "Whole-file OpenCode runtime configuration.",
+  detect: (rel) => rel === "opencode/opencode.json" || rel === "opencode/opencode.jsonc",
+  layout: "file",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/opencode-tui-config.ts
+var opencodeTuiConfigKind = {
+  id: "opencode-tui-config",
+  description: "Whole-file OpenCode TUI configuration.",
+  detect: (rel) => rel === "opencode/tui.json" || rel === "opencode/tui.jsonc",
+  layout: "file",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/opencode-plugin.ts
+var opencodePluginKind = {
+  id: "opencode-plugin",
+  description: "Local OpenCode plugin modules.",
+  detect: (rel) => rel.startsWith("opencode/plugins/") && (rel.endsWith(".ts") || rel.endsWith(".tsx") || rel.endsWith(".js")),
+  layout: "file",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/opencode-plugin-dir.ts
+var opencodePluginDirKind = {
+  id: "opencode-plugin-dir",
+  description: "Directory-based OpenCode plugin packages.",
+  detect: (rel) => rel.startsWith("opencode/plugins/") && !rel.endsWith(".ts") && !rel.endsWith(".tsx") && !rel.endsWith(".js"),
+  layout: "dir",
+  defaultTargets: {}
+};
+
+// src/builtins/kinds/opencode-command.ts
+var opencodeCommandKind = {
+  id: "opencode-command",
+  description: "OpenCode slash command markdown files.",
+  detect: (rel) => rel.startsWith("opencode/commands/") && rel.endsWith(".md"),
+  layout: "file",
+  defaultTargets: {}
+};
+
 // src/builtins/tools/claude-code.ts
-import * as path11 from "node:path";
+import * as path9 from "node:path";
 import * as os3 from "node:os";
 
 // src/builtins/agent-transforms.ts
-import * as path10 from "node:path";
+import * as path8 from "node:path";
 var MARKDOWN_NATIVE_KEYS = {
-  opencode: /* @__PURE__ */ new Set([
-    "description",
-    "mode",
-    "model",
-    "variant",
-    "reasoningEffort",
-    "temperature",
-    "top_p",
-    "steps",
-    "disable",
-    "hidden",
-    "color",
-    "permission"
-  ]),
-  cursor: /* @__PURE__ */ new Set([
-    "name",
-    "description",
-    "model",
-    "readonly",
-    "is_background"
-  ]),
-  "claude-code": /* @__PURE__ */ new Set([
-    "name",
-    "description",
-    "tools",
-    "disallowedTools",
-    "model",
-    "permissionMode",
-    "maxTurns",
-    "skills",
-    "mcpServers",
-    "hooks",
-    "memory",
-    "background",
-    "effort",
-    "isolation",
-    "color",
-    "initialPrompt"
-  ])
+  opencode: /* @__PURE__ */ new Set(["description", "mode", "model", "variant", "reasoningEffort", "temperature", "top_p", "steps", "disable", "hidden", "color", "permission"]),
+  cursor: /* @__PURE__ */ new Set(["name", "description", "model", "readonly", "is_background"]),
+  "claude-code": /* @__PURE__ */ new Set(["name", "description", "tools", "disallowedTools", "model", "permissionMode", "maxTurns", "skills", "mcpServers", "hooks", "memory", "background", "effort", "isolation", "color", "initialPrompt"])
 };
 function isRecord(value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
+function cloneRecord(value) {
+  return {
+    ...value
+  };
+}
+function getAgentName(item) {
+  if (!item) return "agent";
+  return path8.basename(item.sourcePath, path8.extname(item.sourcePath));
+}
 function getTargets(frontmatter) {
   return isRecord(frontmatter.targets) ? frontmatter.targets : {};
 }
+function getTargetOverlay(frontmatter, target) {
+  const targets = getTargets(frontmatter);
+  const overlay2 = targets[target];
+  return isRecord(overlay2) ? overlay2 : {};
+}
+function omitLoadoutsOnlyFields(frontmatter) {
+  const result = cloneRecord(frontmatter);
+  delete result.targets;
+  return result;
+}
+function mergePermission(frontmatter, permission) {
+  const existing = isRecord(frontmatter.permission) ? frontmatter.permission : {};
+  frontmatter.permission = {
+    ...existing,
+    ...permission
+  };
+}
+function removeUndefined(frontmatter) {
+  return Object.fromEntries(Object.entries(frontmatter).filter(([, value]) => value !== void 0));
+}
+function filterKnownKeys(frontmatter, target) {
+  const allowed = MARKDOWN_NATIVE_KEYS[target];
+  return Object.fromEntries(Object.entries(frontmatter).filter(([key]) => allowed.has(key)));
+}
 function canSymlinkMarkdownAgent(raw, target) {
-  const { frontmatter } = parseMarkdownFrontmatter(raw);
+  const {
+    frontmatter
+  } = parseMarkdownFrontmatter(raw);
   if (Object.keys(getTargets(frontmatter)).length > 0) return false;
   const allowed = MARKDOWN_NATIVE_KEYS[target];
   if (!Object.keys(frontmatter).every((key) => allowed.has(key))) return false;
@@ -12949,6 +15812,157 @@ function selectAgentMarkdownMode(target) {
     return canSymlinkMarkdownAgent(raw, target) ? "symlink" : "copy";
   };
 }
+function buildOpenCodeFrontmatter(frontmatter, item) {
+  const overlay2 = getTargetOverlay(frontmatter, "opencode");
+  const result = filterKnownKeys(omitLoadoutsOnlyFields(frontmatter), "opencode");
+  if (result.model === "inherit") delete result.model;
+  if (typeof result.description !== "string" || result.description.length === 0) {
+    result.description = `${getAgentName(item)} agent`;
+  }
+  const merged = {
+    ...result,
+    ...overlay2
+  };
+  if (frontmatter.readonly === true) {
+    mergePermission(merged, {
+      edit: "deny"
+    });
+  }
+  return removeUndefined(merged);
+}
+function buildCursorFrontmatter(frontmatter, item) {
+  const overlay2 = getTargetOverlay(frontmatter, "cursor");
+  const result = filterKnownKeys(omitLoadoutsOnlyFields(frontmatter), "cursor");
+  result.name = typeof result.name === "string" ? result.name : getAgentName(item);
+  if (typeof result.description !== "string" || result.description.length === 0) {
+    result.description = `${result.name} agent`;
+  }
+  if (frontmatter.background !== void 0 && result.is_background === void 0) {
+    result.is_background = frontmatter.background;
+  }
+  return removeUndefined({
+    ...result,
+    ...overlay2
+  });
+}
+function buildClaudeFrontmatter(frontmatter, item) {
+  const overlay2 = getTargetOverlay(frontmatter, "claude-code");
+  const result = filterKnownKeys(omitLoadoutsOnlyFields(frontmatter), "claude-code");
+  result.name = typeof result.name === "string" ? result.name : getAgentName(item);
+  if (typeof result.description !== "string" || result.description.length === 0) {
+    result.description = `${result.name} agent`;
+  }
+  if (frontmatter.readonly === true && result.permissionMode === void 0) {
+    result.permissionMode = "plan";
+  }
+  if (frontmatter.background !== void 0 && result.background === void 0) {
+    result.background = frontmatter.background;
+  }
+  return removeUndefined({
+    ...result,
+    ...overlay2
+  });
+}
+function renderOpenCodeAgent(raw, item) {
+  const {
+    frontmatter,
+    body
+  } = parseMarkdownFrontmatter(raw);
+  return serializeMarkdownFrontmatter(buildOpenCodeFrontmatter(frontmatter, item), body);
+}
+function renderCursorAgent(raw, item) {
+  const {
+    frontmatter,
+    body
+  } = parseMarkdownFrontmatter(raw);
+  return serializeMarkdownFrontmatter(buildCursorFrontmatter(frontmatter, item), body);
+}
+function renderClaudeAgent(raw, item) {
+  const {
+    frontmatter,
+    body
+  } = parseMarkdownFrontmatter(raw);
+  return serializeMarkdownFrontmatter(buildClaudeFrontmatter(frontmatter, item), body);
+}
+function buildCodexConfig(frontmatter, body, item) {
+  const overlay2 = getTargetOverlay(frontmatter, "codex");
+  const result = {
+    name: typeof frontmatter.name === "string" ? frontmatter.name : getAgentName(item),
+    description: typeof frontmatter.description === "string" && frontmatter.description.length > 0 ? frontmatter.description : `${getAgentName(item)} agent`,
+    developer_instructions: body.trim()
+  };
+  if (typeof frontmatter.model === "string" && frontmatter.model !== "inherit") {
+    result.model = frontmatter.model;
+  }
+  if (frontmatter.readonly === true) {
+    result.sandbox_mode = "read-only";
+  }
+  return removeUndefined({
+    ...result,
+    ...overlay2
+  });
+}
+function isScalar(value) {
+  return value === null || ["string", "number", "boolean"].includes(typeof value);
+}
+function formatTomlString(value) {
+  if (value.includes("\n")) {
+    return `"""
+${value.replaceAll('"""', '\\"\\"\\"')}
+"""`;
+  }
+  return JSON.stringify(value);
+}
+function formatTomlValue(value) {
+  if (typeof value === "string") return formatTomlString(value);
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value === null) return '""';
+  if (Array.isArray(value) && value.every(isScalar)) {
+    return `[${value.map(formatTomlValue).join(", ")}]`;
+  }
+  throw new Error("Unsupported TOML value in agent config.");
+}
+function renderTomlObject(value, prefix = []) {
+  const lines = [];
+  const nested = [];
+  const objectArrays = [];
+  for (const [key, entry] of Object.entries(value)) {
+    if (isScalar(entry) || Array.isArray(entry) && entry.every(isScalar)) {
+      lines.push(`${key} = ${formatTomlValue(entry)}`);
+      continue;
+    }
+    if (Array.isArray(entry) && entry.every(isRecord)) {
+      objectArrays.push([key, entry]);
+      continue;
+    }
+    if (isRecord(entry)) {
+      nested.push([key, entry]);
+      continue;
+    }
+    throw new Error(`Unsupported TOML value for key "${key}" in agent config.`);
+  }
+  for (const [key, entry] of nested) {
+    lines.push("");
+    lines.push(`[${[...prefix, key].join(".")}]`);
+    lines.push(...renderTomlObject(entry, [...prefix, key]));
+  }
+  for (const [key, entries] of objectArrays) {
+    for (const entry of entries) {
+      lines.push("");
+      lines.push(`[[${[...prefix, key].join(".")}]]`);
+      lines.push(...renderTomlObject(entry, [...prefix, key]));
+    }
+  }
+  return lines;
+}
+function renderCodexAgent(raw, item) {
+  const {
+    frontmatter,
+    body
+  } = parseMarkdownFrontmatter(raw);
+  return `${renderTomlObject(buildCodexConfig(frontmatter, body, item)).join("\n")}
+`;
+}
 
 // src/builtins/tools/claude-code.ts
 var CLAUDE_WRAPPER = `# Claude Code Instructions
@@ -12960,15 +15974,22 @@ See [AGENTS.md](AGENTS.md) for project instructions.
 var claudeCodeTool = {
   name: "claude-code",
   basePath: {
-    global: path11.join(os3.homedir(), ".claude"),
+    global: path9.join(os3.homedir(), ".claude"),
     project: ".claude"
   },
   supports: ["rule", "skill", "instruction", "agent"],
   targets: {
-    rule: { path: "{base}/rules/{stem}.md" },
-    skill: { path: "{base}/skills/{name}" },
+    rule: {
+      path: "{base}/rules/{stem}.md"
+    },
+    skill: {
+      path: "{base}/skills/{name}"
+    },
     instruction: {
-      path: { project: "CLAUDE.md", global: "{home}/CLAUDE.md" },
+      path: {
+        project: "CLAUDE.md",
+        global: "{home}/CLAUDE.md"
+      },
       mode: "generate",
       generate: () => CLAUDE_WRAPPER
     },
@@ -12981,12 +16002,12 @@ var claudeCodeTool = {
 };
 
 // src/builtins/tools/cursor.ts
-import * as path12 from "node:path";
+import * as path10 from "node:path";
 import * as os4 from "node:os";
 var cursorTool = {
   name: "cursor",
   basePath: {
-    global: path12.join(os4.homedir(), ".cursor"),
+    global: path10.join(os4.homedir(), ".cursor"),
     project: ".cursor"
   },
   supports: ["rule", "skill", "instruction", "agent"],
@@ -12996,9 +16017,14 @@ var cursorTool = {
       path: "{base}/rules/{stem}.mdc",
       transform: "cursor-rule-frontmatter"
     },
-    skill: { path: "{base}/skills/{name}" },
+    skill: {
+      path: "{base}/skills/{name}"
+    },
     instruction: {
-      path: { project: "AGENTS.md", global: "{home}/AGENTS.md" }
+      path: {
+        project: "AGENTS.md",
+        global: "{home}/AGENTS.md"
+      }
     },
     agent: {
       path: "{base}/agents/{stem}.md",
@@ -13009,24 +16035,15 @@ var cursorTool = {
 };
 
 // src/builtins/tools/opencode.ts
-import * as path13 from "node:path";
+import * as path11 from "node:path";
 import * as os5 from "node:os";
 var opencodeTool = {
   name: "opencode",
   basePath: {
-    global: path13.join(os5.homedir(), ".config", "opencode"),
+    global: path11.join(os5.homedir(), ".config", "opencode"),
     project: ".opencode"
   },
-  supports: [
-    "rule",
-    "skill",
-    "instruction",
-    "agent",
-    "opencode-config",
-    "opencode-tui-config",
-    "opencode-plugin",
-    "opencode-command"
-  ],
+  supports: ["rule", "skill", "instruction", "agent", "opencode-config", "opencode-tui-config", "opencode-plugin", "opencode-plugin-dir", "opencode-command"],
   targets: {
     rule: {
       path: "{base}/rules/{stem}.md",
@@ -13037,7 +16054,12 @@ var opencodeTool = {
       transform: "opencode-skill-frontmatter"
     },
     instruction: {
-      path: { project: "AGENTS.md", global: "{home}/AGENTS.md" }
+      // OpenCode V2 resolves global instructions from the global config dir
+      // (core/src/config/plugin/instruction.ts: join(global.config, "AGENTS.md")).
+      path: {
+        project: "AGENTS.md",
+        global: "{base}/AGENTS.md"
+      }
     },
     agent: {
       path: "{base}/agents/{stem}.md",
@@ -13056,25 +16078,38 @@ var opencodeTool = {
         global: "{base}/tui{ext}"
       }
     },
-    "opencode-plugin": { path: "{base}/plugins/{stem}{ext}" },
-    "opencode-command": { path: "{base}/commands/{stem}.md" }
+    "opencode-plugin": {
+      path: "{base}/plugins/{stem}{ext}"
+    },
+    "opencode-plugin-dir": {
+      path: "{base}/plugins/{name}",
+      mode: "copy"
+    },
+    "opencode-command": {
+      path: "{base}/commands/{stem}.md"
+    }
   }
 };
 
 // src/builtins/tools/codex.ts
-import * as path14 from "node:path";
+import * as path12 from "node:path";
 import * as os6 from "node:os";
 var codexTool = {
   name: "codex",
   basePath: {
-    global: path14.join(os6.homedir(), ".agents"),
+    global: path12.join(os6.homedir(), ".agents"),
     project: ".agents"
   },
   supports: ["skill", "instruction", "agent"],
   targets: {
-    skill: { path: "{base}/skills/{name}" },
+    skill: {
+      path: "{base}/skills/{name}"
+    },
     instruction: {
-      path: { project: "AGENTS.md", global: "{home}/AGENTS.md" }
+      path: {
+        project: "AGENTS.md",
+        global: "{home}/AGENTS.md"
+      }
     },
     agent: {
       path: {
@@ -13089,37 +16124,98 @@ var codexTool = {
 };
 
 // src/builtins/tools/pi.ts
-import * as path15 from "node:path";
+import * as path13 from "node:path";
 import * as os7 from "node:os";
 var piTool = {
   name: "pi",
   basePath: {
-    global: path15.join(os7.homedir(), ".pi", "agent"),
+    global: path13.join(os7.homedir(), ".pi", "agent"),
     project: ".pi"
   },
   // Note: "rule" intentionally omitted - pi has no native rules concept.
   // Users can map rules to prompts if needed, or use a compatibility extension.
   supports: ["skill", "instruction", "prompt", "extension", "extension-dir", "theme"],
   targets: {
-    skill: { path: "{base}/skills/{name}" },
-    instruction: {
-      path: { project: "AGENTS.md", global: "{home}/AGENTS.md" }
+    skill: {
+      path: "{base}/skills/{name}"
     },
-    prompt: { path: "{base}/prompts/{stem}.md" },
-    extension: { path: "{base}/extensions/{stem}.ts" },
-    "extension-dir": { path: "{base}/extensions/{stem}", mode: "copy" },
-    theme: { path: "{base}/themes/{stem}.json" }
+    instruction: {
+      path: {
+        project: "AGENTS.md",
+        global: "{home}/AGENTS.md"
+      }
+    },
+    prompt: {
+      path: "{base}/prompts/{stem}.md"
+    },
+    extension: {
+      path: "{base}/extensions/{stem}.ts"
+    },
+    "extension-dir": {
+      path: "{base}/extensions/{stem}",
+      mode: "copy"
+    },
+    theme: {
+      path: "{base}/themes/{stem}.json"
+    }
   }
 };
 
 // src/builtins/index.ts
-var BUILTIN_TOOL_NAMES = [
-  "claude-code",
-  "cursor",
-  "opencode",
-  "codex",
-  "pi"
-];
+var BUILTIN_TOOL_NAMES = ["claude-code", "cursor", "opencode", "codex", "pi"];
+function translateRuleFrontmatter(raw) {
+  const {
+    frontmatter,
+    body
+  } = parseMarkdownFrontmatter(raw);
+  const paths = Array.isArray(frontmatter.paths) ? frontmatter.paths : void 0;
+  if (paths && !Array.isArray(frontmatter.globs)) {
+    frontmatter.globs = paths;
+  }
+  if (typeof frontmatter.activation === "string" && frontmatter.alwaysApply === void 0) {
+    if (frontmatter.activation === "always") frontmatter.alwaysApply = true;
+    if (frontmatter.activation === "scoped") frontmatter.alwaysApply = false;
+  }
+  return serializeMarkdownFrontmatter(frontmatter, body);
+}
+function translateOpenCodeSkillFrontmatter(raw) {
+  const {
+    frontmatter,
+    body
+  } = parseMarkdownFrontmatter(raw);
+  const modelInvocable = frontmatter["model-invocable"];
+  if (typeof modelInvocable === "boolean" && frontmatter["disable-model-invocation"] === void 0) {
+    frontmatter["disable-model-invocation"] = !modelInvocable;
+  }
+  return serializeMarkdownFrontmatter(frontmatter, body);
+}
+function registerBuiltins(api) {
+  api.registerKind(ruleKind);
+  api.registerKind(skillKind);
+  api.registerKind(instructionKind);
+  api.registerKind(agentKind);
+  api.registerKind(promptKind);
+  api.registerKind(extensionKind);
+  api.registerKind(extensionDirKind);
+  api.registerKind(themeKind);
+  api.registerKind(opencodeConfigKind);
+  api.registerKind(opencodeTuiConfigKind);
+  api.registerKind(opencodePluginKind);
+  api.registerKind(opencodePluginDirKind);
+  api.registerKind(opencodeCommandKind);
+  api.registerTransform("cursor-rule-frontmatter", translateRuleFrontmatter);
+  api.registerTransform("opencode-rule-frontmatter", translateRuleFrontmatter);
+  api.registerTransform("opencode-skill-frontmatter", translateOpenCodeSkillFrontmatter);
+  api.registerTransform("opencode-agent-frontmatter", renderOpenCodeAgent);
+  api.registerTransform("cursor-agent-frontmatter", renderCursorAgent);
+  api.registerTransform("claude-agent-frontmatter", renderClaudeAgent);
+  api.registerTransform("codex-agent-toml", renderCodexAgent);
+  api.registerTool(claudeCodeTool);
+  api.registerTool(cursorTool);
+  api.registerTool(opencodeTool);
+  api.registerTool(codexTool);
+  api.registerTool(piTool);
+}
 
 // src/core/resolve.ts
 function resolveLoadout(name, roots, rootConfig, options = {}) {
@@ -13130,7 +16226,10 @@ function resolveLoadout(name, roots, rootConfig, options = {}) {
   if (!found) {
     throw new Error(`Loadout not found: ${name}`);
   }
-  const { definition, rootPath } = found;
+  const {
+    definition,
+    rootPath
+  } = found;
   const effectiveTools = definition.tools || rootConfig?.tools || [...BUILTIN_TOOL_NAMES];
   const items = [];
   for (const include of definition.include || []) {
@@ -13141,13 +16240,16 @@ function resolveLoadout(name, roots, rootConfig, options = {}) {
     description: definition.description,
     tools: effectiveTools,
     items,
-    rootPath
+    rootPath,
+    ...definition.opencode ? {
+      opencode: definition.opencode
+    } : {}
   };
 }
 function resolveInclude(include, rootPath, defaultTools) {
   const relativePath = typeof include === "string" ? include : include.path;
   const tools = typeof include === "object" && include.tools ? include.tools : defaultTools;
-  const sourcePath = path16.join(rootPath, relativePath);
+  const sourcePath = path14.join(rootPath, relativePath);
   if (!fileExists(sourcePath) && !isDirectory(sourcePath)) {
     throw new Error(`Include not found: ${relativePath} (in ${rootPath})`);
   }
@@ -13163,7 +16265,7 @@ function resolveInclude(include, rootPath, defaultTools) {
   };
 }
 function getInstructionItem(loadoutRoot, tools) {
-  const sourcePath = path16.join(loadoutRoot, "AGENTS.md");
+  const sourcePath = path14.join(loadoutRoot, "AGENTS.md");
   if (!fileExists(sourcePath)) {
     return null;
   }
@@ -13195,12 +16297,18 @@ async function collectContextRoots(ctx, includeBundled) {
     roots = collected.roots;
     sourceWarnings = collected.warnings;
   }
-  return { roots, sourceWarnings };
+  return {
+    roots,
+    sourceWarnings
+  };
 }
 async function loadResolvedLoadouts(ctx, names, options = {}) {
   const includeBundled = options.includeBundled ?? false;
   const showKindNamespaceNotes = options.showKindNamespaceNotes ?? false;
-  const { roots, sourceWarnings } = await collectContextRoots(ctx, includeBundled);
+  const {
+    roots,
+    sourceWarnings
+  } = await collectContextRoots(ctx, includeBundled);
   const rootConfig = parseRootConfig(ctx.configPath);
   const loadoutNames = names && names.length > 0 ? names : [rootConfig.default || "base"];
   const loadouts = [];
@@ -13208,16 +16316,429 @@ async function loadResolvedLoadouts(ctx, names, options = {}) {
     const loadout = resolveLoadout(loadoutName, roots, rootConfig, {
       showKindNamespaceNotes
     });
-    const alreadyHasInstruction = loadout.items.some(
-      (i) => i.relativePath === "AGENTS.md"
-    );
+    const alreadyHasInstruction = loadout.items.some((i) => i.relativePath === "AGENTS.md");
     if (!alreadyHasInstruction) {
       const instructionItem = getInstructionItem(ctx.configPath, loadout.tools);
       if (instructionItem) loadout.items.push(instructionItem);
     }
     loadouts.push(loadout);
   }
-  return { loadouts, rootConfig, loadoutNames, roots, sourceWarnings };
+  return {
+    loadouts,
+    rootConfig,
+    loadoutNames,
+    roots,
+    sourceWarnings
+  };
+}
+
+// src/integrations/opencode/delta.ts
+import * as path17 from "node:path";
+import { realpathSync as realpathSync2 } from "node:fs";
+
+// src/core/runtime.ts
+import * as path16 from "node:path";
+
+// src/core/tokens.ts
+import * as path15 from "node:path";
+var CHARS_PER_TOKEN = 4;
+function estimateTokens(content) {
+  return Math.ceil(content.length / CHARS_PER_TOKEN);
+}
+
+// src/core/runtime.ts
+var RUNTIME_SCHEMA_VERSION = 1;
+var RUNTIME_CAPABILITY_MATRIX = {
+  opencode: {
+    runtimeMode: "native-runtime",
+    modelInjection: {
+      instructions: true,
+      rules: true
+    },
+    skillPathDiscovery: true,
+    nativeSkillHotSwap: true,
+    sessionInstructionEntries: true,
+    sessionSkillGating: true,
+    supportedKinds: ["instruction", "rule", "skill"]
+  },
+  pi: {
+    runtimeMode: "native-runtime",
+    modelInjection: {
+      instructions: true,
+      rules: true
+    },
+    skillPathDiscovery: true,
+    nativeSkillHotSwap: false,
+    supportedKinds: ["instruction", "rule", "skill"]
+  },
+  codex: {
+    runtimeMode: "experimental-runtime",
+    modelInjection: {
+      instructions: true,
+      rules: true
+    },
+    skillPathDiscovery: true,
+    nativeSkillHotSwap: false,
+    supportedKinds: ["instruction", "rule", "skill"]
+  },
+  "claude-code": {
+    runtimeMode: "filesystem-activation",
+    modelInjection: {
+      instructions: false,
+      rules: false
+    },
+    skillPathDiscovery: false,
+    nativeSkillHotSwap: false,
+    supportedKinds: ["instruction", "rule", "skill"]
+  },
+  cursor: {
+    runtimeMode: "filesystem-activation",
+    modelInjection: {
+      instructions: false,
+      rules: false
+    },
+    skillPathDiscovery: false,
+    nativeSkillHotSwap: false,
+    supportedKinds: ["instruction", "rule", "skill"]
+  }
+};
+function compileRuntimeBundle(tool, resolved, options = {}) {
+  const loadouts = Array.isArray(resolved) ? resolved : [resolved];
+  const generatedAt = options.generatedAt ?? (/* @__PURE__ */ new Date()).toISOString();
+  const components = [];
+  const diagnostics = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const loadout of loadouts) {
+    for (const item of loadout.items) {
+      if (!item.tools.includes(tool)) continue;
+      const identity2 = `${item.kind}:${path16.resolve(item.sourcePath)}`;
+      if (options.exclude?.has(path16.resolve(item.sourcePath)) || seen.has(identity2)) continue;
+      seen.add(identity2);
+      if (item.kind === "instruction" || item.kind === "rule") {
+        const textComponent = compileTextComponent(loadout.name, item);
+        if ("diagnostic" in textComponent) {
+          diagnostics.push(textComponent.diagnostic);
+        } else {
+          components.push(textComponent.component);
+        }
+        continue;
+      }
+      if (item.kind === "skill") {
+        const skillComponent = compileSkillComponent(loadout.name, item);
+        if ("diagnostic" in skillComponent) {
+          diagnostics.push(skillComponent.diagnostic);
+        } else {
+          components.push(skillComponent.component);
+        }
+        continue;
+      }
+      diagnostics.push({
+        code: "unsupported-kind",
+        severity: "warning",
+        message: `Runtime v1 ignores unsupported artifact kind "${item.kind}".`,
+        kind: item.kind,
+        relativePath: item.relativePath,
+        sourcePath: item.sourcePath
+      });
+    }
+  }
+  const orderedComponents = components;
+  const orderedDiagnostics = diagnostics;
+  const injection = buildInjectionBuckets(orderedComponents);
+  const capabilities = buildRuntimeCapabilities(tool);
+  const runtimeLoadouts = loadouts.map((loadout) => ({
+    name: loadout.name,
+    description: loadout.description,
+    rootPath: loadout.rootPath
+  }));
+  const fingerprint = hashContent(stableStringify({
+    schemaVersion: RUNTIME_SCHEMA_VERSION,
+    tool,
+    loadouts: runtimeLoadouts,
+    components: orderedComponents,
+    injection,
+    diagnostics: orderedDiagnostics,
+    capabilities
+  }));
+  return {
+    schemaVersion: RUNTIME_SCHEMA_VERSION,
+    tool,
+    loadouts: runtimeLoadouts,
+    fingerprint,
+    generatedAt,
+    components: orderedComponents,
+    injection,
+    diagnostics: orderedDiagnostics,
+    capabilities
+  };
+}
+function buildRuntimeCapabilities(tool) {
+  const toolCapabilities = RUNTIME_CAPABILITY_MATRIX[tool];
+  if (toolCapabilities) return toolCapabilities;
+  return {
+    runtimeMode: "filesystem-activation",
+    modelInjection: {
+      instructions: false,
+      rules: false
+    },
+    skillPathDiscovery: false,
+    nativeSkillHotSwap: false,
+    supportedKinds: ["instruction", "rule", "skill"]
+  };
+}
+function renderRuntimeSystemBlock(bundle) {
+  const lines = [];
+  const instructionLabel = bundle.capabilities.modelInjection.instructions ? "Instructions (Model Injection Ready)" : "Instructions (Compiled)";
+  const ruleLabel = bundle.capabilities.modelInjection.rules ? "Rules (Model Injection Ready)" : "Rules (Compiled)";
+  lines.push("[loadout-runtime:v1]");
+  lines.push(`tool: ${bundle.tool}`);
+  lines.push(`fingerprint: ${bundle.fingerprint}`);
+  lines.push(`generatedAt: ${bundle.generatedAt}`);
+  lines.push(`loadouts: ${bundle.loadouts.map((l) => l.name).join(", ") || "(none)"}`);
+  lines.push(`capabilities: mode=${bundle.capabilities.runtimeMode}, instructionInjection=${bundle.capabilities.modelInjection.instructions}, ruleInjection=${bundle.capabilities.modelInjection.rules}, skillPathDiscovery=${bundle.capabilities.skillPathDiscovery}, nativeSkillHotSwap=${bundle.capabilities.nativeSkillHotSwap}`);
+  lines.push("");
+  lines.push(`## ${instructionLabel}`);
+  if (bundle.injection.instructions.length === 0) {
+    lines.push("(none)");
+  } else {
+    for (const item of bundle.injection.instructions) {
+      lines.push(`### ${item.relativePath}`);
+      lines.push(item.content);
+      lines.push("");
+    }
+  }
+  lines.push(`## ${ruleLabel}`);
+  if (bundle.injection.rules.length === 0) {
+    lines.push("(none)");
+  } else {
+    for (const item of bundle.injection.rules) {
+      lines.push(`### ${item.relativePath}`);
+      lines.push(item.content);
+      lines.push("");
+    }
+  }
+  lines.push("## Skills (Path Discovery Only)");
+  lines.push("Read these skill entrypoints when needed; discovery references do not install native skills.");
+  if (bundle.injection.skills.length === 0) {
+    lines.push("(none)");
+  } else {
+    for (const skill of bundle.injection.skills) {
+      const description = skill.description ? ` - ${skill.description}` : "";
+      lines.push(`- ${skill.name}${description}`);
+      lines.push(`  path: ${skill.path}`);
+      lines.push(`  sourcePath: ${skill.sourcePath}`);
+    }
+  }
+  if (bundle.diagnostics.length > 0) {
+    lines.push("");
+    lines.push("## Diagnostics");
+    for (const diagnostic of bundle.diagnostics) {
+      lines.push(`- [${diagnostic.code}] ${diagnostic.message} (${diagnostic.relativePath})`);
+    }
+  }
+  return lines.join("\n").trimEnd() + "\n";
+}
+function compileTextComponent(loadoutName, item) {
+  try {
+    const content = readFile(item.sourcePath);
+    return {
+      component: {
+        loadout: loadoutName,
+        kind: item.kind,
+        relativePath: item.relativePath,
+        sourcePath: item.sourcePath,
+        tokenEstimate: estimateTokens(content),
+        contentHash: hashContent(content),
+        content
+      }
+    };
+  } catch {
+    return {
+      diagnostic: {
+        code: "unreadable-source",
+        severity: "warning",
+        message: "Runtime v1 could not read artifact source.",
+        kind: item.kind,
+        relativePath: item.relativePath,
+        sourcePath: item.sourcePath
+      }
+    };
+  }
+}
+function compileSkillComponent(loadoutName, item) {
+  const skillEntryPath = resolveSkillEntryPath(item.sourcePath);
+  if (!skillEntryPath || !fileExists(skillEntryPath)) {
+    return {
+      diagnostic: {
+        code: "missing-skill-entry",
+        severity: "warning",
+        message: "Runtime v1 expected a SKILL.md entrypoint for skill discovery.",
+        kind: item.kind,
+        relativePath: item.relativePath,
+        sourcePath: item.sourcePath
+      }
+    };
+  }
+  try {
+    const content = readFile(skillEntryPath);
+    return {
+      component: {
+        loadout: loadoutName,
+        kind: "skill",
+        relativePath: item.relativePath,
+        sourcePath: item.sourcePath,
+        tokenEstimate: estimateTokens(content),
+        contentHash: hashContent(content)
+      }
+    };
+  } catch {
+    return {
+      diagnostic: {
+        code: "unreadable-source",
+        severity: "warning",
+        message: "Runtime v1 could not read artifact source.",
+        kind: item.kind,
+        relativePath: item.relativePath,
+        sourcePath: item.sourcePath
+      }
+    };
+  }
+}
+function resolveSkillEntryPath(sourcePath) {
+  if (isDirectory(sourcePath)) {
+    return path16.join(sourcePath, "SKILL.md");
+  }
+  return sourcePath;
+}
+function buildInjectionBuckets(components) {
+  const instructions = [];
+  const rules = [];
+  const skills = [];
+  for (const component of components) {
+    if (component.kind === "instruction" || component.kind === "rule") {
+      const block = {
+        loadout: component.loadout,
+        relativePath: component.relativePath,
+        sourcePath: component.sourcePath,
+        tokenEstimate: component.tokenEstimate,
+        contentHash: component.contentHash,
+        content: component.content
+      };
+      if (component.kind === "instruction") {
+        instructions.push(block);
+      } else {
+        rules.push(block);
+      }
+      continue;
+    }
+    if (component.kind === "skill") {
+      skills.push(createSkillRef(component));
+    }
+  }
+  return {
+    instructions,
+    rules,
+    skills
+  };
+}
+function createSkillRef(component) {
+  const skillEntryPath = resolveSkillEntryPath(component.sourcePath);
+  let name = path16.basename(component.relativePath);
+  let description;
+  if (fileExists(skillEntryPath)) {
+    try {
+      const parsed = parseMarkdownFrontmatter(readFile(skillEntryPath));
+      if (typeof parsed.frontmatter.name === "string" && parsed.frontmatter.name.trim().length > 0) {
+        name = parsed.frontmatter.name;
+      }
+      if (typeof parsed.frontmatter.description === "string" && parsed.frontmatter.description.trim().length > 0) {
+        description = parsed.frontmatter.description;
+      }
+    } catch {
+    }
+  }
+  return {
+    loadout: component.loadout,
+    name,
+    description,
+    path: component.relativePath,
+    sourcePath: component.sourcePath
+  };
+}
+function stableStringify(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    const object = value;
+    const keys = Object.keys(object).sort((a, b) => a.localeCompare(b));
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(object[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+// src/integrations/opencode/delta.ts
+function entryKey(name) {
+  return `loadouts.bundle.${name.toLowerCase().replace(/[^a-z0-9._-]/g, "-").slice(0, 60)}-${hashContent(name).replace(/^sha256:/, "").slice(0, 12)}`;
+}
+async function compileSession(directory, names, options) {
+  const ctx = await getContext(options.scope, directory);
+  const {
+    loadouts,
+    sourceWarnings
+  } = await loadResolvedLoadouts(ctx, names, {
+    includeBundled: true
+  });
+  const full = compileRuntimeBundle("opencode", loadouts);
+  const exclude = /* @__PURE__ */ new Set();
+  if (options.excludeOnDisk !== false) {
+    const rendered = /* @__PURE__ */ new Set();
+    for (const root of await discoverLoadoutRoots(directory)) {
+      const state = loadState(root.path);
+      if (!state) continue;
+      for (const drift of detectDrift(state, path17.dirname(root.path))) {
+        const target = path17.resolve(path17.dirname(root.path), drift.entry.targetPath);
+        const sameLiveSource = isSymlink(target) && canonical(target) === canonical(drift.entry.sourcePath);
+        const native = drift.entry.kind === "skill" || drift.entry.kind === "instruction" && path17.basename(target) === "AGENTS.md";
+        if (native && (drift.status === "ok" || sameLiveSource) && drift.entry.tools.includes("opencode")) {
+          rendered.add(canonical(drift.entry.sourcePath));
+        }
+      }
+    }
+    for (const component of full.components) {
+      const entrypoint = component.kind === "skill" && isDirectory(component.sourcePath) ? path17.join(component.sourcePath, "SKILL.md") : component.sourcePath;
+      if (rendered.has(canonical(component.sourcePath)) || rendered.has(canonical(entrypoint))) exclude.add(path17.resolve(component.sourcePath));
+    }
+  }
+  const bundle = compileRuntimeBundle("opencode", loadouts, {
+    exclude
+  });
+  const selection = {};
+  for (const loadout of loadouts) Object.assign(selection, loadout.opencode);
+  if (Object.keys(selection).length) bundle.fingerprint = hashContent(bundle.fingerprint + JSON.stringify(selection));
+  const entries = {};
+  for (const loadout of bundle.loadouts) {
+    const text = [...bundle.injection.instructions, ...bundle.injection.rules].filter((item) => item.loadout === loadout.name).map((item) => `## ${item.relativePath}
+${item.content}`);
+    const refs = bundle.injection.skills.filter((skill) => skill.loadout === loadout.name);
+    if (refs.length) text.push("## Additional skill entrypoints\n" + refs.map((skill) => `- ${skill.name}${skill.description ? `: ${skill.description}` : ""}
+  Read: ${isDirectory(skill.sourcePath) ? path17.join(skill.sourcePath, "SKILL.md") : skill.sourcePath}`).join("\n"));
+    if (text.length) entries[entryKey(loadout.name)] = text.join("\n\n");
+  }
+  return {
+    bundle,
+    entries,
+    skills: [...new Set(full.injection.skills.map((skill) => skill.name))],
+    warnings: [...sourceWarnings, ...bundle.diagnostics.map((item) => item.message + ` (${item.relativePath})`)],
+    selection
+  };
+}
+function canonical(file) {
+  try {
+    return realpathSync2(file);
+  } catch {
+    return path17.resolve(file);
+  }
 }
 
 // src/tui/core/actions.ts
@@ -13225,33 +16746,50 @@ async function executeEffect(effect, ctx) {
   try {
     if (effect.t === "reload") return done(effect.t, true, "Reload requested");
     if (effect.t === "editFile") return done(effect.t, true, effect.path);
-    if (effect.t === "plan") return done(effect.t, true, "Diff ready", await planLines(ctx.fs, effect.targetSet));
-    if (effect.mode === "runtime") {
-      if (!ctx.runtime) return done(effect.t, false, "Runtime activation is unavailable");
-      if (effect.t === "clear" || effect.targetSet.length === 0) await ctx.runtime.deactivate();
-      else await ctx.runtime.activate(effect.targetSet, effect.scope === "project" ? "local" : "global");
-      return done(effect.t, true, effect.t === "clear" ? "Runtime loadouts cleared" : "Runtime loadouts activated");
+    if (effect.layer === "session") {
+      if (!ctx.session) return done(effect.t, false, "Select a session first");
+      if (effect.t === "plan") {
+        const compiled = await compileSession(ctx.cwd, effect.targetSet, {
+          scope: effect.scope
+        });
+        return done(effect.t, true, "Session delta", [...compiled.bundle.components.map((item) => `+ ${item.kind} ${item.relativePath}`), ...compiled.warnings.map((warning) => `! ${warning}`)]);
+      }
+      const result2 = effect.t === "clear" || effect.targetSet.length === 0 ? await ctx.session.activator.unequip(ctx.session.id) : await ctx.session.activator.equip(ctx.session.id, effect.targetSet, {
+        scope: effect.scope
+      });
+      return done(effect.t, true, ["Session equipment updated", ...result2.warnings].join("; "));
     }
+    const fs3 = await getContext(effect.layer, ctx.cwd);
+    if (effect.t === "plan") return done(effect.t, true, "Diff ready", await planLines(fs3, effect.targetSet));
     if (effect.t === "clear" || effect.targetSet.length === 0) {
-      const { removed } = await removeManaged(ctx.fs.configPath, ctx.fs.projectRoot, ctx.fs.scope);
-      clearState(ctx.fs.configPath);
+      const {
+        removed
+      } = await removeManaged(fs3.configPath, fs3.projectRoot, fs3.scope);
+      clearState(fs3.configPath);
       return done(effect.t, true, `${removed.length} output(s) removed`);
     }
-    const plans = await resolvePlans(ctx.fs, effect.targetSet);
-    const mode = parseRootConfig(ctx.fs.configPath).mode;
-    const result = await applyMultiPlan(plans, ctx.fs.configPath, ctx.fs.projectRoot, mode, ctx.fs.scope);
+    const plans = await resolvePlans(fs3, effect.targetSet);
+    const mode = parseRootConfig(fs3.configPath).mode;
+    const result = await applyMultiPlan(plans, fs3.configPath, fs3.projectRoot, mode, fs3.scope);
     return done(effect.t, true, `${result.totalOutputs} output(s) applied`);
   } catch (err) {
     return done(effect.t, false, err instanceof Error ? err.message : String(err));
   }
 }
 async function resolvePlans(ctx, targets) {
-  const { loadouts } = await loadResolvedLoadouts(ctx, targets, { includeBundled: true });
+  const {
+    loadouts
+  } = await loadResolvedLoadouts(ctx, targets, {
+    includeBundled: true
+  });
   const plans = [];
   for (const loadout of loadouts) {
     const plan2 = await planRender(loadout, ctx.projectRoot, ctx.scope, ctx.configPath);
     if (plan2.errors.length > 0) throw new Error(plan2.errors.join("\n"));
-    plans.push({ loadout, plan: plan2 });
+    plans.push({
+      loadout,
+      plan: plan2
+    });
   }
   return plans;
 }
@@ -13260,9 +16798,13 @@ async function planLines(ctx, targets) {
   const plans = await resolvePlans(ctx, targets);
   const state = loadState(ctx.configPath);
   const stateTargets = new Set(state?.entries.map((entry) => entry.targetPath) ?? []);
-  const planTargets = new Set(plans.flatMap(({ plan: plan2 }) => plan2.outputs.map((output) => output.spec.targetPath)));
+  const planTargets = new Set(plans.flatMap(({
+    plan: plan2
+  }) => plan2.outputs.map((output) => output.spec.targetPath)));
   const lines = [];
-  for (const { plan: plan2 } of plans) {
+  for (const {
+    plan: plan2
+  } of plans) {
     for (const output of plan2.outputs) lines.push(`${stateTargets.has(output.spec.targetPath) ? "~" : "+"} ${output.spec.kind} ${output.spec.targetPath} (${output.spec.tool})`);
     for (const shadowed of plan2.shadowed) lines.push(`! shadowed ${shadowed.targetPath} (${shadowed.tool})`);
   }
@@ -13272,11 +16814,17 @@ async function planLines(ctx, targets) {
   return lines.length ? lines : ["No changes"];
 }
 function done(effect, ok, message, data) {
-  return { t: "effectDone", effect, ok, message, data };
+  return {
+    t: "effectDone",
+    effect,
+    ok,
+    message,
+    data
+  };
 }
 
 // src/tui/core/data.ts
-import * as path18 from "node:path";
+import * as path19 from "node:path";
 import * as os9 from "node:os";
 
 // node_modules/chalk/source/vendor/ansi-styles/index.js
@@ -13775,7 +17323,10 @@ var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
 var source_default = chalk;
 
 // src/lib/artifact-paths.ts
-import * as path17 from "node:path";
+import * as path18 from "node:path";
+function isProjectScope(level) {
+  return level === "project";
+}
 
 // src/lib/artifact-table.ts
 var KIND_SORT_ORDER = {
@@ -13822,11 +17373,26 @@ function sortArtifacts(items) {
   });
 }
 var CHANGE_SYMBOLS = {
-  added: { symbol: "+", color: source_default.green },
-  updated: { symbol: "~", color: source_default.yellow },
-  removed: { symbol: "-", color: source_default.red },
-  unchanged: { symbol: "\u2713", color: source_default.green },
-  shadowed: { symbol: "?", color: source_default.yellow }
+  added: {
+    symbol: "+",
+    color: source_default.green
+  },
+  updated: {
+    symbol: "~",
+    color: source_default.yellow
+  },
+  removed: {
+    symbol: "-",
+    color: source_default.red
+  },
+  unchanged: {
+    symbol: "\u2713",
+    color: source_default.green
+  },
+  shadowed: {
+    symbol: "?",
+    color: source_default.yellow
+  }
 };
 
 // src/tui/core/data.ts
@@ -13839,7 +17405,10 @@ var DRIFT_PRIORITY = {
   broken: 5
 };
 async function loadDashboardData(cwd = process.cwd()) {
-  const { entries, warnings } = await collectCatalogRoots(cwd);
+  const {
+    entries,
+    warnings
+  } = await collectCatalogRoots(cwd);
   const ownerStates = ownerStateMap(entries);
   const seenByOwner = /* @__PURE__ */ new Map();
   const rows = [];
@@ -13875,7 +17444,7 @@ async function loadDashboardData(cwd = process.cwd()) {
           scope,
           description: definition.description,
           status,
-          activation: active ? "filesystem" : null,
+          equipped: active ? [scope] : [],
           counts: countSlots(slots),
           tools,
           issue,
@@ -13883,7 +17452,10 @@ async function loadDashboardData(cwd = process.cwd()) {
           slots
         };
         rows.push(row);
-        if (issue) issues.push({ rowId: id, text: issue });
+        if (issue) issues.push({
+          rowId: id,
+          text: issue
+        });
       } catch (err) {
         const text = err instanceof Error ? err.message : String(err);
         rows.push({
@@ -13891,23 +17463,45 @@ async function loadDashboardData(cwd = process.cwd()) {
           name,
           scope,
           status: "broken",
-          activation: null,
-          counts: { rules: 0, skills: 0, instructions: 0, extensions: 0 },
+          equipped: [],
+          counts: {
+            rules: 0,
+            skills: 0,
+            instructions: 0,
+            extensions: 0
+          },
           tools: [],
           issue: text,
           filePath,
           slots: []
         });
-        issues.push({ rowId: id, text });
+        issues.push({
+          rowId: id,
+          text
+        });
       }
     }
   }
   return {
     rows: sortRows(rows),
-    active: rows.filter((row) => row.activation).map((row) => row.name),
+    active: rows.filter((row) => row.equipped.length).map((row) => row.name),
     tools: Array.from(new Set(rows.flatMap((row) => row.tools))).sort(),
     issues,
     warnings
+  };
+}
+function withSessionEquipment(data, status) {
+  return {
+    ...data,
+    rows: data.rows.map((row) => {
+      const equipped2 = row.equipped.filter((layer) => layer !== "session");
+      if (status?.scope === row.scope && status.names.includes(row.name)) equipped2.push("session");
+      return {
+        ...row,
+        equipped: equipped2,
+        status: row.status === "broken" || row.status === "drift" ? row.status : equipped2.length ? "active" : "available"
+      };
+    })
   };
 }
 function ownerStateMap(entries) {
@@ -13918,7 +17512,7 @@ function ownerStateMap(entries) {
     map.set(owner, {
       active: new Set(loadState(primary.root.path)?.active ?? []),
       configPath: primary.root.path,
-      projectRoot: owner === "project" ? path18.dirname(primary.root.path) : os9.homedir(),
+      projectRoot: owner === "project" ? path19.dirname(primary.root.path) : os9.homedir(),
       scope: owner
     });
   }
@@ -13948,14 +17542,19 @@ function countSlots(slots) {
   };
 }
 function loadoutDefinitionPath(root, name) {
-  const yamlPath = path18.join(root, "loadouts", `${name}.yaml`);
-  return fileExists(yamlPath) ? yamlPath : path18.join(root, "loadouts", `${name}.yml`);
+  const yamlPath = path19.join(root, "loadouts", `${name}.yaml`);
+  return fileExists(yamlPath) ? yamlPath : path19.join(root, "loadouts", `${name}.yml`);
 }
 function scopeFromRoot(root) {
   return root.level === "global" ? "global" : "project";
 }
 function sortRows(rows) {
-  const order = { active: 0, drift: 1, available: 2, broken: 3 };
+  const order = {
+    active: 0,
+    drift: 1,
+    available: 2,
+    broken: 3
+  };
   return [...rows].sort((a, b) => order[a.status] - order[b.status] || a.name.localeCompare(b.name));
 }
 
@@ -13966,14 +17565,20 @@ function createInitialModel(data, options = {}) {
     rows: data.rows,
     sections,
     cursor: firstCursor(sections),
-    filter: { text: "" },
+    filter: {
+      text: ""
+    },
     filtering: false,
-    mode: options.mode ?? "filesystem",
+    layer: options.layer ?? "project",
+    layers: options.layers ?? ["global", "project"],
     scope: options.scope ?? "project",
     staged: /* @__PURE__ */ new Set(),
     overlay: null,
     busy: null,
-    lastResult: data.issues.length ? { text: `${data.issues.length} issue(s) detected`, variant: "error" } : void 0
+    lastResult: data.issues.length ? {
+      text: `${data.issues.length} issue(s) detected`,
+      variant: "error"
+    } : void 0
   };
 }
 function buildSections(rows) {
@@ -13985,109 +17590,319 @@ function buildSections(rows) {
 }
 function firstCursor(sections) {
   for (const section of ["active", "available", "issues"]) {
-    if (sections[section].length > 0) return { section, index: 0 };
+    if (sections[section].length > 0) return {
+      section,
+      index: 0
+    };
   }
-  return { section: "active", index: 0 };
+  return {
+    section: "active",
+    index: 0
+  };
 }
-
-// src/tui/core/theme.ts
-var defaultThemeTokens = {
-  text: "text",
-  muted: "muted",
-  dim: "dim",
-  accent: "accent",
-  success: "success",
-  error: "error",
-  warning: "warning",
-  border: "border"
-};
 
 // src/tui/core/update.ts
 var SECTIONS = ["active", "available", "issues"];
 function update(model, intent) {
-  if (intent.t === "closeOverlay") return model.filtering ? cancelFilter(model) : { model: { ...model, overlay: null, diffLines: void 0 } };
-  if (intent.t === "filterStart") return withCursor({ ...model, filtering: true });
-  if (intent.t === "filterInput") return withCursor({ ...model, filter: { ...model.filter, text: intent.text } });
-  if (intent.t === "filterChar") return withCursor({ ...model, filter: { ...model.filter, text: model.filter.text + intent.char } });
-  if (intent.t === "filterBackspace") return withCursor({ ...model, filter: { ...model.filter, text: model.filter.text.slice(0, -1) } });
-  if (intent.t === "filterCommit") return { model: { ...model, filtering: false } };
+  if (intent.t === "closeOverlay") return model.filtering ? cancelFilter(model) : {
+    model: {
+      ...model,
+      overlay: null,
+      diffLines: void 0
+    }
+  };
+  if (intent.t === "filterStart") return withCursor({
+    ...model,
+    filtering: true
+  });
+  if (intent.t === "filterInput") return withCursor({
+    ...model,
+    filter: {
+      ...model.filter,
+      text: intent.text
+    }
+  });
+  if (intent.t === "filterChar") return withCursor({
+    ...model,
+    filter: {
+      ...model.filter,
+      text: model.filter.text + intent.char
+    }
+  });
+  if (intent.t === "filterBackspace") return withCursor({
+    ...model,
+    filter: {
+      ...model.filter,
+      text: model.filter.text.slice(0, -1)
+    }
+  });
+  if (intent.t === "filterCommit") return {
+    model: {
+      ...model,
+      filtering: false
+    }
+  };
   if (intent.t === "filterCancel") return cancelFilter(model);
   if (intent.t === "effectDone") return effectDone(model, intent);
-  if (model.filtering) return { model };
-  if (intent.t === "openHelp") return { model: { ...model, overlay: "help" } };
-  if (intent.t === "quit") return { model: { ...model, quitRequested: true } };
-  if (intent.t === "cycleScope") return withCursor({ ...model, filter: { ...model.filter, scope: nextScope(model.filter.scope) } });
-  if (intent.t === "cycleTool") return withCursor({ ...model, filter: { ...model.filter, tool: nextTool(model) } });
-  if (intent.t === "cycleMode") return { model: { ...model, mode: model.mode === "filesystem" ? "runtime" : "filesystem" } };
-  if (intent.t === "move") return { model: move(model, intent.delta) };
-  if (intent.t === "section") return { model: moveSection(model, intent.dir) };
-  if (intent.t === "enter") return { model: toggleDetail(model) };
-  if (intent.t === "refresh") return { model: { ...model, busy: { label: "Refreshing" } }, effect: { t: "reload" } };
+  if (model.busy) return {
+    model
+  };
+  if (model.filtering) return {
+    model
+  };
+  if (intent.t === "openHelp") return {
+    model: {
+      ...model,
+      overlay: "help"
+    }
+  };
+  if (intent.t === "quit") return {
+    model: {
+      ...model,
+      quitRequested: true
+    }
+  };
+  if (intent.t === "cycleScope") return withCursor({
+    ...model,
+    filter: {
+      ...model.filter,
+      scope: nextScope(model.filter.scope)
+    }
+  });
+  if (intent.t === "cycleTool") return withCursor({
+    ...model,
+    filter: {
+      ...model.filter,
+      tool: nextTool(model)
+    }
+  });
+  if (intent.t === "cycleLayer") {
+    const layer = model.layers[(model.layers.indexOf(model.layer) + 1) % model.layers.length];
+    return {
+      model: {
+        ...model,
+        layer,
+        scope: layer === "session" ? model.scope : layer,
+        undo: void 0
+      }
+    };
+  }
+  if (intent.t === "move") return {
+    model: move(model, intent.delta)
+  };
+  if (intent.t === "section") return {
+    model: moveSection(model, intent.dir)
+  };
+  if (intent.t === "enter") return {
+    model: toggleDetail(model)
+  };
+  if (intent.t === "refresh") return {
+    model: {
+      ...model,
+      busy: {
+        label: "Refreshing"
+      }
+    },
+    effect: {
+      t: "reload"
+    }
+  };
   if (intent.t === "edit") return edit(model);
   if (intent.t === "diffPreview") return plan(model);
-  if (intent.t === "sync") return apply(model, activeNames(model, model.scope), "Syncing");
+  if (intent.t === "sync") return apply(model, activeNames(model, model.layer), "Syncing");
   if (intent.t === "clear") return clear(model);
   if (intent.t === "undo") return undo(model);
   if (intent.t === "activate" || intent.t === "deactivate" || intent.t === "toggle") return toggle(model, intent.t);
-  return { model };
+  return {
+    model
+  };
 }
 function cancelFilter(model) {
-  return withCursor({ ...model, filtering: false, filter: { ...model.filter, text: "" } });
+  return withCursor({
+    ...model,
+    filtering: false,
+    filter: {
+      ...model.filter,
+      text: ""
+    }
+  });
 }
 function toggle(model, action) {
   const row = cursorRow(model);
-  if (!row || row.status === "broken") return { model };
-  const shouldActivate = action === "activate" || action === "toggle" && !row.activation;
-  if (shouldActivate && row.activation || !shouldActivate && !row.activation) return { model };
-  const nextRows = model.rows.map((candidate) => candidate.id === row.id ? { ...candidate, status: shouldActivate ? "active" : "available", activation: shouldActivate ? model.mode : null, issue: void 0 } : candidate);
+  if (!row || row.status === "broken") return {
+    model
+  };
+  if (model.layer !== "session" && row.scope !== model.layer) {
+    return {
+      model: {
+        ...model,
+        lastResult: {
+          text: `Select the ${row.scope} equip layer with m for this loadout.`,
+          variant: "error"
+        }
+      }
+    };
+  }
+  const active = row.equipped.includes(model.layer);
+  const shouldActivate = action === "activate" || action === "toggle" && !active;
+  if (shouldActivate && active || !shouldActivate && !active) return {
+    model
+  };
+  const nextRows = model.rows.map((candidate) => {
+    let equipped2 = candidate.equipped;
+    if (model.layer === "session" && candidate.scope !== row.scope) equipped2 = equipped2.filter((layer) => layer !== "session");
+    if (candidate.id === row.id) equipped2 = shouldActivate ? [...equipped2, model.layer] : equipped2.filter((layer) => layer !== model.layer);
+    return {
+      ...candidate,
+      equipped: equipped2,
+      status: candidate.status === "broken" ? "broken" : equipped2.length ? "active" : "available"
+    };
+  });
   const sections = buildSections(nextRows);
-  const targetSet = activeNames({ ...model, rows: nextRows }, row.scope);
+  const targetSet = activeNames({
+    ...model,
+    rows: nextRows
+  }, model.layer);
   return {
     model: {
       ...model,
       rows: nextRows,
+      scope: row.scope,
       sections,
       cursor: cursorForId(sections, row.id),
       undo: snapshot(model),
-      busy: { label: shouldActivate ? "Activating" : "Deactivating" },
+      busy: {
+        label: shouldActivate ? "Activating" : "Deactivating"
+      },
       lastResult: void 0
     },
-    effect: { t: "apply", targetSet, mode: model.mode, scope: row.scope }
+    effect: {
+      t: "apply",
+      targetSet,
+      layer: model.layer,
+      scope: row.scope
+    }
   };
 }
 function undo(model) {
-  if (!model.undo) return { model };
-  return {
-    model: { ...model, rows: model.undo.rows, sections: model.undo.sections, cursor: model.undo.cursor, undo: void 0, busy: { label: "Undoing" } },
-    effect: { t: "apply", targetSet: model.undo.targetSet, mode: model.mode, scope: model.undo.scope }
+  if (!model.undo) return {
+    model
   };
-}
-function clear(model) {
-  const nextRows = model.rows.map((row) => row.activation && row.scope === model.scope ? { ...row, status: "available", activation: null, issue: void 0 } : row);
-  return {
-    model: { ...model, rows: nextRows, sections: buildSections(nextRows), cursor: firstCursor(buildSections(nextRows)), undo: snapshot(model), busy: { label: "Clearing" } },
-    effect: { t: "clear", mode: model.mode, scope: model.scope }
-  };
-}
-function apply(model, targetSet, label) {
-  return { model: { ...model, busy: { label }, undo: snapshot(model) }, effect: { t: "apply", targetSet, mode: model.mode, scope: model.scope } };
-}
-function plan(model) {
-  const targetSet = activeNames(model, model.scope);
-  return { model: { ...model, busy: { label: "Planning diff" }, overlay: "diff" }, effect: { t: "plan", targetSet, scope: model.scope } };
-}
-function edit(model) {
-  const row = cursorRow(model);
-  if (!row?.filePath) return { model };
-  return { model, effect: { t: "editFile", path: row.filePath } };
-}
-function effectDone(model, intent) {
   return {
     model: {
       ...model,
+      rows: model.undo.rows,
+      sections: model.undo.sections,
+      cursor: model.undo.cursor,
+      scope: model.undo.scope,
+      layer: model.undo.layer,
+      undo: void 0,
+      busy: {
+        label: "Undoing"
+      }
+    },
+    effect: {
+      t: "apply",
+      targetSet: model.undo.targetSet,
+      layer: model.undo.layer,
+      scope: model.undo.scope
+    }
+  };
+}
+function clear(model) {
+  const nextRows = model.rows.map((row) => {
+    const equipped2 = row.equipped.filter((layer) => layer !== model.layer);
+    return {
+      ...row,
+      equipped: equipped2,
+      status: row.status === "broken" ? "broken" : equipped2.length ? "active" : "available"
+    };
+  });
+  return {
+    model: {
+      ...model,
+      rows: nextRows,
+      sections: buildSections(nextRows),
+      cursor: firstCursor(buildSections(nextRows)),
+      undo: snapshot(model),
+      busy: {
+        label: "Clearing"
+      }
+    },
+    effect: {
+      t: "clear",
+      layer: model.layer,
+      scope: model.scope
+    }
+  };
+}
+function apply(model, targetSet, label) {
+  return {
+    model: {
+      ...model,
+      busy: {
+        label
+      },
+      undo: snapshot(model)
+    },
+    effect: {
+      t: "apply",
+      targetSet,
+      layer: model.layer,
+      scope: model.scope
+    }
+  };
+}
+function plan(model) {
+  const targetSet = activeNames(model, model.layer);
+  return {
+    model: {
+      ...model,
+      busy: {
+        label: "Planning diff"
+      },
+      overlay: "diff"
+    },
+    effect: {
+      t: "plan",
+      targetSet,
+      layer: model.layer,
+      scope: model.scope
+    }
+  };
+}
+function edit(model) {
+  const row = cursorRow(model);
+  if (!row?.filePath) return {
+    model
+  };
+  return {
+    model,
+    effect: {
+      t: "editFile",
+      path: row.filePath
+    }
+  };
+}
+function effectDone(model, intent) {
+  const rollback = !intent.ok && model.undo ? model.undo : void 0;
+  return {
+    model: {
+      ...model,
+      ...rollback ? {
+        rows: rollback.rows,
+        sections: rollback.sections,
+        cursor: rollback.cursor,
+        scope: rollback.scope,
+        layer: rollback.layer,
+        undo: void 0
+      } : {},
       busy: null,
       diffLines: intent.effect === "plan" ? intent.data ?? [intent.message ?? "No changes"] : model.diffLines,
-      lastResult: intent.message ? { text: intent.message, variant: intent.ok ? "success" : "error" } : model.lastResult
+      lastResult: intent.message ? {
+        text: intent.message,
+        variant: intent.ok ? "success" : "error"
+      } : model.lastResult
     }
   };
 }
@@ -14095,25 +17910,55 @@ function move(model, delta) {
   const ids = visibleIds(model, model.cursor.section);
   if (ids.length === 0) return model;
   const index = clamp(model.cursor.index + delta, 0, ids.length - 1);
-  return { ...model, cursor: { ...model.cursor, index } };
+  return {
+    ...model,
+    cursor: {
+      ...model.cursor,
+      index
+    }
+  };
 }
 function moveSection(model, dir) {
   const current = SECTIONS.indexOf(model.cursor.section);
   for (let step = 1; step <= SECTIONS.length; step++) {
     const section = SECTIONS[(current + step * dir + SECTIONS.length) % SECTIONS.length];
-    if (visibleIds(model, section).length > 0) return { ...model, cursor: { section, index: 0 } };
+    if (visibleIds(model, section).length > 0) return {
+      ...model,
+      cursor: {
+        section,
+        index: 0
+      }
+    };
   }
   return model;
 }
 function toggleDetail(model) {
   const row = cursorRow(model);
   if (!row) return model;
-  return { ...model, detail: model.detail?.rowId === row.id ? void 0 : { rowId: row.id } };
+  return {
+    ...model,
+    detail: model.detail?.rowId === row.id ? void 0 : {
+      rowId: row.id
+    }
+  };
 }
 function withCursor(model) {
   const ids = visibleIds(model, model.cursor.section);
-  if (ids.length > 0) return { model: { ...model, cursor: { ...model.cursor, index: clamp(model.cursor.index, 0, ids.length - 1) } } };
-  return { model: moveSection({ ...model, cursor: firstCursor(model.sections) }, 1) };
+  if (ids.length > 0) return {
+    model: {
+      ...model,
+      cursor: {
+        ...model.cursor,
+        index: clamp(model.cursor.index, 0, ids.length - 1)
+      }
+    }
+  };
+  return {
+    model: moveSection({
+      ...model,
+      cursor: firstCursor(model.sections)
+    }, 1)
+  };
 }
 function cursorRow(model) {
   const id = visibleIds(model, model.cursor.section)[model.cursor.index];
@@ -14132,15 +17977,25 @@ function visibleIds(model, section) {
 function cursorForId(sections, id) {
   for (const section of SECTIONS) {
     const index = sections[section].indexOf(id);
-    if (index >= 0) return { section, index };
+    if (index >= 0) return {
+      section,
+      index
+    };
   }
   return firstCursor(sections);
 }
 function snapshot(model) {
-  return { rows: model.rows, sections: model.sections, cursor: model.cursor, targetSet: activeNames(model, model.scope), scope: model.scope };
+  return {
+    rows: model.rows,
+    sections: model.sections,
+    cursor: model.cursor,
+    targetSet: activeNames(model, model.layer),
+    scope: model.scope,
+    layer: model.layer
+  };
 }
-function activeNames(model, scope) {
-  return model.rows.filter((row) => row.activation && (!scope || row.scope === scope)).map((row) => row.name);
+function activeNames(model, layer) {
+  return model.rows.filter((row) => row.equipped.includes(layer)).map((row) => row.name);
 }
 function nextScope(scope) {
   return scope === void 0 ? "project" : scope === "project" ? "global" : void 0;
@@ -14156,53 +18011,221 @@ function clamp(value, min, max) {
 }
 
 // src/tui/core/keymap.ts
-var keymap = [
-  { keys: ["j", "down"], label: "move down", intent: { t: "move", delta: 1 } },
-  { keys: ["k", "up"], label: "move up", intent: { t: "move", delta: -1 } },
-  { keys: ["tab"], label: "next section", intent: { t: "section", dir: 1 } },
-  { keys: ["shift+tab"], label: "prev section", intent: { t: "section", dir: -1 } },
-  { keys: ["space"], label: "toggle", intent: { t: "toggle" }, hint: true },
-  { keys: ["a"], label: "activate", intent: { t: "activate" }, hint: true },
-  { keys: ["d"], label: "deactivate", intent: { t: "deactivate" }, hint: true },
-  { keys: ["s"], label: "sync", intent: { t: "sync" }, hint: true },
-  { keys: ["x"], label: "clear", intent: { t: "clear" }, hint: true },
-  { keys: ["enter"], label: "details", intent: { t: "enter" } },
-  { keys: ["D"], label: "diff", intent: { t: "diffPreview" }, hint: true },
-  { keys: ["e"], label: "edit", intent: { t: "edit" }, hint: true },
-  { keys: ["m"], label: "mode", intent: { t: "cycleMode" } },
-  { keys: ["g"], label: "scope", intent: { t: "cycleScope" } },
-  { keys: ["t"], label: "tool", intent: { t: "cycleTool" } },
-  { keys: ["/"], label: "find", intent: { t: "filterStart" }, hint: true },
-  { keys: ["u"], label: "undo", intent: { t: "undo" }, hint: true },
-  { keys: ["r"], label: "refresh", intent: { t: "refresh" } },
-  { keys: ["?"], label: "help", intent: { t: "openHelp" }, hint: true },
-  { keys: ["esc"], label: "close/cancel", intent: { t: "closeOverlay" } },
-  { keys: ["q"], label: "quit", intent: { t: "quit" } },
-  { keys: ["printable"], label: "filter text", intent: { t: "filterChar", char: "" }, mode: "filter" },
-  { keys: ["backspace"], label: "delete filter char", intent: { t: "filterBackspace" }, mode: "filter" },
-  { keys: ["enter"], label: "commit filter", intent: { t: "filterCommit" }, mode: "filter" },
-  { keys: ["esc"], label: "cancel filter", intent: { t: "filterCancel" }, mode: "filter" }
-];
+var keymap = [{
+  keys: ["j", "down"],
+  label: "move down",
+  intent: {
+    t: "move",
+    delta: 1
+  }
+}, {
+  keys: ["k", "up"],
+  label: "move up",
+  intent: {
+    t: "move",
+    delta: -1
+  }
+}, {
+  keys: ["tab"],
+  label: "next section",
+  intent: {
+    t: "section",
+    dir: 1
+  }
+}, {
+  keys: ["shift+tab"],
+  label: "prev section",
+  intent: {
+    t: "section",
+    dir: -1
+  }
+}, {
+  keys: ["space"],
+  label: "toggle",
+  intent: {
+    t: "toggle"
+  },
+  hint: true
+}, {
+  keys: ["a"],
+  label: "activate",
+  intent: {
+    t: "activate"
+  },
+  hint: true
+}, {
+  keys: ["d"],
+  label: "deactivate",
+  intent: {
+    t: "deactivate"
+  },
+  hint: true
+}, {
+  keys: ["s"],
+  label: "sync",
+  intent: {
+    t: "sync"
+  },
+  hint: true
+}, {
+  keys: ["x"],
+  label: "clear",
+  intent: {
+    t: "clear"
+  },
+  hint: true
+}, {
+  keys: ["enter"],
+  label: "details",
+  intent: {
+    t: "enter"
+  }
+}, {
+  keys: ["D"],
+  label: "diff",
+  intent: {
+    t: "diffPreview"
+  },
+  hint: true
+}, {
+  keys: ["e"],
+  label: "edit",
+  intent: {
+    t: "edit"
+  },
+  hint: true
+}, {
+  keys: ["m"],
+  label: "equip layer",
+  intent: {
+    t: "cycleLayer"
+  },
+  hint: true
+}, {
+  keys: ["S"],
+  label: "choose session",
+  intent: {
+    t: "selectSession"
+  }
+}, {
+  keys: ["g"],
+  label: "scope",
+  intent: {
+    t: "cycleScope"
+  }
+}, {
+  keys: ["t"],
+  label: "tool",
+  intent: {
+    t: "cycleTool"
+  }
+}, {
+  keys: ["/"],
+  label: "find",
+  intent: {
+    t: "filterStart"
+  },
+  hint: true
+}, {
+  keys: ["u"],
+  label: "undo",
+  intent: {
+    t: "undo"
+  },
+  hint: true
+}, {
+  keys: ["r"],
+  label: "refresh",
+  intent: {
+    t: "refresh"
+  }
+}, {
+  keys: ["?"],
+  label: "help",
+  intent: {
+    t: "openHelp"
+  },
+  hint: true
+}, {
+  keys: ["esc"],
+  label: "close/cancel",
+  intent: {
+    t: "closeOverlay"
+  }
+}, {
+  keys: ["q"],
+  label: "quit",
+  intent: {
+    t: "quit"
+  }
+}, {
+  keys: ["printable"],
+  label: "filter text",
+  intent: {
+    t: "filterChar",
+    char: ""
+  },
+  mode: "filter"
+}, {
+  keys: ["backspace"],
+  label: "delete filter char",
+  intent: {
+    t: "filterBackspace"
+  },
+  mode: "filter"
+}, {
+  keys: ["enter"],
+  label: "commit filter",
+  intent: {
+    t: "filterCommit"
+  },
+  mode: "filter"
+}, {
+  keys: ["esc"],
+  label: "cancel filter",
+  intent: {
+    t: "filterCancel"
+  },
+  mode: "filter"
+}];
 function intentForKey(key) {
   return keymap.find((binding) => binding.mode !== "filter" && binding.keys.includes(key))?.intent;
 }
 function footerKeyHints() {
-  return keymap.filter((binding) => binding.mode !== "filter" && binding.hint).map((binding) => ({ key: binding.keys[0], label: binding.label }));
+  return keymap.filter((binding) => binding.mode !== "filter" && binding.hint).map((binding) => ({
+    key: binding.keys[0],
+    label: binding.label
+  }));
 }
 
 // src/tui/core/view.ts
-var SECTIONS2 = [
-  { id: "active", title: "Active" },
-  { id: "available", title: "Available" },
-  { id: "issues", title: "Issues" }
-];
+var SECTIONS2 = [{
+  id: "active",
+  title: "Active"
+}, {
+  id: "available",
+  title: "Available"
+}, {
+  id: "issues",
+  title: "Issues"
+}];
 function view(model) {
-  const panes = SECTIONS2.map(({ id, title }) => pane(model, id, title));
+  const panes = SECTIONS2.map(({
+    id,
+    title
+  }) => pane(model, id, title));
   const row = cursorRow2(model);
   return {
     panes,
     detail: row ? detail(row, model.detail?.rowId === row.id) : emptyDetail(model),
-    footer: { equipped: equipped(model), keys: footerKeyHints(), filter: { active: model.filtering, text: model.filter.text } },
+    footer: {
+      equipped: equipped(model),
+      keys: footerKeyHints(),
+      filter: {
+        active: model.filtering,
+        text: model.filter.text
+      }
+    },
     overlay: overlay(model)
   };
 }
@@ -14219,27 +18242,49 @@ function pane(model, section, title) {
   };
 }
 function detail(row, expanded) {
-  const blocks = [
-    kv("scope", row.scope),
-    kv("status", row.issue ? `${row.status}: ${row.issue}` : row.status)
-  ];
-  if (row.description) blocks.push([{ text: `"${row.description}"`, style: "muted" }]);
-  blocks.push([{ text: expanded ? "Artifacts (slots)" : "Artifacts (press enter to expand)", style: "accent" }]);
+  const blocks = [kv("scope", row.scope), kv("equipped", row.equipped.join(" / ") || "\u2014"), kv("status", row.issue ? `${row.status}: ${row.issue}` : row.status)];
+  if (row.description) blocks.push([{
+    text: `"${row.description}"`,
+    style: "muted"
+  }]);
+  blocks.push([{
+    text: expanded ? "Artifacts (slots)" : "Artifacts (press enter to expand)",
+    style: "accent"
+  }]);
   for (const slot of expanded ? row.slots : row.slots.slice(0, 5)) {
-    blocks.push([
-      { text: artifactKindColumn(slot.kind), style: "dim" },
-      { text: slot.relativePath, style: "text" },
-      { text: " -> ", style: "dim" },
-      { text: slot.tools.length ? slot.tools.join(", ") : "\u2014", style: slot.tools.length ? "muted" : "dim" }
-    ]);
+    blocks.push([{
+      text: artifactKindColumn(slot.kind),
+      style: "dim"
+    }, {
+      text: slot.relativePath,
+      style: "text"
+    }, {
+      text: " -> ",
+      style: "dim"
+    }, {
+      text: slot.tools.length ? slot.tools.join(", ") : "\u2014",
+      style: slot.tools.length ? "muted" : "dim"
+    }]);
   }
-  if (!expanded && row.slots.length > 5) blocks.push([{ text: `+${row.slots.length - 5} more`, style: "dim" }]);
-  return { title: row.name, blocks };
+  if (!expanded && row.slots.length > 5) blocks.push([{
+    text: `+${row.slots.length - 5} more`,
+    style: "dim"
+  }]);
+  return {
+    title: row.name,
+    blocks
+  };
 }
 function emptyDetail(model) {
   return {
     title: "Loadouts",
-    blocks: model.rows.length ? [[{ text: "No rows match the current filter", style: "muted" }]] : [[{ text: "No loadouts found. Run `loadouts init` to get started.", style: "muted" }]]
+    blocks: model.rows.length ? [[{
+      text: "No rows match the current filter",
+      style: "muted"
+    }]] : [[{
+      text: "No loadouts found. Run `loadouts init` to get started.",
+      style: "muted"
+    }]]
   };
 }
 function overlay(model) {
@@ -14247,62 +18292,103 @@ function overlay(model) {
     return {
       kind: "help",
       title: "Keymap",
-      lines: keymap.map((binding) => [
-        { text: binding.keys.join("/"), style: "accent" },
-        { text: ` ${binding.label}`, style: "text" }
-      ])
+      lines: keymap.map((binding) => [{
+        text: binding.keys.join("/"),
+        style: "accent"
+      }, {
+        text: ` ${binding.label}`,
+        style: "text"
+      }])
     };
   }
   if (model.overlay === "diff") {
     return {
       kind: "diff",
       title: model.busy ? "Diff (loading)" : "Diff",
-      lines: (model.diffLines?.length ? model.diffLines : [model.busy?.label ?? "No diff loaded"]).map((line) => [{ text: line, style: lineStyle(line) }])
+      lines: (model.diffLines?.length ? model.diffLines : [model.busy?.label ?? "No diff loaded"]).map((line) => [{
+        text: line,
+        style: lineStyle(line)
+      }])
     };
   }
-  if (model.overlay === "confirm") return { kind: "confirm", title: "Confirm", lines: [[{ text: "Press enter to confirm", style: "warning" }]] };
+  if (model.overlay === "confirm") return {
+    kind: "confirm",
+    title: "Confirm",
+    lines: [[{
+      text: "Press enter to confirm",
+      style: "warning"
+    }]]
+  };
   return void 0;
 }
 function equipped(model) {
-  const active = model.rows.filter((row) => row.activation);
-  const names = active.map((row) => row.name).join(" + ") || "none";
-  const tools = Array.from(new Set(active.flatMap((row) => row.tools))).sort().join(", ") || "no tools";
+  const active = model.rows.filter((row) => row.equipped.length);
   const drift = active.some((row) => row.status === "drift");
-  return [
-    { text: "EQUIPPED: ", style: "accent" },
-    { text: names, style: active.length ? "success" : "dim" },
-    { text: ` -> ${tools} `, style: "muted" },
-    { text: `[${model.mode === "runtime" ? "session" : "fs"}] `, style: "dim" },
-    { text: drift ? "drift" : "in sync", style: drift ? "warning" : "success" },
-    ...model.filtering || model.filter.text ? [
-      { text: "  /", style: "accent" },
-      { text: model.filter.text || " ", style: model.filter.text ? "text" : "dim" }
-    ] : []
-  ];
+  return [{
+    text: "EQUIPPED: ",
+    style: "accent"
+  }, ...["global", "project", "session"].map((layer) => ({
+    text: `${layer[0].toUpperCase()} ${active.filter((row) => row.equipped.includes(layer)).map((row) => row.name).join("\xB7") || "\u2014"}  `,
+    style: layer === model.layer ? "accent" : "muted"
+  })), {
+    text: `[${model.layer}] `,
+    style: "dim"
+  }, {
+    text: drift ? "drift" : "in sync",
+    style: drift ? "warning" : "success"
+  }, ...model.busy ? [{
+    text: `  ${model.busy.label}\u2026`,
+    style: "warning"
+  }] : [], ...model.lastResult ? [{
+    text: `  ${model.lastResult.text}`,
+    style: model.lastResult.variant === "error" ? "error" : "muted"
+  }] : [], ...model.filtering || model.filter.text ? [{
+    text: "  /",
+    style: "accent"
+  }, {
+    text: model.filter.text || " ",
+    style: model.filter.text ? "text" : "dim"
+  }] : []];
 }
 function artifactKindColumn(kind) {
   return `${kind.padEnd(11)}  `;
 }
 function rowSpans(row) {
-  const counts = [
-    count(row.counts.rules, "rule"),
-    count(row.counts.skills, "skill"),
-    count(row.counts.instructions, "instr"),
-    count(row.counts.extensions, "ext")
-  ].filter(Boolean).join("  ") || "empty";
-  return [
-    { text: row.name, style: row.activation ? "success" : "text" },
-    { text: `  ${row.scope}`, style: "dim" },
-    { text: `  ${counts}`, style: "muted" },
-    ...row.activation ? [{ text: `  [${row.activation === "runtime" ? "session" : "fs"}]`, style: "accent" }] : [],
-    ...row.issue ? [{ text: `  ${row.issue}`, style: "warning" }] : []
-  ];
+  const counts = [count(row.counts.rules, "rule"), count(row.counts.skills, "skill"), count(row.counts.instructions, "instr"), count(row.counts.extensions, "ext")].filter(Boolean).join("  ") || "empty";
+  return [{
+    text: row.name,
+    style: row.equipped.length ? "success" : "text"
+  }, {
+    text: `  ${row.scope}`,
+    style: "dim"
+  }, {
+    text: `  ${counts}`,
+    style: "muted"
+  }, ...row.equipped.length ? [{
+    text: `  [${row.equipped.map((layer) => layer[0].toUpperCase()).join("/")}]`,
+    style: "accent"
+  }] : [], ...row.issue ? [{
+    text: `  ${row.issue}`,
+    style: "warning"
+  }] : []];
 }
 function glyph(row) {
-  if (row.status === "broken") return { char: "!", style: "error" };
-  if (row.status === "drift") return { char: "~", style: "warning" };
-  if (row.activation) return { char: "\u2713", style: "success" };
-  return { char: "-", style: "dim" };
+  if (row.status === "broken") return {
+    char: "!",
+    style: "error"
+  };
+  if (row.status === "drift") return {
+    char: "~",
+    style: "warning"
+  };
+  if (row.equipped.length) return {
+    char: "\u2713",
+    style: "success"
+  };
+  return {
+    char: "-",
+    style: "dim"
+  };
 }
 function visibleRows(model, section) {
   return model.sections[section].map((id) => model.rows.find((row) => row.id === id)).filter((row) => Boolean(row)).filter((row) => {
@@ -14316,7 +18402,13 @@ function cursorRow2(model) {
   return visibleRows(model, model.cursor.section)[model.cursor.index];
 }
 function kv(key, value) {
-  return [{ text: `${key}: `, style: "dim" }, { text: value, style: "text" }];
+  return [{
+    text: `${key}: `,
+    style: "dim"
+  }, {
+    text: value,
+    style: "text"
+  }];
 }
 function count(n, label) {
   return n === 0 ? "" : `${n} ${label}${n === 1 ? "" : "s"}`;
@@ -14324,6 +18416,112 @@ function count(n, label) {
 function lineStyle(line) {
   return line.startsWith("!") ? "error" : line.startsWith("~") ? "warning" : line.startsWith("+") ? "success" : "text";
 }
+
+// src/tui/core/controller.ts
+var DashboardController = class {
+  disposed = false;
+  refreshVersion = 0;
+  constructor(options) {
+    this.options = options;
+    this.model = createInitialModel({
+      rows: [],
+      active: [],
+      tools: [],
+      issues: [],
+      warnings: []
+    }, {
+      layer: options.layer ?? (options.session ? "session" : "project"),
+      layers: options.session ? ["global", "project", "session"] : ["global", "project"]
+    });
+  }
+  get spec() {
+    return view(this.model);
+  }
+  get session() {
+    return this.options.session;
+  }
+  dispose() {
+    this.disposed = true;
+    this.refreshVersion++;
+  }
+  async selectSession(session) {
+    if (this.model.busy) return;
+    this.options.session = session;
+    this.model = {
+      ...this.model,
+      undo: void 0,
+      layer: session ? "session" : "project",
+      layers: session ? ["global", "project", "session"] : ["global", "project"]
+    };
+    await this.refresh();
+  }
+  async refresh() {
+    const version = ++this.refreshVersion;
+    try {
+      const data = await loadDashboardData(this.options.cwd);
+      const session = this.options.session;
+      const status = session ? await session.activator.status(session.id) : void 0;
+      if (this.disposed || version !== this.refreshVersion) return;
+      const next = createInitialModel(withSessionEquipment(data, status), {
+        layer: this.model.layer,
+        layers: this.model.layers,
+        scope: status?.scope ?? this.model.scope
+      });
+      this.model = {
+        ...this.model,
+        rows: next.rows,
+        sections: next.sections,
+        scope: next.scope
+      };
+    } catch (error) {
+      this.model = {
+        ...this.model,
+        lastResult: {
+          variant: "error",
+          text: error instanceof Error ? error.message : String(error)
+        }
+      };
+    }
+    if (!this.disposed) this.options.changed();
+  }
+  async dispatch(intent) {
+    if (this.disposed) return;
+    if ((intent.t === "quit" || intent.t === "closeOverlay") && this.model.overlay) intent = {
+      t: "closeOverlay"
+    };
+    else if (intent.t === "closeOverlay" && !this.model.filtering) intent = {
+      t: "quit"
+    };
+    const result = update(this.model, intent);
+    this.model = result.model;
+    if (this.model.quitRequested) {
+      this.options.exit();
+      return;
+    }
+    this.options.changed();
+    if (!result.effect) return;
+    const effect = result.effect;
+    let done2;
+    try {
+      if (effect.t === "editFile") await this.options.edit(effect.path);
+      done2 = await executeEffect(effect, {
+        cwd: this.options.cwd,
+        session: this.options.session
+      });
+    } catch (error) {
+      done2 = {
+        t: "effectDone",
+        effect: effect.t,
+        ok: false,
+        message: error instanceof Error ? error.message : String(error)
+      };
+    }
+    if (this.disposed) return;
+    this.model = update(this.model, done2).model;
+    if (effect.t !== "plan") await this.refresh();
+    this.options.changed();
+  }
+};
 
 // src/tui/skins/pi-tui/input.ts
 import { decodeKittyPrintable, Key, matchesKey } from "@earendil-works/pi-tui";
@@ -14341,11 +18539,20 @@ function intentFromPiTuiInput(data, spec) {
   return void 0;
 }
 function filterIntentFromInput(data) {
-  if (matchesKey(data, Key.escape)) return { t: "filterCancel" };
-  if (matchesKey(data, Key.enter)) return { t: "filterCommit" };
-  if (matchesKey(data, Key.backspace)) return { t: "filterBackspace" };
+  if (matchesKey(data, Key.escape)) return {
+    t: "filterCancel"
+  };
+  if (matchesKey(data, Key.enter)) return {
+    t: "filterCommit"
+  };
+  if (matchesKey(data, Key.backspace)) return {
+    t: "filterBackspace"
+  };
   const printable = decodeKittyPrintable(data) ?? (data.length === 1 ? data : void 0);
-  return printable && printable.length === 1 && printable >= " " && printable !== "\x7F" ? { t: "filterChar", char: printable } : void 0;
+  return printable && printable.length === 1 && printable >= " " && printable !== "\x7F" ? {
+    t: "filterChar",
+    char: printable
+  } : void 0;
 }
 function isCtrlC(data) {
   return matchesKey(data, Key.ctrl("c"));
@@ -14385,6 +18592,18 @@ function piHostThemeToPiTuiTheme(theme) {
 
 // src/tui/skins/pi-tui/render.ts
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+
+// src/tui/core/theme.ts
+var defaultThemeTokens = {
+  text: "text",
+  muted: "muted",
+  dim: "dim",
+  accent: "accent",
+  success: "success",
+  error: "error",
+  warning: "warning",
+  border: "border"
+};
 
 // src/tui/skins/pi-tui/theme.ts
 var identity = (text) => text;
@@ -14541,251 +18760,421 @@ function clamp2(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+// node_modules/commander/esm.mjs
+var import_index = __toESM(require_commander(), 1);
+var {
+  program,
+  createCommand,
+  createArgument,
+  createOption,
+  CommanderError,
+  InvalidArgumentError,
+  InvalidOptionArgumentError,
+  // deprecated old name
+  Command,
+  Argument,
+  Option,
+  Help
+} = import_index.default;
+
+// src/core/scope.ts
+async function inProject(cwd = process.cwd()) {
+  const root = await findNearestLoadoutRoot(cwd);
+  return root !== null && isProjectScope(root.level);
+}
+function hasGlobal() {
+  return getGlobalRoot() !== null;
+}
+async function resolveScopes(flags, cwd = process.cwd()) {
+  const hasProject = await inProject(cwd);
+  const hasGlobalRoot = hasGlobal();
+  if (flags.local) {
+    if (!hasProject) {
+      throw new Error("Not in a loadout project. Run 'loadouts init' first.");
+    }
+    return ["project"];
+  }
+  if (flags.global) {
+    if (!hasGlobalRoot) {
+      throw new Error("No global loadout found at ~/.config/loadouts");
+    }
+    return ["global"];
+  }
+  const scopes = [];
+  if (hasProject) scopes.push("project");
+  if (hasGlobalRoot) scopes.push("global");
+  if (scopes.length === 0) {
+    throw new Error("No loadout found. Run 'loadouts init' or 'loadouts init --global'.");
+  }
+  return scopes;
+}
+async function detectCollision(name, cwd = process.cwd()) {
+  const found = [];
+  const hasProjectRoot = await inProject(cwd);
+  if (hasProjectRoot) {
+    const projectRoot = await findNearestLoadoutRoot(cwd);
+    if (projectRoot) {
+      const projectLoadouts = listLoadouts(projectRoot.path);
+      if (projectLoadouts.includes(name)) {
+        found.push("project");
+      }
+    }
+  }
+  const globalRoot = getGlobalRoot();
+  if (globalRoot) {
+    const globalLoadouts = listLoadouts(globalRoot.path);
+    if (globalLoadouts.includes(name)) {
+      found.push("global");
+    }
+  }
+  return found;
+}
+async function requireScopeForName(name, flags, cwd = process.cwd()) {
+  if (flags.local) return "project";
+  if (flags.global) return "global";
+  const collision = await detectCollision(name, cwd);
+  if (collision.length > 1) {
+    throw new Error(`Loadout '${name}' exists in both project and global scope. Use -l/--local or -g/--global to specify which one.`);
+  }
+  if (collision.length === 0) {
+    const bundledRoot = getBundledRoot();
+    if (bundledRoot) {
+      const bundledLoadouts = listLoadouts(bundledRoot.path);
+      if (bundledLoadouts.includes(name)) {
+        const hasProjectRoot = await inProject(cwd);
+        const hasGlobalRoot = hasGlobal();
+        if (hasProjectRoot && hasGlobalRoot) {
+          throw new Error(`Loadout '${name}' is bundled. Use -l/--local or -g/--global to choose a target scope.`);
+        }
+        if (hasProjectRoot) return "project";
+        if (hasGlobalRoot) return "global";
+        throw new Error(`Loadout '${name}' is bundled and requires a target scope. Run 'loadouts init' or 'loadouts init --global' first.`);
+      }
+    }
+    throw new Error(`Loadout '${name}' not found in any scope.`);
+  }
+  return collision[0];
+}
+
+// src/lib/output.ts
+var log = {
+  info: (msg) => console.log(source_default.blue("\u2139"), msg),
+  success: (msg) => console.log(source_default.green("\u2713"), msg),
+  warn: (msg) => console.log(source_default.yellow("\u26A0"), msg),
+  error: (msg) => console.log(source_default.red("\u2717"), msg),
+  dim: (msg) => console.log(source_default.dim(msg)),
+  plain: (msg) => console.log(msg)
+};
+function heading(title) {
+  console.log();
+  console.log(source_default.bold(title));
+  console.log(source_default.dim("\u2500".repeat(title.length)));
+}
+function list(items, indent = 2) {
+  const pad = " ".repeat(indent);
+  for (const item of items) {
+    console.log(`${pad}${source_default.dim("\u2022")} ${item}`);
+  }
+}
+function keyValue(pairs, indent = 2) {
+  const pad = " ".repeat(indent);
+  for (const [key, value] of Object.entries(pairs)) {
+    if (value !== void 0) {
+      console.log(`${pad}${source_default.dim(key + ":")} ${value}`);
+    }
+  }
+}
+
+// src/cli/commands/runtime.ts
+function normalizeToolName(tool) {
+  const normalized = tool.trim();
+  const toolDef = registry.getTool(normalized);
+  if (!toolDef) {
+    throw new Error(`Unknown tool: ${tool}`);
+  }
+  return normalized;
+}
+async function resolveRuntimeScope(names, options, cwd) {
+  if (options.local && options.global) {
+    throw new Error("Use either --local or --global, not both.");
+  }
+  if (options.local) return "project";
+  if (options.global) return "global";
+  if (names.length > 0) {
+    const targetScope = await requireScopeForName(names[0], {}, cwd);
+    for (const name of names.slice(1)) {
+      const scope = await requireScopeForName(name, {}, cwd);
+      if (scope !== targetScope) {
+        throw new Error("Loadout names resolve to different scopes. Use --local or --global to choose one scope.");
+      }
+    }
+    return targetScope;
+  }
+  const scopes = await resolveScopes({}, cwd);
+  return scopes.includes("project") ? "project" : scopes[0];
+}
+async function runRuntime(names, options, cwd = process.cwd()) {
+  if (options.json && options.systemBlock) {
+    throw new Error("Use either --json or --system-block, not both.");
+  }
+  const tool = normalizeToolName(options.tool || "opencode");
+  const scope = await resolveRuntimeScope(names, options, cwd);
+  const ctx = await getContext(scope, cwd);
+  const {
+    loadouts,
+    loadoutNames,
+    sourceWarnings
+  } = await loadResolvedLoadouts(ctx, names, {
+    includeBundled: true
+  });
+  const bundle = compileRuntimeBundle(tool, loadouts);
+  return {
+    bundle,
+    loadoutNames,
+    sourceWarnings,
+    scope
+  };
+}
+function runtimeSystemBlock(bundle) {
+  return renderRuntimeSystemBlock(bundle);
+}
+function renderRuntimeHuman(result) {
+  const {
+    bundle,
+    loadoutNames,
+    scope,
+    sourceWarnings
+  } = result;
+  heading(`Runtime bundle (${scope})`);
+  keyValue({
+    Loadouts: loadoutNames.join(", "),
+    Tool: bundle.tool,
+    Fingerprint: bundle.fingerprint,
+    Injected: `instructions=${bundle.injection.instructions.length}, rules=${bundle.injection.rules.length}, skills=${bundle.injection.skills.length}`
+  });
+  log.dim(`  Capabilities: mode=${bundle.capabilities.runtimeMode}, modelInjection(instructions=${bundle.capabilities.modelInjection.instructions}, rules=${bundle.capabilities.modelInjection.rules}), skillPathDiscovery=${bundle.capabilities.skillPathDiscovery}, nativeSkillHotSwap=${bundle.capabilities.nativeSkillHotSwap}`);
+  if (sourceWarnings.length > 0) {
+    console.log();
+    log.warn("Source warnings:");
+    list(sourceWarnings);
+  }
+  if (bundle.diagnostics.length > 0) {
+    console.log();
+    log.warn(`Diagnostics (${bundle.diagnostics.length}):`);
+    list(bundle.diagnostics.map((d) => `[${d.code}] ${d.message} (${d.relativePath})`));
+  }
+}
+var runtimeCommand = new Command("runtime").description("Compile runtime bundle JSON for a tool").argument("[names...]", "Loadout names (defaults to root default/base)").option("--tool <tool>", "Target tool", "opencode").option("--json", "Output RuntimeBundle JSON only").option("--system-block", "Output renderRuntimeSystemBlock(bundle) only").option("-l, --local", "Project scope only").option("-g, --global", "Global scope only").action(async (names, options) => {
+  try {
+    const result = await runRuntime(names, options);
+    if (options.json) {
+      console.log(JSON.stringify(result.bundle, null, 2));
+      return;
+    }
+    if (options.systemBlock) {
+      process.stdout.write(runtimeSystemBlock(result.bundle));
+      return;
+    }
+    renderRuntimeHuman(result);
+  } catch (err) {
+    log.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+});
+
 // src/tui/hosts/pi/inject.ts
-var PI_RUNTIME_SESSION_ID = "pi";
-var PiRuntimeInjector = class {
-  bridge = new CliRuntimeBridge({ tool: "pi" });
-  cwd;
-  store;
-  sessionID;
-  scopeState;
-  onChange;
-  constructor(options) {
-    this.cwd = options.cwd;
-    this.store = options.store;
-    this.sessionID = options.sessionID ?? PI_RUNTIME_SESSION_ID;
-    this.scopeState = options.scopeState ?? { scope: "local" };
-    this.onChange = options.onChange;
+var PiSessionActivator = class {
+  states = /* @__PURE__ */ new Map();
+  constructor(cwd, changed) {
+    this.cwd = cwd;
+    this.changed = changed;
   }
-  async activate(names, scope) {
-    const compiled = await this.bridge.compile(names, scope, this.cwd);
-    this.scopeState.scope = scope;
-    setRuntimeSessionState(this.store, this.sessionID, {
-      activeNames: names,
-      bundle: compiled.bundle,
-      systemBlock: compiled.systemBlock,
-      activatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  async equip(sessionID, names, options) {
+    const result = await runRuntime(names, {
+      tool: "pi",
+      global: options.scope === "global",
+      local: options.scope === "project"
+    }, this.cwd);
+    const status = {
+      version: 1,
+      names: result.loadoutNames,
+      scope: options.scope,
+      fingerprint: result.bundle.fingerprint,
+      equippedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      keys: [],
+      skills: result.bundle.injection.skills.map((skill) => skill.name),
+      priorPermissions: [],
+      appliedPermissions: []
+    };
+    this.states.set(sessionID, {
+      status,
+      block: renderRuntimeSystemBlock(result.bundle)
     });
-    this.onChange?.(this.status());
-  }
-  async deactivate() {
-    clearRuntimeSessionState(this.store, this.sessionID);
-    this.onChange?.(this.status());
-  }
-  status() {
-    const state = getRuntimeSessionState(this.store, this.sessionID);
+    this.changed(status);
     return {
-      active: state?.activeNames ?? [],
-      scope: this.scopeState.scope,
-      updatedAt: state?.activatedAt
+      status,
+      warnings: [...result.sourceWarnings, ...result.bundle.diagnostics.map((item) => item.message)]
     };
   }
+  async unequip(sessionID) {
+    this.states.delete(sessionID);
+    this.changed();
+    return {
+      warnings: []
+    };
+  }
+  async status(sessionID) {
+    return this.states.get(sessionID)?.status;
+  }
+  systemBlock(sessionID) {
+    return this.states.get(sessionID)?.block ?? "";
+  }
 };
-function piRuntimeSystemBlock(store, sessionID = PI_RUNTIME_SESSION_ID) {
-  return renderInjectedSystemBlock(getRuntimeSessionState(store, sessionID));
+
+// src/integrations/opencode/command.ts
+function parseEquipCommand(input = "") {
+  const [action = "dashboard", ...args] = input.trim().split(/\s+/).filter(Boolean);
+  if (action === "equip") {
+    const global = args.includes("-g") || args.includes("--global");
+    const project = args.includes("-p") || args.includes("--project");
+    if (global && project) throw new Error("Choose --global or --project.");
+    const flags = /* @__PURE__ */ new Set(["-g", "--global", "-p", "--project"]);
+    const names = args.filter((arg) => !flags.has(arg));
+    if (!names.length || names.some((name) => name.startsWith("-"))) throw new Error("Usage: /loadouts equip <names\u2026> [-g|-p]");
+    return {
+      action,
+      names,
+      scope: global ? "global" : "project"
+    };
+  }
+  if (["dashboard", "quick", "status", "unequip", "list"].includes(action) && !args.length) return {
+    action
+  };
+  throw new Error("Usage: /loadouts [equip <names\u2026> [-g|-p] | unequip | status | list | quick]");
 }
-function piRuntimeResourcePaths(store, sessionID = PI_RUNTIME_SESSION_ID) {
-  const state = getRuntimeSessionState(store, sessionID);
+
+// src/core/plugin.ts
+function createPluginAPI(reg) {
   return {
-    skillPaths: state?.bundle.injection.skills.map((skill) => skill.path) ?? [],
-    promptPaths: [],
-    themePaths: []
+    apiVersion: 1,
+    registerKind: (spec) => reg.registerKind(spec),
+    registerTool: (spec) => reg.registerTool(spec),
+    registerTransform: (name, fn) => reg.registerTransform(name, fn),
+    registerHook: (event, fn) => reg.registerHook(event, fn),
+    getKind: (id) => reg.getKind(id),
+    getTool: (name) => reg.getTool(name)
   };
 }
 
 // src/tui/hosts/pi/embed-entry.ts
-var STATUS_KEY = "loadouts";
+var ENTRY = "loadouts.equipment";
+var savedSchema = external_exports.object({
+  names: external_exports.array(external_exports.string()),
+  scope: external_exports.enum(["project", "global"])
+});
 function loadoutsPiExtension(pi) {
-  const store = createRuntimeSessionStore();
-  const scopeState = { scope: "local" };
-  const bridge = new CliRuntimeBridge({ tool: "pi" });
-  pi.on("before_agent_start", async (event) => {
-    const block = piRuntimeSystemBlock(store);
-    if (!block) return void 0;
-    return { systemPrompt: `${event.systemPrompt}
-
-${block}` };
+  if (!registry.getTool("pi")) registerBuiltins(createPluginAPI(registry));
+  let activator;
+  let restoring = false;
+  pi.on("session_start", async (_event, ctx) => {
+    activator = new PiSessionActivator(ctx.cwd, (status) => {
+      if (!restoring) pi.appendEntry(ENTRY, status ? {
+        names: status.names,
+        scope: status.scope
+      } : null);
+      ctx.ui.setStatus("loadouts", status ? `EQUIPPED S ${status.names.join("\xB7")}` : void 0);
+    });
+    const entry = [...ctx.sessionManager.getBranch()].reverse().find((item) => item.type === "custom" && item.customType === ENTRY);
+    if (entry?.type !== "custom") return;
+    const parsed = savedSchema.safeParse(entry.data);
+    if (!parsed.success || !parsed.data.names.length) return;
+    restoring = true;
+    try {
+      await activator.equip(ctx.sessionManager.getSessionId(), parsed.data.names, {
+        scope: parsed.data.scope
+      });
+    } catch (error) {
+      ctx.ui.notify(String(error), "error");
+    } finally {
+      restoring = false;
+    }
   });
-  pi.on("resources_discover", async () => piRuntimeResourcePaths(store));
+  pi.on("before_agent_start", (event, ctx) => {
+    const block = activator?.systemBlock(ctx.sessionManager.getSessionId());
+    return block ? {
+      systemPrompt: `${event.systemPrompt}
+
+${block}`
+    } : void 0;
+  });
   pi.registerCommand("loadouts", {
-    description: "Open the loadouts dashboard or manage runtime loadouts",
+    description: "Loadout dashboard; equip, unequip, status",
     handler: async (args, ctx) => {
-      if (args.trim().length === 0) {
-        await openDashboard(ctx, store, scopeState);
-        return;
-      }
       try {
-        const result = await handleRuntimeCommand({
-          argumentsText: args,
-          cwd: ctx.cwd,
-          bridge,
-          store,
-          sessionID: PI_RUNTIME_SESSION_ID
+        const command = parseEquipCommand(args);
+        const sessionID = ctx.sessionManager.getSessionId();
+        if (command.action === "dashboard" || command.action === "quick") {
+          await dashboard(ctx, activator);
+          return;
+        }
+        if (command.action === "equip") await activator.equip(sessionID, command.names, {
+          scope: command.scope
         });
-        if (result.command.action === "activate") scopeState.scope = result.command.scope;
-        updateStatus(ctx, statusFromStore(store, scopeState.scope));
-        ctx.ui.notify(result.text, "info");
-      } catch (err) {
-        ctx.ui.notify(err instanceof Error ? err.message : String(err), "error");
+        if (command.action === "unequip") await activator.unequip(sessionID);
+        ctx.ui.notify((await activator.status(sessionID))?.names.join(" + ") || "No session loadouts", "info");
+      } catch (error) {
+        ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
       }
     }
   });
 }
-async function openDashboard(ctx, store, scopeState) {
+async function dashboard(ctx, activator) {
   if (ctx.mode !== "tui") {
-    ctx.ui.notify("/loadouts dashboard is only available in Pi TUI mode.", "warning");
+    ctx.ui.notify("The dashboard requires Pi TUI mode.", "warning");
     return;
   }
-  let overlayHandle;
-  await ctx.ui.custom((tui, theme, _keybindings, done2) => {
-    const piTheme = piHostThemeToPiTuiTheme(theme);
-    const injector = new PiRuntimeInjector({
+  await ctx.ui.custom((tui, theme, _keys, done2) => {
+    const colors = piHostThemeToPiTuiTheme(theme);
+    const controller = new DashboardController({
       cwd: ctx.cwd,
-      store,
-      scopeState,
-      onChange: (status) => updateStatus(ctx, status)
+      session: {
+        id: ctx.sessionManager.getSessionId(),
+        activator
+      },
+      changed: () => tui.requestRender(),
+      exit: () => {
+        controller.dispose();
+        done2(void 0);
+      },
+      edit: async (file) => {
+        ctx.ui.notify(`Edit ${file} in your editor.`, "info");
+      }
     });
-    const host = {
-      theme: () => defaultThemeTokens,
-      requestRender: () => {
-        tui.requestRender();
+    const component = {
+      render: (width) => {
+        const spec = controller.spec;
+        return spec.overlay ? renderOverlay(spec.overlay, width, colors) : renderDashboard(spec, width, colors);
       },
-      exit: () => done2(void 0),
-      openEditor: async (filePath) => {
-        ctx.ui.notify(`Edit ${filePath} from a terminal editor; embedded Pi edit is not available yet.`, "warning");
+      handleInput: (input) => {
+        const intent = isCtrlC(input) ? {
+          t: "quit"
+        } : intentFromPiTuiInput(input, controller.spec);
+        if (intent) void controller.dispatch(intent);
       },
-      data: { rows: [], active: [], tools: [], issues: [], warnings: [] },
-      runtime: injector
+      invalidate() {
+      }
     };
-    let model;
-    const component = new PiDashboardComponent(piTheme, dispatch);
-    void initialize();
+    void controller.refresh();
     return component;
-    async function initialize() {
-      host.data = applyRuntimeStatus(await loadDashboardData(ctx.cwd), injector.status());
-      model = createInitialModel(host.data, { mode: "runtime", scope: "project" });
-      renderNow();
-    }
-    function dispatch(intent) {
-      if (!model) return;
-      if (isQuitIntent(intent, model)) {
-        done2(void 0);
-        return;
-      }
-      const result = update(model, intent);
-      model = result.model;
-      if (model.quitRequested) {
-        done2(void 0);
-        return;
-      }
-      renderNow();
-      if (result.effect) void runEffect(result.effect);
-    }
-    async function runEffect(effect) {
-      let actionIntent;
-      try {
-        if (effect.t === "editFile") await host.openEditor(effect.path);
-        actionIntent = await executeEffect(effect, {
-          fs: await actionContext(effect, model.scope, ctx.cwd),
-          runtime: host.runtime
-        });
-      } catch (err) {
-        actionIntent = {
-          t: "effectDone",
-          effect: effect.t,
-          ok: false,
-          message: err instanceof Error ? err.message : String(err)
-        };
-      }
-      if (effect.t === "reload" || effect.t === "editFile") {
-        host.data = applyRuntimeStatus(await loadDashboardData(ctx.cwd), injector.status());
-        const next = createInitialModel(host.data, { mode: "runtime", scope: model.scope });
-        model = { ...next, filter: model.filter, filtering: model.filtering, cursor: model.cursor, overlay: model.overlay, diffLines: model.diffLines };
-      }
-      const result = update(model, actionIntent);
-      model = result.model;
-      renderNow();
-    }
-    function renderNow() {
-      component.setSpec(view(model));
-      updateStatus(ctx, injector.status());
-      host.requestRender();
-    }
   }, {
     overlay: true,
-    overlayOptions: { width: "94%", maxHeight: "86%", minWidth: 42, margin: 1 },
-    onHandle: (handle) => {
-      overlayHandle = handle;
+    overlayOptions: {
+      width: "94%",
+      maxHeight: "86%",
+      minWidth: 42,
+      margin: 1
     }
   });
-}
-var PiDashboardComponent = class {
-  spec = view(createInitialModel({ rows: [], active: [], tools: [], issues: [], warnings: [] }, { mode: "runtime" }));
-  theme;
-  onIntent;
-  constructor(theme, onIntent) {
-    this.theme = theme;
-    this.onIntent = onIntent;
-  }
-  setSpec(spec) {
-    this.spec = spec;
-  }
-  render(width) {
-    return this.spec.overlay ? renderOverlay(this.spec.overlay, width, this.theme) : renderDashboard(this.spec, width, this.theme);
-  }
-  handleInput(data) {
-    if (isCtrlC(data)) {
-      this.onIntent({ t: "quit" });
-      return;
-    }
-    const intent = intentFromPiTuiInput(data, this.spec);
-    if (intent) this.onIntent(intent);
-  }
-  invalidate() {
-  }
-};
-function isQuitIntent(intent, model) {
-  return intent.t === "quit" && !model.overlay && !model.filtering;
-}
-async function actionContext(effect, fallbackScope, cwd) {
-  if (effect.t === "reload" || effect.t === "editFile") {
-    return {
-      scope: fallbackScope,
-      configPath: cwd,
-      statePath: path19.join(cwd, ".state.json"),
-      projectRoot: cwd
-    };
-  }
-  const scope = "scope" in effect ? effect.scope : fallbackScope;
-  return getContext(scope, cwd);
-}
-function applyRuntimeStatus(data, status) {
-  if (status.active.length === 0) return data;
-  const scope = status.scope === "global" ? "global" : "project";
-  const active = new Set(status.active);
-  return {
-    ...data,
-    rows: data.rows.map((row) => active.has(row.name) && row.scope === scope ? { ...row, status: "active", activation: "runtime" } : row),
-    active: Array.from(/* @__PURE__ */ new Set([...data.active, ...status.active])).sort()
-  };
-}
-function statusFromStore(store, scope) {
-  const state = getRuntimeSessionState(store, PI_RUNTIME_SESSION_ID);
-  return {
-    active: state?.activeNames ?? [],
-    scope,
-    updatedAt: state?.activatedAt
-  };
-}
-function updateStatus(ctx, status) {
-  if (status.active.length === 0) {
-    ctx.ui.setStatus(STATUS_KEY, void 0);
-    ctx.ui.setWidget(STATUS_KEY, void 0);
-    return;
-  }
-  const names = status.active.join(" + ");
-  ctx.ui.setStatus(STATUS_KEY, `EQUIPPED ${names}`);
-  ctx.ui.setWidget(STATUS_KEY, [`EQUIPPED: ${names}`, `mode: runtime (${status.scope})`], { placement: "belowEditor" });
 }
 export {
   loadoutsPiExtension as default

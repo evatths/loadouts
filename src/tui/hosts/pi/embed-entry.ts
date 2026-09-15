@@ -1,243 +1,79 @@
-import * as path from "node:path";
-import type { Component, OverlayHandle, TUI } from "@earendil-works/pi-tui";
-import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
-import { getContext } from "../../../core/discovery.js";
-import type { Scope } from "../../../core/types.js";
-import { CliRuntimeBridge } from "../../../integrations/opencode-runtime/bridge.js";
-import { handleRuntimeCommand } from "../../../integrations/opencode-runtime/command.js";
-import { createRuntimeSessionStore, getRuntimeSessionState } from "../../../integrations/opencode-runtime/state.js";
-import { executeEffect } from "../../core/actions.js";
-import { loadDashboardData, type DashboardData } from "../../core/data.js";
-import type { Effect, Intent } from "../../core/intent.js";
-import { createInitialModel, type Model } from "../../core/model.js";
-import { defaultThemeTokens } from "../../core/theme.js";
-import { update } from "../../core/update.js";
-import { view } from "../../core/view.js";
-import type { HostContext, RuntimeStatus } from "../../core/host.js";
-import { isCtrlC, intentFromPiTuiInput } from "../../skins/pi-tui/input.js";
+import type { Component } from "@earendil-works/pi-tui";
+import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+import { z } from "zod";
+import { DashboardController } from "../../core/controller.js";
+import { intentFromPiTuiInput, isCtrlC } from "../../skins/pi-tui/input.js";
 import { piHostThemeToPiTuiTheme } from "../../skins/pi-tui/pi-theme-adapter.js";
 import { renderDashboard, renderOverlay } from "../../skins/pi-tui/render.js";
-import type { PiTuiTheme } from "../../skins/pi-tui/theme.js";
-import { PI_RUNTIME_SESSION_ID, PiRuntimeInjector, piRuntimeResourcePaths, piRuntimeSystemBlock, type PiRuntimeScopeState } from "./inject.js";
+import { PiSessionActivator } from "./inject.js";
+import { parseEquipCommand } from "../../../integrations/opencode/command.js";
+import { registerBuiltins } from "../../../builtins/index.js";
+import { createPluginAPI } from "../../../core/plugin.js";
+import { registry } from "../../../core/registry.js";
 
-const STATUS_KEY = "loadouts";
+const ENTRY = "loadouts.equipment";
+const savedSchema = z.object({ names: z.array(z.string()), scope: z.enum(["project", "global"]) });
 
 export default function loadoutsPiExtension(pi: ExtensionAPI): void {
-  const store = createRuntimeSessionStore();
-  const scopeState: PiRuntimeScopeState = { scope: "local" };
-  const bridge = new CliRuntimeBridge({ tool: "pi" });
-
-  pi.on("before_agent_start", async (event) => {
-    const block = piRuntimeSystemBlock(store);
-    if (!block) return undefined;
-    return { systemPrompt: `${event.systemPrompt}\n\n${block}` };
+  if (!registry.getTool("pi")) registerBuiltins(createPluginAPI(registry));
+  let activator: PiSessionActivator;
+  let restoring = false;
+  pi.on("session_start", async (_event, ctx) => {
+    activator = new PiSessionActivator(ctx.cwd, (status) => {
+      if (!restoring) pi.appendEntry(ENTRY, status ? { names: status.names, scope: status.scope } : null);
+      ctx.ui.setStatus("loadouts", status ? `EQUIPPED S ${status.names.join("·")}` : undefined);
+    });
+    const entry = [...ctx.sessionManager.getBranch()].reverse().find((item) => item.type === "custom" && item.customType === ENTRY);
+    if (entry?.type !== "custom") return;
+    const parsed = savedSchema.safeParse(entry.data);
+    if (!parsed.success || !parsed.data.names.length) return;
+    restoring = true;
+    try { await activator.equip(ctx.sessionManager.getSessionId(), parsed.data.names, { scope: parsed.data.scope }); }
+    catch (error) { ctx.ui.notify(String(error), "error"); }
+    finally { restoring = false; }
   });
 
-  pi.on("resources_discover", async () => piRuntimeResourcePaths(store));
+  pi.on("before_agent_start", (event, ctx) => {
+    const block = activator?.systemBlock(ctx.sessionManager.getSessionId());
+    return block ? { systemPrompt: `${event.systemPrompt}\n\n${block}` } : undefined;
+  });
 
   pi.registerCommand("loadouts", {
-    description: "Open the loadouts dashboard or manage runtime loadouts",
+    description: "Loadout dashboard; equip, unequip, status",
     handler: async (args, ctx) => {
-      if (args.trim().length === 0) {
-        await openDashboard(ctx, store, scopeState);
-        return;
-      }
-
       try {
-        const result = await handleRuntimeCommand({
-          argumentsText: args,
-          cwd: ctx.cwd,
-          bridge,
-          store,
-          sessionID: PI_RUNTIME_SESSION_ID,
-        });
-        if (result.command.action === "activate") scopeState.scope = result.command.scope;
-        updateStatus(ctx, statusFromStore(store, scopeState.scope));
-        ctx.ui.notify(result.text, "info");
-      } catch (err) {
-        ctx.ui.notify(err instanceof Error ? err.message : String(err), "error");
-      }
+        const command = parseEquipCommand(args);
+        const sessionID = ctx.sessionManager.getSessionId();
+        if (command.action === "dashboard" || command.action === "quick") { await dashboard(ctx, activator); return; }
+        if (command.action === "equip") await activator.equip(sessionID, command.names, { scope: command.scope });
+        if (command.action === "unequip") await activator.unequip(sessionID);
+        ctx.ui.notify((await activator.status(sessionID))?.names.join(" + ") || "No session loadouts", "info");
+      } catch (error) { ctx.ui.notify(error instanceof Error ? error.message : String(error), "error"); }
     },
   });
 }
 
-async function openDashboard(ctx: ExtensionCommandContext, store: ReturnType<typeof createRuntimeSessionStore>, scopeState: PiRuntimeScopeState): Promise<void> {
-  if (ctx.mode !== "tui") {
-    ctx.ui.notify("/loadouts dashboard is only available in Pi TUI mode.", "warning");
-    return;
-  }
-
-  let overlayHandle: OverlayHandle | undefined;
-
-  await ctx.ui.custom<void>((tui, theme, _keybindings, done) => {
-    const piTheme = piHostThemeToPiTuiTheme(theme);
-    const injector = new PiRuntimeInjector({
-      cwd: ctx.cwd,
-      store,
-      scopeState,
-      onChange: (status) => updateStatus(ctx, status),
+async function dashboard(ctx: ExtensionCommandContext, activator: PiSessionActivator): Promise<void> {
+  if (ctx.mode !== "tui") { ctx.ui.notify("The dashboard requires Pi TUI mode.", "warning"); return; }
+  await ctx.ui.custom<void>((tui, theme, _keys, done) => {
+    const colors = piHostThemeToPiTuiTheme(theme);
+    const controller = new DashboardController({
+      cwd: ctx.cwd, session: { id: ctx.sessionManager.getSessionId(), activator },
+      changed: () => tui.requestRender(), exit: () => { controller.dispose(); done(undefined); },
+      edit: async (file) => { ctx.ui.notify(`Edit ${file} in your editor.`, "info"); },
     });
-    const host: HostContext = {
-      theme: () => defaultThemeTokens,
-      requestRender: () => {
-        tui.requestRender();
+    const component: Component = {
+      render: (width) => {
+        const spec = controller.spec;
+        return spec.overlay ? renderOverlay(spec.overlay, width, colors) : renderDashboard(spec, width, colors);
       },
-      exit: () => done(undefined),
-      openEditor: async (filePath) => {
-        ctx.ui.notify(`Edit ${filePath} from a terminal editor; embedded Pi edit is not available yet.`, "warning");
+      handleInput: (input) => {
+        const intent = isCtrlC(input) ? { t: "quit" as const } : intentFromPiTuiInput(input, controller.spec);
+        if (intent) void controller.dispatch(intent);
       },
-      data: { rows: [], active: [], tools: [], issues: [], warnings: [] },
-      runtime: injector,
+      invalidate() {},
     };
-    let model: Model;
-    const component = new PiDashboardComponent(piTheme, dispatch);
-
-    void initialize();
+    void controller.refresh();
     return component;
-
-    async function initialize(): Promise<void> {
-      host.data = applyRuntimeStatus(await loadDashboardData(ctx.cwd), injector.status());
-      model = createInitialModel(host.data, { mode: "runtime", scope: "project" });
-      renderNow();
-    }
-
-    function dispatch(intent: Intent): void {
-      if (!model) return;
-      if (isQuitIntent(intent, model)) {
-        done(undefined);
-        return;
-      }
-
-      const result = update(model, intent);
-      model = result.model;
-      if (model.quitRequested) {
-        done(undefined);
-        return;
-      }
-      renderNow();
-      if (result.effect) void runEffect(result.effect);
-    }
-
-    async function runEffect(effect: Effect): Promise<void> {
-      let actionIntent: Intent;
-      try {
-        if (effect.t === "editFile") await host.openEditor(effect.path);
-        actionIntent = await executeEffect(effect, {
-          fs: await actionContext(effect, model.scope, ctx.cwd),
-          runtime: host.runtime,
-        });
-      } catch (err) {
-        actionIntent = {
-          t: "effectDone",
-          effect: effect.t,
-          ok: false,
-          message: err instanceof Error ? err.message : String(err),
-        };
-      }
-
-      if (effect.t === "reload" || effect.t === "editFile") {
-        host.data = applyRuntimeStatus(await loadDashboardData(ctx.cwd), injector.status());
-        const next = createInitialModel(host.data, { mode: "runtime", scope: model.scope });
-        model = { ...next, filter: model.filter, filtering: model.filtering, cursor: model.cursor, overlay: model.overlay, diffLines: model.diffLines };
-      }
-
-      const result = update(model, actionIntent);
-      model = result.model;
-      renderNow();
-    }
-
-    function renderNow(): void {
-      component.setSpec(view(model));
-      updateStatus(ctx, injector.status());
-      host.requestRender();
-    }
-  }, {
-    overlay: true,
-    overlayOptions: { width: "94%", maxHeight: "86%", minWidth: 42, margin: 1 },
-    onHandle: (handle) => {
-      overlayHandle = handle;
-    },
-  });
-}
-
-class PiDashboardComponent implements Component {
-  private spec = view(createInitialModel({ rows: [], active: [], tools: [], issues: [], warnings: [] }, { mode: "runtime" }));
-  private readonly theme: PiTuiTheme;
-  private readonly onIntent: (intent: Intent) => void;
-
-  constructor(theme: PiTuiTheme, onIntent: (intent: Intent) => void) {
-    this.theme = theme;
-    this.onIntent = onIntent;
-  }
-
-  setSpec(spec: ReturnType<typeof view>): void {
-    this.spec = spec;
-  }
-
-  render(width: number): string[] {
-    return this.spec.overlay
-      ? renderOverlay(this.spec.overlay, width, this.theme)
-      : renderDashboard(this.spec, width, this.theme);
-  }
-
-  handleInput(data: string): void {
-    if (isCtrlC(data)) {
-      this.onIntent({ t: "quit" });
-      return;
-    }
-    const intent = intentFromPiTuiInput(data, this.spec);
-    if (intent) this.onIntent(intent);
-  }
-
-  invalidate(): void {}
-}
-
-function isQuitIntent(intent: Intent, model: Model): boolean {
-  return intent.t === "quit" && !model.overlay && !model.filtering;
-}
-
-async function actionContext(effect: Effect, fallbackScope: Scope, cwd: string) {
-  if (effect.t === "reload" || effect.t === "editFile") {
-    return {
-      scope: fallbackScope,
-      configPath: cwd,
-      statePath: path.join(cwd, ".state.json"),
-      projectRoot: cwd,
-    };
-  }
-  const scope = "scope" in effect ? effect.scope : fallbackScope;
-  return getContext(scope, cwd);
-}
-
-function applyRuntimeStatus(data: DashboardData, status: RuntimeStatus): DashboardData {
-  if (status.active.length === 0) return data;
-  const scope = status.scope === "global" ? "global" : "project";
-  const active = new Set(status.active);
-  return {
-    ...data,
-    rows: data.rows.map((row) => active.has(row.name) && row.scope === scope
-      ? { ...row, status: "active", activation: "runtime" }
-      : row),
-    active: Array.from(new Set([...data.active, ...status.active])).sort(),
-  };
-}
-
-function statusFromStore(store: ReturnType<typeof createRuntimeSessionStore>, scope: RuntimeStatus["scope"]): RuntimeStatus {
-  const state = getRuntimeSessionState(store, PI_RUNTIME_SESSION_ID);
-  return {
-    active: state?.activeNames ?? [],
-    scope,
-    updatedAt: state?.activatedAt,
-  };
-}
-
-function updateStatus(ctx: Pick<ExtensionContext, "ui">, status: RuntimeStatus): void {
-  if (status.active.length === 0) {
-    ctx.ui.setStatus(STATUS_KEY, undefined);
-    ctx.ui.setWidget(STATUS_KEY, undefined);
-    return;
-  }
-  const names = status.active.join(" + ");
-  ctx.ui.setStatus(STATUS_KEY, `EQUIPPED ${names}`);
-  ctx.ui.setWidget(STATUS_KEY, [`EQUIPPED: ${names}`, `mode: runtime (${status.scope})`], { placement: "belowEditor" });
+  }, { overlay: true, overlayOptions: { width: "94%", maxHeight: "86%", minWidth: 42, margin: 1 } });
 }

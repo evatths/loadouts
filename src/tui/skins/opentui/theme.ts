@@ -1,26 +1,27 @@
-import type { TuiThemeCurrent } from "@opencode-ai/plugin/tui";
+import type { Plugin } from "@opencode/plugin/tui";
+import type { RGBA } from "@opentui/core";
 import { defaultThemeTokens, type StyleToken, type ThemeTokens } from "../../core/theme.js";
 
-export type OpenTuiColor = string | object;
+export type OpenTuiColor = string | RGBA;
 
 export type OpenTuiThemeTokens = Record<StyleToken, OpenTuiColor> & {
   background?: OpenTuiColor;
   selectedBackground?: OpenTuiColor;
 };
 
-export function toOpenTuiTheme(theme?: TuiThemeCurrent): OpenTuiThemeTokens {
+export function toOpenTuiTheme(theme?: Plugin.Context["theme"]): OpenTuiThemeTokens {
   if (!theme) return defaultThemeTokens;
   return {
-    text: theme.text,
-    muted: theme.textMuted,
-    dim: theme.borderSubtle,
-    accent: theme.accent,
-    success: theme.success,
-    error: theme.error,
-    warning: theme.warning,
-    border: theme.border,
-    background: theme.backgroundPanel,
-    selectedBackground: theme.backgroundElement,
+    text: theme.text.default,
+    muted: theme.text.subdued,
+    dim: theme.text.subdued,
+    accent: theme.text.action.primary.default,
+    success: theme.text.feedback.success.default,
+    error: theme.text.feedback.error.default,
+    warning: theme.text.feedback.warning.default,
+    border: theme.border.default,
+    background: theme.background.default,
+    selectedBackground: theme.background.surface.offset,
   };
 }
 

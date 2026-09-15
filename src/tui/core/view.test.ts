@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createInitialModel, type Model } from "./model.js";
+import { createInitialModel, type EquipLayer, type Model } from "./model.js";
 import { view } from "./view.js";
 import type { DashboardData } from "./data.js";
 
@@ -10,8 +10,9 @@ describe("view", () => {
         "detail": {
           "blocks": [
             "scope: project",
+            "equipped: project",
             "status: active",
-            "\"base description\"",
+            ""base description"",
             "Artifacts (press enter to expand)",
             "rule         rules/base.md -> claude-code",
             "instruction  AGENTS.base.md -> claude-code, opencode",
@@ -19,13 +20,13 @@ describe("view", () => {
           ],
           "title": "base",
         },
-        "equipped": "EQUIPPED: base + data -> claude-code, opencode [fs] drift",
+        "equipped": "EQUIPPED: G —  P base·data  S —  [project] drift  1 issue(s) detected",
         "overlay": undefined,
         "panes": [
           {
             "rows": [
-              "*✓ base  project  1 rule  1 skill  1 instr  [fs]",
-              " ~ data  project  1 rule  [fs]  configuration drift",
+              "*✓ base  project  1 rule  1 skill  1 instr  [P]",
+              " ~ data  project  1 rule  [P]  configuration drift",
             ],
             "title": "Active (2)",
           },
@@ -54,14 +55,15 @@ describe("view", () => {
         "detail": {
           "blocks": [
             "scope: global",
+            "equipped: —",
             "status: available",
-            "\"meta description\"",
+            ""meta description"",
             "Artifacts (press enter to expand)",
             "rule         rules/meta.md -> claude-code",
           ],
           "title": "meta",
         },
-        "equipped": "EQUIPPED: base + data -> claude-code, opencode [fs] drift  /meta",
+        "equipped": "EQUIPPED: G —  P base·data  S —  [project] drift  1 issue(s) detected  /meta",
         "overlay": undefined,
         "panes": [
           {
@@ -100,7 +102,7 @@ describe("view", () => {
           ],
           "title": "Loadouts",
         },
-        "equipped": "EQUIPPED: none -> no tools [fs] in sync",
+        "equipped": "EQUIPPED: G —  P —  S —  [project] in sync",
         "overlay": undefined,
         "panes": [
           {
@@ -122,7 +124,7 @@ describe("view", () => {
 });
 
 function model(): Model {
-  return createInitialModel(data(), { mode: "filesystem", scope: "project" });
+  return createInitialModel(data(), { scope: "project" });
 }
 
 function data(): DashboardData {
@@ -132,22 +134,22 @@ function data(): DashboardData {
     warnings: [],
     issues: [{ rowId: "project:data", text: "configuration drift" }],
     rows: [
-      row("project:base", "base", "project", "active", "filesystem"),
-      row("project:data", "data", "project", "drift", "filesystem", "configuration drift"),
-      row("global:meta", "meta", "global", "available", null),
-      row("project:bad", "bad", "project", "broken", null, "missing include"),
+      row("project:base", "base", "project", "active", ["project"]),
+      row("project:data", "data", "project", "drift", ["project"], "configuration drift"),
+      row("global:meta", "meta", "global", "available", []),
+      row("project:bad", "bad", "project", "broken", [], "missing include"),
     ],
   };
 }
 
-function row(id: string, name: string, scope: "project" | "global", status: "active" | "available" | "drift" | "broken", activation: "filesystem" | null, issue?: string) {
+function row(id: string, name: string, scope: "project" | "global", status: "active" | "available" | "drift" | "broken", equipped: EquipLayer[], issue?: string) {
   return {
     id,
     name,
     scope,
     description: `${name} description`,
     status,
-    activation,
+    equipped,
     counts: { rules: 1, skills: name === "base" ? 1 : 0, instructions: name === "base" ? 1 : 0, extensions: 0 },
     tools: ["claude-code", "opencode"],
     issue,

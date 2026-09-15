@@ -37,6 +37,7 @@ function pane(model: Model, section: Section, title: string): SpecPane {
 function detail(row: LoadoutRow, expanded: boolean) {
   const blocks: SpecSpan[][] = [
     kv("scope", row.scope),
+    kv("equipped", row.equipped.join(" / ") || "—"),
     kv("status", row.issue ? `${row.status}: ${row.issue}` : row.status),
   ];
   if (row.description) blocks.push([{ text: `"${row.description}"`, style: "muted" }]);
@@ -85,16 +86,18 @@ function overlay(model: Model): ViewSpec["overlay"] {
 }
 
 function equipped(model: Model): SpecSpan[] {
-  const active = model.rows.filter((row) => row.activation);
-  const names = active.map((row) => row.name).join(" + ") || "none";
-  const tools = Array.from(new Set(active.flatMap((row) => row.tools))).sort().join(", ") || "no tools";
+  const active = model.rows.filter((row) => row.equipped.length);
   const drift = active.some((row) => row.status === "drift");
   return [
     { text: "EQUIPPED: ", style: "accent" },
-    { text: names, style: active.length ? "success" : "dim" },
-    { text: ` -> ${tools} `, style: "muted" },
-    { text: `[${model.mode === "runtime" ? "session" : "fs"}] `, style: "dim" },
+    ...(["global", "project", "session"] as const).map((layer): SpecSpan => ({
+      text: `${layer[0].toUpperCase()} ${active.filter((row) => row.equipped.includes(layer)).map((row) => row.name).join("·") || "—"}  `,
+      style: layer === model.layer ? "accent" : "muted",
+    })),
+    { text: `[${model.layer}] `, style: "dim" },
     { text: drift ? "drift" : "in sync", style: drift ? "warning" : "success" },
+    ...(model.busy ? [{ text: `  ${model.busy.label}…`, style: "warning" as const }] : []),
+    ...(model.lastResult ? [{ text: `  ${model.lastResult.text}`, style: model.lastResult.variant === "error" ? "error" as const : "muted" as const }] : []),
     ...(model.filtering || model.filter.text
       ? [
           { text: "  /", style: "accent" as const },
@@ -116,10 +119,10 @@ function rowSpans(row: LoadoutRow): SpecSpan[] {
     count(row.counts.extensions, "ext"),
   ].filter(Boolean).join("  ") || "empty";
   return [
-    { text: row.name, style: row.activation ? "success" : "text" },
+    { text: row.name, style: row.equipped.length ? "success" : "text" },
     { text: `  ${row.scope}`, style: "dim" },
     { text: `  ${counts}`, style: "muted" },
-    ...(row.activation ? [{ text: `  [${row.activation === "runtime" ? "session" : "fs"}]`, style: "accent" as const }] : []),
+    ...(row.equipped.length ? [{ text: `  [${row.equipped.map((layer) => layer[0].toUpperCase()).join("/")}]`, style: "accent" as const }] : []),
     ...(row.issue ? [{ text: `  ${row.issue}`, style: "warning" as const }] : []),
   ];
 }
@@ -127,7 +130,7 @@ function rowSpans(row: LoadoutRow): SpecSpan[] {
 function glyph(row: LoadoutRow): { char: string; style: StyleToken } {
   if (row.status === "broken") return { char: "!", style: "error" };
   if (row.status === "drift") return { char: "~", style: "warning" };
-  if (row.activation) return { char: "✓", style: "success" };
+  if (row.equipped.length) return { char: "✓", style: "success" };
   return { char: "-", style: "dim" };
 }
 

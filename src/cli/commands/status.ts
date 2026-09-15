@@ -610,7 +610,7 @@ export async function getStatusJson(
   const dashboard = await loadDashboardData(cwd);
   const allowedScopes = scopeSet(contexts);
   const active = dashboard.rows
-    .filter((row) => row.activation && allowedScopes.has(row.scope))
+    .filter((row) => row.equipped.length && allowedScopes.has(row.scope))
     .map((row) => row.name);
 
   const dedupedActive = Array.from(new Set(active));

@@ -1,107 +1,108 @@
 # Runtime Activation (OpenCode First)
 
-`loadouts runtime` compiles loadouts into a session-time bundle without touching activated outputs on disk. Runtime v1 is designed as an OpenCode-first integration path and a reference surface for other tools.
+Equip loadouts globally, for a project, or for **one OpenCode session**.
+Session switching uses OpenCode V2's durable instruction entries and permission
+rules, so another session at the same directory is unaffected.
 
-## Why Runtime Exists
+## CLI
 
-- Keep activation side-effect free for agent sessions.
-- Reuse the existing resolver and include semantics from standard loadout compilation.
-- Make instruction/rule injection explicit and auditable in one JSON payload.
-- Expose skill directories as references (path discovery only), without claiming native skill hot-swap.
-
-## Architecture
-
-Runtime activation follows a resolver-backed bundle compiler:
-
-1. Resolve loadouts exactly like normal activation (`include`, source imports, bundled/global fallback, tool filtering).
-2. Compile supported artifacts into a `RuntimeBundle`.
-3. Return bundle JSON (`--json`) or a model-ready block (`--system-block`).
-
-Key properties:
-
-- Session-local state: caller owns lifecycle in memory/process state.
-- No persistent activation changes: runtime commands do not mutate `.loadouts/.state.json`.
-- No output rendering: runtime does not write `.opencode/`, `AGENTS.md`, or other tool target files.
-- Deterministic fingerprinting: `fingerprint` is stable across `generatedAt` changes for equivalent content.
-
-## OpenCode-First Flow
-
-Use OpenCode as the primary runtime consumer in v1:
-
-```bash
-# JSON bridge for plugin/session adapters
-loadouts runtime base backend --tool opencode --json
-
-# Pre-rendered system block text
-loadouts runtime base backend --tool opencode --system-block
+```sh
+loadouts session list
+loadouts session status --session ses_...
+loadouts session equip backend review --session ses_... -p
+loadouts session equip caveman --session ses_... -g
+loadouts session unequip --session ses_...
 ```
 
-Recommended integration pattern:
+`-g` and `-p` choose the **loadout source scope**; the destination is always the
+named session. Omit `--session` to use the most recently updated root session at
+the current directory. `--json` is available on every subcommand.
+The CLI discovers an already-running authenticated service; start OpenCode first.
 
-- Compile once when a session starts or active runtime loadouts change.
-- Cache by `fingerprint`.
-- Inject `instructions` and `rules` into model/system context.
-- Register `skills[*].path` for discovery only.
+Session equips inject only instruction/rule content not already rendered by
+intact Global/Project OpenCode outputs. Skill gates restrict native catalog skill
+access to the selected loadout set while retaining pre-existing restrictions.
+Unsupported session artifacts (commands, MCP, references, plugins) are reported
+as diagnostics; equip those at Global/Project scope.
 
-### Slash Command UX (`/loadouts`)
+## OpenCode dashboard
 
-The OpenCode runtime path is designed around a deterministic plugin-backed slash command:
+Install the bundled integration at either filesystem scope:
+
+```sh
+loadouts activate opencode-runtime -g
+# or: loadouts activate opencode-runtime -l
+```
+
+This renders the package directory `plugins/loadouts/`, containing the server and
+TUI entries. Build from source with `npm run build` before activating a checkout.
+
+Inside OpenCode:
 
 ```text
-/loadouts activate base
-/loadouts a base -l
-/loadouts a release -g
+/loadouts                       dashboard (also ctrl+l)
+/loadouts quick                 multi-select session equip
+/loadouts equip caveman -g      replace this session's set
+/loadouts equip backend -p
+/loadouts unequip
+/loadouts status
 /loadouts list
-/loadouts info base
-/loadouts clear
 ```
 
-Expected behavior:
+The dashboard shows **G / P / S** equipment. `m` selects the equip layer;
+`j/k` moves, `tab` changes section, `space` toggles, `enter` expands artifacts,
+`/` searches, `u` undoes, and `q` returns to the originating session.
+Global/project rows are equipped through their matching filesystem layer.
+The footer updates from persisted session state and native events.
 
-- The server plugin maps `/loadouts activate|a|use <names...>` to `loadouts runtime ...` (or equivalent runtime adapter path) and computes session runtime state deterministically.
-- The TUI plugin listens for server plugin events and renders status/results in a TUI-only dialog that is not appended to chat and is not visible to the assistant.
-- `-l/--local` and `-g/--global` are supported as direct scope selectors for runtime compilation.
-- Runtime JSON and intermediate plugin outputs stay hidden from the model-facing response.
-- The server and TUI plugins share persisted runtime state through `~/.cache/loadouts/opencode-runtime/<cwd-hash>.json`; the server plugin uses that state during system-message injection.
-- A bundled scaffold loadout (`opencode-runtime`) renders `.opencode/plugins/loadouts-runtime.ts`, `.opencode/plugins/loadouts-runtime-tui.tsx`, and `.opencode/tui.jsonc`.
+The server plugin also filters skill advertisements (session permission denies
+alone do not hide them on 2.0.3), provides off-disk skills through a catalog
+transform, and supports headless equips.
 
-### Known OpenCode Runtime Semantics
+Optional loadout selections:
 
-- The runtime plugin's `command.execute.before` hook is deterministic for parsing `/loadouts` arguments and updating runtime state.
-- In interactive OpenCode, the server plugin owns `/loadouts` command handling and the TUI plugin owns user-visible feedback. If the TUI plugin is not loaded, the server plugin remains the headless/fallback path.
-- OpenCode may still route server slash command text through model-facing flows when the TUI plugin is absent. Treat user-visible server acknowledgment text as host-dependent.
-- OpenCode loads server plugins and TUI plugins at startup. Restart OpenCode after changing or activating runtime plugin or TUI config artifacts.
-- The plugin bridge shells out to `loadouts runtime ...`. Ensure the `loadouts` binary available on OpenCode's `PATH` includes runtime support.
-- The bundled TUI config is whole-file managed like other Loadouts config artifacts. Existing unmanaged `.opencode/tui.jsonc` files are protected by normal shadowing; add `./plugins/loadouts-runtime-tui.tsx` to your existing TUI config if needed.
+```yaml
+name: review
+include:
+  - instructions/AGENTS.review.md
+opencode:
+  agent: reviewer
+  model:
+    providerID: anthropic
+    id: claude-sonnet-4-5
+```
 
-## Tool Capability Matrix (Runtime v1)
+For automatic project session equips, add to `.loadouts/loadouts.yaml`:
 
-The bundle always includes resolved instructions, rules, and skill references. Capability flags tell consumers what should be treated as native runtime behavior for each tool.
+```yaml
+opencode:
+  defaultSession: [backend]
+```
 
-| Tool | Runtime mode | Instruction/rule model injection | Skill path discovery | Native skill hot-swap |
-|------|--------------|----------------------------------|----------------------|-----------------------|
-| OpenCode | `experimental-runtime` | Yes | Yes | No |
-| Pi | `native-runtime` | Yes | Yes | No |
-| Codex | `experimental-runtime` | Yes | Yes | No |
-| Claude Code | `filesystem-activation` | No | No | No |
-| Cursor | `filesystem-activation` | No (not native) | No | No |
+## Standalone and Pi
 
-For filesystem-first tools, use standard `activate/sync` as the primary path and treat runtime output as inspection/debugging data.
+`loadouts tui` uses pi-tui and works without OpenCode. If a running service is
+available, press `S` to select a conversation at the current directory, then use
+the Session layer. Global/Project activation works independently of the service.
+The standalone dashboard requires Node 22.19+.
 
-## Runtime v1 Limits
+Pi's bundled `loadouts-runtime` extension uses the same dashboard and layers.
+Session equipment is persisted in Pi custom entries, keyed by the actual session
+ID, and injected through `before_agent_start`. Resuming/switching a Pi session
+reconstructs its own equipment. Pi skills remain path-discovery references.
 
-- Supported kinds: `instruction`, `rule`, `skill`.
-- Agents are filesystem-rendered native definitions for supported harnesses; they are not injected through runtime v1.
-- Unsupported kinds are reported as diagnostics, not hard failures.
-- Skills require a `SKILL.md` entrypoint for runtime discovery metadata.
-- Runtime v1 does not implement native skill hot-swap.
+## Inspect compiled bundles
 
-## Reference Scaffold
+The existing compiler command remains useful independently of activation:
 
-- Bundled OpenCode server runtime plugin: `bundled/opencode/plugins/loadouts-runtime.ts`
-- Bundled OpenCode TUI runtime plugin: `bundled/opencode/plugins/loadouts-runtime-tui.tsx`
-- Bundled OpenCode TUI config: `bundled/opencode/tui.jsonc`
-- Bundled scaffold loadout: `bundled/loadouts/opencode-runtime.yaml`
-- Historical/reference plugin scaffold: `docs/examples/opencode-runtime-plugin.ts`
-- Core compiler implementation: `src/core/runtime.ts`
-- CLI command surface: `src/cli/commands/runtime.ts`
+```sh
+loadouts runtime base --tool opencode --json
+loadouts runtime base --tool pi --system-block
+```
+
+OpenCode supports native per-session instruction entries and skill gating, plus
+location-wide skill hot reload. Pi supports session system-prompt injection.
+Other tools retain their existing compiler/filesystem capability flags.
+
+See [OpenCode V2 implementation details](opencode-v2-runtime.md) for ownership,
+rollback, concurrency limits, cache behavior, probes and verification scripts.

@@ -109,7 +109,7 @@ export async function getContext(
     };
   } else {
     const nearestRoot = await findNearestLoadoutRoot(cwd);
-    if (!nearestRoot) {
+    if (!nearestRoot || nearestRoot.level !== "project") {
       throw new Error("No .loadouts/ directory found. Run 'loadouts init' first.");
     }
     // projectRoot is the directory containing .loadouts/, not git root

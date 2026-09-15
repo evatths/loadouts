@@ -60,7 +60,24 @@ loadouts runtime base --system-block # Output renderRuntimeSystemBlock(bundle) o
 
 See `docs/runtime.md` for architecture, OpenCode-first integration flow, and per-tool capability flags.
 
-For OpenCode runtime plugin integrations, this is exposed as `/loadouts activate|a|use ...`, `/loadouts list|ls`, `/loadouts info`, and `/loadouts clear`. The bundled fallback command omits `$ARGUMENTS` to reduce model-visible command noise, and runtime JSON/intermediate plugin output should stay hidden. User-visible slash command acknowledgment text may still be model-mediated by OpenCode even when plugin state handling is deterministic.
+### `loadouts session <status|equip|unequip|list>`
+Manage durable equipment on one OpenCode V2 session without filesystem activation.
+```bash
+loadouts session list
+loadouts session status --session ses_...
+loadouts session equip backend --session ses_... -p
+loadouts session equip caveman --session ses_... -g
+loadouts session unequip --session ses_...
+```
+Omit `--session` to target the most recently updated root session at the current
+directory. `-g`/`-p` select the loadout source scope. All subcommands accept `--json`.
+The running service is discovered automatically and is never started by this command.
+
+### `loadouts tui`
+Open the standalone dashboard (Node 22.19+). Press `m` to choose the equip layer,
+or `S` to target a running OpenCode conversation. The embedded OpenCode dashboard
+opens with `/loadouts` or `ctrl+l`; `/loadouts equip <names…> [-g|-p]`,
+`/loadouts unequip`, `/loadouts status`, and `/loadouts quick` run client-side.
 
 ### `loadouts diff [name]`
 Preview what would change if a loadout were applied.
