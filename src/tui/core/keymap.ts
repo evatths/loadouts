@@ -11,8 +11,8 @@ export interface KeyBinding {
 export const keymap: KeyBinding[] = [
   { keys: ["j", "down"], label: "move down", intent: { t: "move", delta: 1 } },
   { keys: ["k", "up"], label: "move up", intent: { t: "move", delta: -1 } },
-  { keys: ["tab"], label: "next section", intent: { t: "section", dir: 1 } },
-  { keys: ["shift+tab"], label: "prev section", intent: { t: "section", dir: -1 } },
+  { keys: ["tab", "l", "right"], label: "next section", intent: { t: "section", dir: 1 } },
+  { keys: ["shift+tab", "h", "left"], label: "prev section", intent: { t: "section", dir: -1 } },
   { keys: ["space"], label: "toggle", intent: { t: "toggle" }, hint: true },
   { keys: ["a"], label: "activate", intent: { t: "activate" }, hint: true },
   { keys: ["d"], label: "deactivate", intent: { t: "deactivate" }, hint: true },
