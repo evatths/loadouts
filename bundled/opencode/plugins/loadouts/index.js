@@ -114,17 +114,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path22) {
-      const ctrl = callVisitor(key, node, visitor, path22);
+    function visit_(key, node, visitor, path23) {
+      const ctrl = callVisitor(key, node, visitor, path23);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
-        replaceNode(key, path22, ctrl);
-        return visit_(key, ctrl, visitor, path22);
+        replaceNode(key, path23, ctrl);
+        return visit_(key, ctrl, visitor, path23);
       }
       if (typeof ctrl !== "symbol") {
         if (identity2.isCollection(node)) {
-          path22 = Object.freeze(path22.concat(node));
+          path23 = Object.freeze(path23.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = visit_(i, node.items[i], visitor, path22);
+            const ci = visit_(i, node.items[i], visitor, path23);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -135,13 +135,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity2.isPair(node)) {
-          path22 = Object.freeze(path22.concat(node));
-          const ck = visit_("key", node.key, visitor, path22);
+          path23 = Object.freeze(path23.concat(node));
+          const ck = visit_("key", node.key, visitor, path23);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path22);
+          const cv = visit_("value", node.value, visitor, path23);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -162,17 +162,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path22) {
-      const ctrl = await callVisitor(key, node, visitor, path22);
+    async function visitAsync_(key, node, visitor, path23) {
+      const ctrl = await callVisitor(key, node, visitor, path23);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
-        replaceNode(key, path22, ctrl);
-        return visitAsync_(key, ctrl, visitor, path22);
+        replaceNode(key, path23, ctrl);
+        return visitAsync_(key, ctrl, visitor, path23);
       }
       if (typeof ctrl !== "symbol") {
         if (identity2.isCollection(node)) {
-          path22 = Object.freeze(path22.concat(node));
+          path23 = Object.freeze(path23.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = await visitAsync_(i, node.items[i], visitor, path22);
+            const ci = await visitAsync_(i, node.items[i], visitor, path23);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -183,13 +183,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity2.isPair(node)) {
-          path22 = Object.freeze(path22.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path22);
+          path23 = Object.freeze(path23.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path23);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path22);
+          const cv = await visitAsync_("value", node.value, visitor, path23);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -216,23 +216,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path22) {
+    function callVisitor(key, node, visitor, path23) {
       if (typeof visitor === "function")
-        return visitor(key, node, path22);
+        return visitor(key, node, path23);
       if (identity2.isMap(node))
-        return visitor.Map?.(key, node, path22);
+        return visitor.Map?.(key, node, path23);
       if (identity2.isSeq(node))
-        return visitor.Seq?.(key, node, path22);
+        return visitor.Seq?.(key, node, path23);
       if (identity2.isPair(node))
-        return visitor.Pair?.(key, node, path22);
+        return visitor.Pair?.(key, node, path23);
       if (identity2.isScalar(node))
-        return visitor.Scalar?.(key, node, path22);
+        return visitor.Scalar?.(key, node, path23);
       if (identity2.isAlias(node))
-        return visitor.Alias?.(key, node, path22);
+        return visitor.Alias?.(key, node, path23);
       return void 0;
     }
-    function replaceNode(key, path22, node) {
-      const parent = path22[path22.length - 1];
+    function replaceNode(key, path23, node) {
+      const parent = path23[path23.length - 1];
       if (identity2.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity2.isPair(parent)) {
@@ -842,10 +842,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity2 = require_identity();
     var Node2 = require_Node();
-    function collectionFromPath(schema, path22, value3) {
+    function collectionFromPath(schema, path23, value3) {
       let v = value3;
-      for (let i = path22.length - 1; i >= 0; --i) {
-        const k = path22[i];
+      for (let i = path23.length - 1; i >= 0; --i) {
+        const k = path23[i];
         if (typeof k === "number" && Number.isInteger(k) && k >= 0) {
           const a = [];
           a[k] = v;
@@ -864,7 +864,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path22) => path22 == null || typeof path22 === "object" && !!path22[Symbol.iterator]().next().done;
+    var isEmptyPath = (path23) => path23 == null || typeof path23 === "object" && !!path23[Symbol.iterator]().next().done;
     var Collection = class extends Node2.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -894,11 +894,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path22, value3) {
-        if (isEmptyPath(path22))
+      addIn(path23, value3) {
+        if (isEmptyPath(path23))
           this.add(value3);
         else {
-          const [key, ...rest] = path22;
+          const [key, ...rest] = path23;
           const node = this.get(key, true);
           if (identity2.isCollection(node))
             node.addIn(rest, value3);
@@ -912,8 +912,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path22) {
-        const [key, ...rest] = path22;
+      deleteIn(path23) {
+        const [key, ...rest] = path23;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -927,8 +927,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path22, keepScalar) {
-        const [key, ...rest] = path22;
+      getIn(path23, keepScalar) {
+        const [key, ...rest] = path23;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity2.isScalar(node) ? node.value : node;
@@ -946,8 +946,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path22) {
-        const [key, ...rest] = path22;
+      hasIn(path23) {
+        const [key, ...rest] = path23;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -957,8 +957,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path22, value3) {
-        const [key, ...rest] = path22;
+      setIn(path23, value3) {
+        const [key, ...rest] = path23;
         if (rest.length === 0) {
           this.set(key, value3);
         } else {
@@ -3473,9 +3473,9 @@ var require_Document = __commonJS({
           this.contents.add(value3);
       }
       /** Adds a value to the document. */
-      addIn(path22, value3) {
+      addIn(path23, value3) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path22, value3);
+          this.contents.addIn(path23, value3);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -3550,14 +3550,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path22) {
-        if (Collection.isEmptyPath(path22)) {
+      deleteIn(path23) {
+        if (Collection.isEmptyPath(path23)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path22) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path23) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -3572,10 +3572,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path22, keepScalar) {
-        if (Collection.isEmptyPath(path22))
+      getIn(path23, keepScalar) {
+        if (Collection.isEmptyPath(path23))
           return !keepScalar && identity2.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity2.isCollection(this.contents) ? this.contents.getIn(path22, keepScalar) : void 0;
+        return identity2.isCollection(this.contents) ? this.contents.getIn(path23, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -3586,10 +3586,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path22) {
-        if (Collection.isEmptyPath(path22))
+      hasIn(path23) {
+        if (Collection.isEmptyPath(path23))
           return this.contents !== void 0;
-        return identity2.isCollection(this.contents) ? this.contents.hasIn(path22) : false;
+        return identity2.isCollection(this.contents) ? this.contents.hasIn(path23) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -3606,13 +3606,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path22, value3) {
-        if (Collection.isEmptyPath(path22)) {
+      setIn(path23, value3) {
+        if (Collection.isEmptyPath(path23)) {
           this.contents = value3;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path22), value3);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path23), value3);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path22, value3);
+          this.contents.setIn(path23, value3);
         }
       }
       /**
@@ -5572,9 +5572,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path22) => {
+    visit.itemAtPath = (cst, path23) => {
       let item = cst;
-      for (const [field, index2] of path22) {
+      for (const [field, index2] of path23) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index2];
@@ -5583,23 +5583,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path22) => {
-      const parent = visit.itemAtPath(cst, path22.slice(0, -1));
-      const field = path22[path22.length - 1][0];
+    visit.parentCollection = (cst, path23) => {
+      const parent = visit.itemAtPath(cst, path23.slice(0, -1));
+      const field = path23[path23.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path22, item, visitor) {
-      let ctrl = visitor(item, path22);
+    function _visit(path23, item, visitor) {
+      let ctrl = visitor(item, path23);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i = 0; i < token.items.length; ++i) {
-            const ci = _visit(Object.freeze(path22.concat([[field, i]])), token.items[i], visitor);
+            const ci = _visit(Object.freeze(path23.concat([[field, i]])), token.items[i], visitor);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -5610,10 +5610,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path22);
+            ctrl = ctrl(item, path23);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path22) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path23) : ctrl;
     }
     exports.visit = visit;
   }
@@ -9168,7 +9168,7 @@ var init_promise = __esm({
 });
 
 // src/tui/hosts/opencode/index.ts
-import * as path21 from "node:path";
+import * as path22 from "node:path";
 
 // node_modules/@opencode/plugin/dist/promise/plugin.js
 var plugin_exports = {};
@@ -9964,8 +9964,8 @@ var CIRCULAR = "[Circular]";
 function formatPropertyKey(name) {
   return typeof name === "string" ? JSON.stringify(name) : String(name);
 }
-function formatPath(path22) {
-  return path22.map((key) => `[${formatPropertyKey(key)}]`).join("");
+function formatPath(path23) {
+  return path23.map((key) => `[${formatPropertyKey(key)}]`).join("");
 }
 function formatDate(date) {
   try {
@@ -14068,8 +14068,8 @@ var runPromiseExitWith = (context3) => {
   const runFork3 = runForkWith(context3);
   return (effect2, options2) => {
     const fiber3 = runFork3(effect2, options2);
-    return new Promise((resolve7) => {
-      fiber3.addObserver((exit3) => resolve7(exit3));
+    return new Promise((resolve8) => {
+      fiber3.addObserver((exit3) => resolve8(exit3));
     });
   };
 };
@@ -16839,9 +16839,9 @@ var Pointer = class extends Base {
    * The issue that occurred.
    */
   issue;
-  constructor(path22, issue) {
+  constructor(path23, issue) {
     super();
-    this.path = path22;
+    this.path = path23;
     this.issue = issue;
   }
 };
@@ -17026,43 +17026,43 @@ function getExpectedMessage(expected, issue) {
   const input = formatInput(issue);
   return input === void 0 ? `Expected ${expected}` : `Expected ${expected}, got ${input}`;
 }
-function toDefaultIssues(issue, path22, leafHook, checkHook) {
+function toDefaultIssues(issue, path23, leafHook, checkHook) {
   switch (issue._tag) {
     case "Filter": {
       const message = checkHook(issue);
       if (message !== void 0) {
         return [{
-          path: path22,
+          path: path23,
           message
         }];
       }
       if (issue.issue._tag !== "InvalidValue") {
-        return toDefaultIssues(issue.issue, path22, leafHook, checkHook);
+        return toDefaultIssues(issue.issue, path23, leafHook, checkHook);
       }
       const expected = findExpected(issue.issue);
       return [{
-        path: path22,
+        path: path23,
         message: expected === void 0 ? getExpectedMessage(formatCheck(issue.filter), issue) : getExpectedMessage(expected, issue.issue)
       }];
     }
     case "Encoding":
-      return toDefaultIssues(issue.issue, path22, leafHook, checkHook);
+      return toDefaultIssues(issue.issue, path23, leafHook, checkHook);
     case "Pointer":
-      return toDefaultIssues(issue.issue, [...path22, ...issue.path], leafHook, checkHook);
+      return toDefaultIssues(issue.issue, [...path23, ...issue.path], leafHook, checkHook);
     case "Composite":
-      return issue.issues.flatMap((issue2) => toDefaultIssues(issue2, path22, leafHook, checkHook));
+      return issue.issues.flatMap((issue2) => toDefaultIssues(issue2, path23, leafHook, checkHook));
     case "AnyOf": {
       if (issue.issues.length === 0) {
         return [{
-          path: path22,
+          path: path23,
           message: findMessage(issue) ?? getExpectedMessage(getExpected(issue.ast), issue)
         }];
       }
-      return issue.issues.flatMap((issue2) => toDefaultIssues(issue2, path22, leafHook, checkHook));
+      return issue.issues.flatMap((issue2) => toDefaultIssues(issue2, path23, leafHook, checkHook));
     }
     default:
       return [{
-        path: path22,
+        path: path23,
         message: leafHook(issue)
       }];
   }
@@ -17081,7 +17081,7 @@ function makeFormatterDefault() {
   return (issue) => formatIssue(issue, "");
 }
 var defaultFormatter = /* @__PURE__ */ makeFormatterDefault();
-function formatIssue(issue, path22) {
+function formatIssue(issue, path23) {
   let message;
   switch (issue._tag) {
     case "Filter": {
@@ -17090,7 +17090,7 @@ function formatIssue(issue, path22) {
         message = annotated;
       } else {
         if (issue.issue._tag !== "InvalidValue") {
-          return formatIssue(issue.issue, path22);
+          return formatIssue(issue.issue, path23);
         }
         const expected = findExpected(issue.issue);
         message = expected === void 0 ? getExpectedMessage(formatCheck(issue.filter), issue) : getExpectedMessage(expected, issue.issue);
@@ -17098,13 +17098,13 @@ function formatIssue(issue, path22) {
       break;
     }
     case "Encoding":
-      return formatIssue(issue.issue, path22);
+      return formatIssue(issue.issue, path23);
     case "Pointer":
-      return formatIssue(issue.issue, path22 + formatPath(issue.path));
+      return formatIssue(issue.issue, path23 + formatPath(issue.path));
     case "Composite":
     case "AnyOf": {
       if (issue._tag === "Composite" || issue.issues.length > 0) {
-        return issue.issues.map((issue2) => formatIssue(issue2, path22)).join("\n");
+        return issue.issues.map((issue2) => formatIssue(issue2, path23)).join("\n");
       }
       message = findMessage(issue) ?? getExpectedMessage(getExpected(issue.ast), issue);
       break;
@@ -17113,8 +17113,8 @@ function formatIssue(issue, path22) {
       message = defaultLeafHook(issue);
       break;
   }
-  return path22 ? `${message}
-  at ${path22}` : message;
+  return path23 ? `${message}
+  at ${path23}` : message;
 }
 function findMessage(issue) {
   if (issue._tag === "Pointer") return;
@@ -21890,10 +21890,10 @@ function makeReducer2(combiner2) {
 }
 
 // node_modules/effect/dist/internal/errors.js
-function errorWithPath(message, path22) {
-  if (path22.length > 0) {
+function errorWithPath(message, path23) {
+  if (path23.length > 0) {
     message += `
-  at ${formatPath(path22)}`;
+  at ${formatPath(path23)}`;
   }
   return new Error(message);
 }
@@ -22234,26 +22234,26 @@ function filterLayer(ast, checks, normalBase, terminalBase) {
   });
 }
 var memoized = /* @__PURE__ */ memoize((ast) => recur(ast, []));
-function recur(ast, path22) {
+function recur(ast, path23) {
   const annotation = resolve(ast)?.toArbitrary;
   if (annotation) {
-    const typeParameters = isDeclaration(ast) ? ast.typeParameters.map((tp) => recur(tp, path22)) : [];
+    const typeParameters = isDeclaration(ast) ? ast.typeParameters.map((tp) => recur(tp, path23)) : [];
     const checks = collectChecks(ast.checks);
     const derive = (lazyNormal) => (fc, ctx, nextCtx, recursionStack) => normalizeDerivation(annotation(makeTypeParameters(typeParameters, fc, resetContext(ctx), recursionStack, lazyNormal))(fc, nextCtx), typeParameters.length > 0)[lazyNormal ? "terminal" : "arbitrary"];
     return filterLayer(ast, checks, derive(false), derive(true));
   }
   if (ast.checks) {
     const checks = collectChecks(ast.checks);
-    const lawc = recur(replaceChecks(ast, void 0), path22);
+    const lawc = recur(replaceChecks(ast, void 0), path23);
     return filterLayer(ast, checks, (fc, _ctx, nextCtx, recursionStack) => lawc(fc, nextCtx, recursionStack), (fc, _ctx, nextCtx, recursionStack) => lawc.terminal(fc, nextCtx, recursionStack));
   }
-  return base(ast, path22);
+  return base(ast, path23);
 }
-function base(ast, path22) {
+function base(ast, path23) {
   switch (ast._tag) {
     case "Never":
     case "Declaration":
-      throw errorWithPath(`Unsupported AST ${ast._tag}`, path22);
+      throw errorWithPath(`Unsupported AST ${ast._tag}`, path23);
     case "Null":
       return same((fc) => fc.constant(null));
     case "Void":
@@ -22290,20 +22290,20 @@ function base(ast, path22) {
     case "ObjectKeyword":
       return same((fc) => fc.oneof(fc.object(), fc.array(fc.anything())));
     case "Enum":
-      return recur(enumsToLiterals(ast), path22);
+      return recur(enumsToLiterals(ast), path23);
     case "TemplateLiteral": {
-      const parts = ast.parts.map((part, i) => recur(toEncoded(part), [...path22, i]));
+      const parts = ast.parts.map((part, i) => recur(toEncoded(part), [...path23, i]));
       return same((fc, ctx, recursionStack) => fc.tuple(...parts.map((part) => part(fc, finiteNumberContext(ctx), recursionStack))).map((segments) => segments.map((segment) => globalThis.String(segment)).join("")));
     }
     case "Arrays": {
       const elements = ast.elements.map((ast2, i) => ({
         ast: ast2,
-        arbitrary: recur(ast2, [...path22, i])
+        arbitrary: recur(ast2, [...path23, i])
       }));
       const len = ast.elements.length;
       const rest = ast.rest.map((ast2, i) => ({
         ast: ast2,
-        arbitrary: recur(ast2, [...path22, len + i])
+        arbitrary: recur(ast2, [...path23, len + i])
       }));
       const terminal = (fc, ctx, recursionStack) => {
         const reset = resetContext(ctx);
@@ -22403,12 +22403,12 @@ function base(ast, path22) {
     case "Objects": {
       const propertySignatures = ast.propertySignatures.map((ps) => ({
         ps,
-        arbitrary: recur(ps.type, [...path22, ps.name])
+        arbitrary: recur(ps.type, [...path23, ps.name])
       }));
       const indexSignatures = ast.indexSignatures.map((is3) => ({
         is: is3,
-        parameter: recur(is3.parameter, path22),
-        type: recur(is3.type, path22)
+        parameter: recur(is3.parameter, path23),
+        type: recur(is3.type, path23)
       }));
       const terminal = (fc, ctx, recursionStack) => {
         const reset = resetContext(ctx);
@@ -22511,7 +22511,7 @@ function base(ast, path22) {
       }, terminal);
     }
     case "Union": {
-      const types = ast.types.map((ast2) => recur(ast2, path22));
+      const types = ast.types.map((ast2) => recur(ast2, path23));
       const terminal = (fc, ctx, recursionStack) => oneOf(fc, types.map((type) => type.terminal(fc, ctx, recursionStack)).filter(isNotUndefined));
       return makeLazy((fc, ctx, recursionStack) => {
         const arbitraries = types.map((type) => type(fc, ctx, recursionStack));
@@ -22531,7 +22531,7 @@ function base(ast, path22) {
     case "Suspend": {
       const memo = arbitraryMemoMap.get(ast);
       if (memo) return memo;
-      const get4 = memoizeThunk(() => recur(ast.thunk(), path22));
+      const get4 = memoizeThunk(() => recur(ast.thunk(), path23));
       const out = makeLazy((fc, ctx, recursionStack) => {
         const recursion = getSuspendRecursion(fc, ast);
         const nextCtx = {
@@ -22541,7 +22541,7 @@ function base(ast, path22) {
         const nextStack = recursionStack.includes(ast) ? recursionStack : [...recursionStack, ast];
         const terminal = get4().terminal(fc, nextCtx, nextStack);
         if (terminal === void 0) {
-          throw errorWithPath("Unable to derive an arbitrary for a recursive schema without a finite generation path", path22);
+          throw errorWithPath("Unable to derive an arbitrary for a recursive schema without a finite generation path", path23);
         }
         return fc.oneof(recursion, terminal, fc.constant(null).chain(() => get4()(fc, nextCtx, nextStack)));
       }, (fc, ctx, recursionStack) => {
@@ -22564,10 +22564,10 @@ function base(ast, path22) {
 var toEquivalence = /* @__PURE__ */ memoize((ast) => {
   return recur2(ast, []);
 });
-function recur2(ast, path22) {
+function recur2(ast, path23) {
   const annotation = resolve(ast)?.["toEquivalence"];
   if (annotation) {
-    return annotation(isDeclaration(ast) ? ast.typeParameters.map((tp) => recur2(tp, path22)) : []);
+    return annotation(isDeclaration(ast) ? ast.typeParameters.map((tp) => recur2(tp, path23)) : []);
   }
   switch (ast._tag) {
     case "Never":
@@ -22590,9 +22590,9 @@ function recur2(ast, path22) {
     case "TemplateLiteral":
       return equals;
     case "Arrays": {
-      const elements = ast.elements.map((e, i) => recur2(e, [...path22, i]));
+      const elements = ast.elements.map((e, i) => recur2(e, [...path23, i]));
       const len = ast.elements.length;
-      const rest = ast.rest.map((r, i) => recur2(r, [...path22, len + i]));
+      const rest = ast.rest.map((r, i) => recur2(r, [...path23, len + i]));
       return make2((a, b) => {
         if (!Array.isArray(a) || !Array.isArray(b)) {
           return false;
@@ -22627,8 +22627,8 @@ function recur2(ast, path22) {
       if (ast.propertySignatures.length === 0 && ast.indexSignatures.length === 0) {
         return equals;
       }
-      const propertySignatures = ast.propertySignatures.map((ps) => recur2(ps.type, [...path22, ps.name]));
-      const indexSignatures = ast.indexSignatures.map((is3) => recur2(is3.type, path22));
+      const propertySignatures = ast.propertySignatures.map((ps) => recur2(ps.type, [...path23, ps.name]));
+      const indexSignatures = ast.indexSignatures.map((is3) => recur2(is3.type, path23));
       return make2((a, b) => {
         if (!isObject(a) || !isObject(b)) {
           return false;
@@ -22664,7 +22664,7 @@ function recur2(ast, path22) {
     }
     case "Union": {
       const types = toType(ast).types;
-      const compiled = new Map(types.map((candidate, i) => [candidate, [_is(candidate), recur2(ast.types[i], path22)]]));
+      const compiled = new Map(types.map((candidate, i) => [candidate, [_is(candidate), recur2(ast.types[i], path23)]]));
       return make2((a, b) => {
         const candidates = getCandidates(a, types);
         for (let i = 0; i < candidates.length; i++) {
@@ -22677,7 +22677,7 @@ function recur2(ast, path22) {
       });
     }
     case "Suspend": {
-      const get4 = memoizeThunk(() => recur2(ast.thunk(), path22));
+      const get4 = memoizeThunk(() => recur2(ast.thunk(), path23));
       return make2((a, b) => get4()(a, b));
     }
   }
@@ -22880,8 +22880,8 @@ function relocateReference(reference, targetPath) {
   const uri = index2 === -1 ? reference : reference.slice(0, index2);
   return `${uri}${formatPointerFragment(targetPath)}`;
 }
-function formatPointerFragment(path22) {
-  return path22.length === 0 ? "#" : `#/${path22.map((token) => encodeURI(escapeToken(token)).replace(/#/g, "%23")).join("/")}`;
+function formatPointerFragment(path23) {
+  return path23.length === 0 ? "#" : `#/${path23.map((token) => encodeURI(escapeToken(token)).replace(/#/g, "%23")).join("/")}`;
 }
 function locationKey(resource, pointer) {
   return `${resource}\0${JSON.stringify(pointer)}`;
@@ -23222,11 +23222,11 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
     schemas,
     definitions
   };
-  function compileDefinition(key, path22) {
+  function compileDefinition(key, path23) {
     const compiled = definitionStates.get(key);
     if (compiled !== void 0) return typeof compiled === "string" ? compiled : key;
     if (!Object.hasOwn(references, key)) {
-      throw errorWithPath(`Invalid reference ${key}`, [...path22, "$ref"]);
+      throw errorWithPath(`Invalid reference ${key}`, [...path23, "$ref"]);
     }
     definitionStates.set(key, null);
     const representation = references[key];
@@ -23259,14 +23259,14 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
     const annotations = representation.checks.length === 0 ? representation.annotations : representation.checks[representation.checks.length - 1].annotations;
     return typeof annotations?.identifier !== "string" && typeof annotations?.[IDENTIFIER_FALLBACK_KEY] === "string" ? annotations[IDENTIFIER_FALLBACK_KEY] : void 0;
   }
-  function annotationSchemas(representation, path22) {
-    return representation?.schemas?.map((schema, index2) => recur3(schema, [...path22, "schemas", index2])) ?? [];
+  function annotationSchemas(representation, path23) {
+    return representation?.schemas?.map((schema, index2) => recur3(schema, [...path23, "schemas", index2])) ?? [];
   }
-  function compileCheck(check2, type, path22) {
+  function compileCheck(check2, type, path23) {
     const annotations = check2.annotations;
     const callback3 = annotations?.toJsonSchema;
     if (callback3 !== void 0) {
-      const schemas2 = annotationSchemas(check2.representation, [...path22, "representation"]);
+      const schemas2 = annotationSchemas(check2.representation, [...path23, "representation"]);
       const fragment = callback3({
         type,
         schemas: schemas2
@@ -23280,7 +23280,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
       return check2._tag === "Filter" && hasOnlyKeywords(schema, allowed) && (ordinary2 === void 0 || hasOnlyKeywords(ordinary2, promotableAnnotationKeywords)) ? [schema, true] : [schema];
     }
     if (check2._tag === "Filter") return void 0;
-    const children = check2.checks.map((child, index2) => compileCheck(child, type, [...path22, "checks", index2])).filter((child) => child !== void 0);
+    const children = check2.checks.map((child, index2) => compileCheck(child, type, [...path23, "checks", index2])).filter((child) => child !== void 0);
     if (children.length === 0) return void 0;
     const ordinary = collectJsonSchemaAnnotations(annotations, options2);
     const allOf = children.map(([schema]) => schema);
@@ -23291,16 +23291,16 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
       ...ordinary
     }];
   }
-  function recur3(representation, path22) {
+  function recur3(representation, path23) {
     if (representation._tag === "Reference") {
-      const canonical2 = compileDefinition(representation.$ref, path22);
+      const canonical2 = compileDefinition(representation.$ref, path23);
       return {
         $ref: `#/$defs/${escapeToken(canonical2)}`
       };
     }
     const cached3 = compiledRepresentations.get(representation);
     if (cached3 !== void 0) return cached3;
-    let output = on(representation, path22);
+    let output = on(representation, path23);
     const ordinary = collectJsonSchemaAnnotations(representation.annotations, options2);
     if (ordinary !== void 0) {
       output = {
@@ -23310,7 +23310,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
     }
     for (let index2 = 0; index2 < representation.checks.length; index2++) {
       const type = typeof output.type === "string" && isJsonSchemaType(output.type) ? output.type : void 0;
-      const check2 = compileCheck(representation.checks[index2], type, [...path22, "checks", index2]);
+      const check2 = compileCheck(representation.checks[index2], type, [...path23, "checks", index2]);
       if (check2 !== void 0) {
         output = appendJsonSchema(output, ...check2);
       }
@@ -23318,7 +23318,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
     compiledRepresentations.set(representation, output);
     return output;
   }
-  function on(representation, path22) {
+  function on(representation, path23) {
     switch (representation._tag) {
       case "Any":
       case "Unknown":
@@ -23356,7 +23356,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         return {};
       }
       case "Suspend":
-        return recur3(representation.thunk, [...path22, "thunk"]);
+        return recur3(representation.thunk, [...path23, "thunk"]);
       case "Never":
         return {
           not: {}
@@ -23417,7 +23417,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         };
       case "Arrays": {
         if (representation.rest.length > 1) {
-          throw errorWithPath("Invalid schema representation document", [...path22, "rest"]);
+          throw errorWithPath("Invalid schema representation document", [...path23, "rest"]);
         }
         const out = {
           type: "array"
@@ -23425,7 +23425,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         let minItems = representation.elements.length;
         const prefixItems = representation.elements.map((element, index2) => {
           if (element.isOptional) minItems--;
-          const compiled = recur3(element.type, [...path22, "elements", index2, "type"]);
+          const compiled = recur3(element.type, [...path23, "elements", index2, "type"]);
           const annotations = collectJsonSchemaAnnotations(element.annotations, options2);
           return annotations === void 0 ? compiled : appendJsonSchema(compiled, annotations);
         });
@@ -23438,7 +23438,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         }
         if (representation.rest.length === 1) {
           delete out.maxItems;
-          const rest = recur3(representation.rest[0], [...path22, "rest", 0]);
+          const rest = recur3(representation.rest[0], [...path23, "rest", 0]);
           if (Object.keys(rest).length > 0) out.items = rest;
           else delete out.items;
         }
@@ -23462,10 +23462,10 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         for (let index2 = 0; index2 < representation.propertySignatures.length; index2++) {
           const property = representation.propertySignatures[index2];
           if (typeof property.name !== "string") {
-            throw errorWithPath("Invalid schema representation document", [...path22, "propertySignatures", index2, "name"]);
+            throw errorWithPath("Invalid schema representation document", [...path23, "propertySignatures", index2, "name"]);
           }
           const name = property.name;
-          const compiled = recur3(property.type, [...path22, "propertySignatures", index2, "type"]);
+          const compiled = recur3(property.type, [...path23, "propertySignatures", index2, "type"]);
           const annotations = collectJsonSchemaAnnotations(property.annotations, options2);
           assignProperty(properties, name, annotations === void 0 ? compiled : appendJsonSchema(compiled, annotations));
           if (!property.isOptional) required3.push(name);
@@ -23476,9 +23476,9 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         const additionalProperties = [];
         for (let index2 = 0; index2 < representation.indexSignatures.length; index2++) {
           const signature = representation.indexSignatures[index2];
-          let type = recur3(signature.type, [...path22, "indexSignatures", index2, "type"]);
+          let type = recur3(signature.type, [...path23, "indexSignatures", index2, "type"]);
           if (Object.keys(type).length === 1 && "not" in type) type = false;
-          const patterns = getParameterPatterns(signature.parameter, [...path22, "indexSignatures", index2, "parameter"], /* @__PURE__ */ new Set());
+          const patterns = getParameterPatterns(signature.parameter, [...path23, "indexSignatures", index2, "parameter"], /* @__PURE__ */ new Set());
           if (patterns.length === 0) {
             additionalProperties.push(type);
           } else {
@@ -23508,7 +23508,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         return out;
       }
       case "Union": {
-        const types = representation.types.map((type, index2) => recur3(type, [...path22, "types", index2]));
+        const types = representation.types.map((type, index2) => recur3(type, [...path23, "types", index2]));
         if (types.length === 0) return {
           not: {}
         };
@@ -23524,25 +23524,25 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
       }
     }
   }
-  function getParameterPatterns(parameter, path22, seenReferences) {
+  function getParameterPatterns(parameter, path23, seenReferences) {
     switch (parameter._tag) {
       case "Reference": {
         if (!Object.hasOwn(references, parameter.$ref)) {
-          throw errorWithPath(`Invalid reference ${parameter.$ref}`, [...path22, "$ref"]);
+          throw errorWithPath(`Invalid reference ${parameter.$ref}`, [...path23, "$ref"]);
         }
-        compileDefinition(parameter.$ref, path22);
+        compileDefinition(parameter.$ref, path23);
         if (seenReferences.has(parameter.$ref)) return [];
         const next = new Set(seenReferences).add(parameter.$ref);
         return getParameterPatterns(references[parameter.$ref], ["references", parameter.$ref], next);
       }
       case "String":
-        return collectPatterns(recur3(parameter, path22));
+        return collectPatterns(recur3(parameter, path23));
       case "TemplateLiteral":
         return [`^${parameter.parts.map(getPartPattern).join("")}$`];
       case "Union":
-        return parameter.types.flatMap((type, index2) => getParameterPatterns(type, [...path22, "types", index2], seenReferences));
+        return parameter.types.flatMap((type, index2) => getParameterPatterns(type, [...path23, "types", index2], seenReferences));
       default:
-        throw errorWithPath("Invalid schema representation document", path22);
+        throw errorWithPath("Invalid schema representation document", path23);
     }
   }
 }
@@ -23927,25 +23927,25 @@ function get3(oldValue, newValue) {
   getLoop(oldValue, newValue, "", patches);
   return patches;
 }
-function getLoop(oldValue, newValue, path22, patches) {
+function getLoop(oldValue, newValue, path23, patches) {
   if (Object.is(oldValue, newValue)) return;
   if (Array.isArray(oldValue) && Array.isArray(newValue)) {
     const len1 = oldValue.length;
     const len2 = newValue.length;
     const shared = Math.min(len1, len2);
     for (let i = 0; i < shared; i++) {
-      getLoop(oldValue[i], newValue[i], `${path22}/${i}`, patches);
+      getLoop(oldValue[i], newValue[i], `${path23}/${i}`, patches);
     }
     for (let i = len1 - 1; i >= len2; i--) {
       patches.push({
         op: "remove",
-        path: `${path22}/${i}`
+        path: `${path23}/${i}`
       });
     }
     for (let i = len1; i < len2; i++) {
       patches.push({
         op: "add",
-        path: `${path22}/${i}`,
+        path: `${path23}/${i}`,
         value: newValue[i]
       });
     }
@@ -23956,7 +23956,7 @@ function getLoop(oldValue, newValue, path22, patches) {
     const keys22 = Object.keys(newValue);
     const allKeys = Array.from(/* @__PURE__ */ new Set([...keys1, ...keys22])).sort();
     for (const key of allKeys) {
-      const keyPath = `${path22}/${escapeToken(key)}`;
+      const keyPath = `${path23}/${escapeToken(key)}`;
       const hasKey1 = Object.hasOwn(oldValue, key);
       const hasKey2 = Object.hasOwn(newValue, key);
       if (hasKey1 && hasKey2) {
@@ -23978,7 +23978,7 @@ function getLoop(oldValue, newValue, path22, patches) {
   }
   patches.push({
     op: "replace",
-    path: path22,
+    path: path23,
     value: newValue
   });
 }
@@ -24128,12 +24128,12 @@ var PathNode = class {
   path;
   get;
   set;
-  constructor(path22) {
-    this.path = path22;
+  constructor(path23) {
+    this.path = path23;
     this.get = (s) => {
       let out = s;
-      for (let i = 0; i < path22.length; i++) {
-        out = out[path22[i]];
+      for (let i = 0; i < path23.length; i++) {
+        out = out[path23[i]];
       }
       return out;
     };
@@ -24141,12 +24141,12 @@ var PathNode = class {
       const out = cloneShallow(s);
       let current = out;
       let i = 0;
-      for (; i < path22.length - 1; i++) {
-        const key = path22[i];
+      for (; i < path23.length - 1; i++) {
+        const key = path23[i];
         assignProperty(current, key, cloneShallow(current[key]));
         current = current[key];
       }
-      assignProperty(current, path22[i], a);
+      assignProperty(current, path23[i], a);
       return out;
     };
   }
@@ -24571,9 +24571,9 @@ function toStandardSchemaV1(self, options2) {
     if (exit3) {
       return makeStandardResult(exit3);
     }
-    return new Promise((resolve7) => {
+    return new Promise((resolve8) => {
       fiber3.addObserver((exit4) => {
-        resolve7(makeStandardResult(exit4));
+        resolve8(makeStandardResult(exit4));
       });
     });
   };
@@ -31951,8 +31951,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path22, errorMaps, issueData } = params;
-  const fullPath = [...path22, ...issueData.path || []];
+  const { data, path: path23, errorMaps, issueData } = params;
+  const fullPath = [...path23, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -32068,11 +32068,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value3, path22, key) {
+  constructor(parent, value3, path23, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value3;
-    this._path = path22;
+    this._path = path23;
     this._key = key;
   }
   get path() {
@@ -36646,8 +36646,8 @@ async function collectCatalogRoots(cwd = process.cwd()) {
 }
 
 // src/tui/core/data.ts
-import * as path16 from "node:path";
-import * as os9 from "node:os";
+import * as path17 from "node:path";
+import * as os10 from "node:os";
 
 // src/core/manifest.ts
 import * as path10 from "node:path";
@@ -36773,6 +36773,10 @@ function detectDrift(state, projectRoot) {
 }
 
 // src/core/render.ts
+import * as path13 from "node:path";
+import * as os8 from "node:os";
+
+// src/lib/gitignore.ts
 import * as path12 from "node:path";
 import * as os7 from "node:os";
 
@@ -36793,14 +36797,14 @@ function resolveOutputSpec(toolName, item, scope3) {
   if (!mapping) return null;
   if (mapping.scopes && !mapping.scopes.includes(scope3)) return null;
   const tool = registry.getTool(toolName);
-  const sourceExt = path12.extname(item.sourcePath);
+  const sourceExt = path13.extname(item.sourcePath);
   const ext = mapping.ext ?? sourceExt;
   const vars = {
     base: tool.basePath[scope3],
-    home: os7.homedir(),
-    stem: path12.basename(item.sourcePath, sourceExt),
+    home: os8.homedir(),
+    stem: path13.basename(item.sourcePath, sourceExt),
     ext,
-    name: path12.basename(item.sourcePath),
+    name: path13.basename(item.sourcePath),
     relative: item.relativePath,
     kind: item.kind
   };
@@ -36861,8 +36865,8 @@ function expandDirItem(item, kind) {
   const files = walkDir(item.sourcePath);
   return files.map((relativeFile) => ({
     kind: item.kind,
-    sourcePath: path12.join(item.sourcePath, relativeFile),
-    relativePath: path12.join(item.relativePath, relativeFile),
+    sourcePath: path13.join(item.sourcePath, relativeFile),
+    relativePath: path13.join(item.relativePath, relativeFile),
     tools: item.tools
   }));
 }
@@ -36871,21 +36875,21 @@ function resolveExpandedOutputSpec(toolName, baseItem, expandedItem, scope3) {
   if (!mapping) return null;
   if (mapping.scopes && !mapping.scopes.includes(scope3)) return null;
   const tool = registry.getTool(toolName);
-  const sourceExt = path12.extname(expandedItem.sourcePath);
+  const sourceExt = path13.extname(expandedItem.sourcePath);
   const ext = mapping.ext ?? sourceExt;
-  const relativeWithinDir = path12.relative(baseItem.sourcePath, expandedItem.sourcePath);
+  const relativeWithinDir = path13.relative(baseItem.sourcePath, expandedItem.sourcePath);
   const vars = {
     base: tool.basePath[scope3],
-    home: os7.homedir(),
-    stem: path12.basename(baseItem.sourcePath),
+    home: os8.homedir(),
+    stem: path13.basename(baseItem.sourcePath),
     // Use the directory name as stem
     ext,
-    name: path12.basename(baseItem.sourcePath),
+    name: path13.basename(baseItem.sourcePath),
     relative: baseItem.relativePath,
     kind: baseItem.kind
   };
   const baseTargetPath = expandTemplate(mapping.path, scope3, vars);
-  const targetPath = path12.join(baseTargetPath, relativeWithinDir);
+  const targetPath = path13.join(baseTargetPath, relativeWithinDir);
   const mode = resolveMappingMode(mapping, expandedItem);
   return {
     tool: toolName,
@@ -36961,15 +36965,15 @@ async function planRender(loadout, projectRoot, scope3, statePath) {
   };
 }
 function resolveTargetPath(targetPath, projectRoot) {
-  return path12.isAbsolute(targetPath) ? targetPath : path12.join(projectRoot, targetPath);
+  return path13.isAbsolute(targetPath) ? targetPath : path13.join(projectRoot, targetPath);
 }
 
 // src/core/resolve.ts
-import * as path14 from "node:path";
+import * as path15 from "node:path";
 
 // src/core/kindLoader.ts
 var yaml3 = __toESM(require_dist(), 1);
-import * as path13 from "node:path";
+import * as path14 from "node:path";
 var yamlKindSources = /* @__PURE__ */ new Map();
 var YamlOutputMappingSchema = external_exports.object({
   path: external_exports.union([external_exports.string(), external_exports.object({
@@ -37034,11 +37038,11 @@ function buildDetect(spec) {
 }
 function loadYamlKindsFromRoots(roots, options2 = {}) {
   for (const root of roots) {
-    const kindsDir = path13.join(root.path, "kinds");
+    const kindsDir = path14.join(root.path, "kinds");
     if (!isDirectory(kindsDir)) continue;
     const files = listFiles(kindsDir).filter((f) => f.endsWith(".yaml") || f.endsWith(".yml"));
     for (const file of files) {
-      const filePath = path13.join(kindsDir, file);
+      const filePath = path14.join(kindsDir, file);
       if (!fileExists(filePath)) continue;
       try {
         const kind = parseYamlKind(filePath);
@@ -37102,7 +37106,7 @@ function resolveLoadout(name, roots, rootConfig, options2 = {}) {
 function resolveInclude(include, rootPath, defaultTools) {
   const relativePath = typeof include === "string" ? include : include.path;
   const tools = typeof include === "object" && include.tools ? include.tools : defaultTools;
-  const sourcePath = path14.join(rootPath, relativePath);
+  const sourcePath = path15.join(rootPath, relativePath);
   if (!fileExists(sourcePath) && !isDirectory(sourcePath)) {
     throw new Error(`Include not found: ${relativePath} (in ${rootPath})`);
   }
@@ -37118,7 +37122,7 @@ function resolveInclude(include, rootPath, defaultTools) {
   };
 }
 function getInstructionItem(loadoutRoot, tools) {
-  const sourcePath = path14.join(loadoutRoot, "AGENTS.md");
+  const sourcePath = path15.join(loadoutRoot, "AGENTS.md");
   if (!fileExists(sourcePath)) {
     return null;
   }
@@ -37373,7 +37377,7 @@ var ansi_styles_default = ansiStyles;
 
 // node_modules/chalk/source/vendor/supports-color/index.js
 import process2 from "node:process";
-import os8 from "node:os";
+import os9 from "node:os";
 import tty from "node:tty";
 function hasFlag(flag, argv = globalThis.Deno ? globalThis.Deno.args : process2.argv) {
   const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
@@ -37438,7 +37442,7 @@ function _supportsColor(haveStream, { streamIsTTY, sniffFlags = true } = {}) {
     return min6;
   }
   if (process2.platform === "win32") {
-    const osRelease = os8.release().split(".");
+    const osRelease = os9.release().split(".");
     if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
       return Number(osRelease[2]) >= 14931 ? 3 : 2;
     }
@@ -37681,7 +37685,7 @@ var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
 var source_default = chalk;
 
 // src/lib/artifact-paths.ts
-import * as path15 from "node:path";
+import * as path16 from "node:path";
 
 // src/lib/artifact-table.ts
 var KIND_SORT_ORDER = {
@@ -37853,7 +37857,7 @@ function ownerStateMap(entries3) {
     map10.set(owner, {
       active: new Set(loadState(primary.root.path)?.active ?? []),
       configPath: primary.root.path,
-      projectRoot: owner === "project" ? path16.dirname(primary.root.path) : os9.homedir(),
+      projectRoot: owner === "project" ? path17.dirname(primary.root.path) : os10.homedir(),
       scope: owner
     });
   }
@@ -37883,8 +37887,8 @@ function countSlots(slots) {
   };
 }
 function loadoutDefinitionPath(root, name) {
-  const yamlPath = path16.join(root, "loadouts", `${name}.yaml`);
-  return fileExists(yamlPath) ? yamlPath : path16.join(root, "loadouts", `${name}.yml`);
+  const yamlPath = path17.join(root, "loadouts", `${name}.yaml`);
+  return fileExists(yamlPath) ? yamlPath : path17.join(root, "loadouts", `${name}.yml`);
 }
 function scopeFromRoot(root) {
   return root.level === "global" ? "global" : "project";
@@ -37900,14 +37904,14 @@ function sortRows(rows) {
 }
 
 // src/integrations/opencode/delta.ts
-import * as path19 from "node:path";
+import * as path20 from "node:path";
 import { realpathSync as realpathSync2 } from "node:fs";
 
 // src/core/runtime.ts
-import * as path18 from "node:path";
+import * as path19 from "node:path";
 
 // src/core/tokens.ts
-import * as path17 from "node:path";
+import * as path18 from "node:path";
 var CHARS_PER_TOKEN = 4;
 function estimateTokens(content) {
   return Math.ceil(content.length / CHARS_PER_TOKEN);
@@ -37978,8 +37982,8 @@ function compileRuntimeBundle(tool, resolved, options2 = {}) {
   for (const loadout of loadouts) {
     for (const item of loadout.items) {
       if (!item.tools.includes(tool)) continue;
-      const identity2 = `${item.kind}:${path18.resolve(item.sourcePath)}`;
-      if (options2.exclude?.has(path18.resolve(item.sourcePath)) || seen.has(identity2)) continue;
+      const identity2 = `${item.kind}:${path19.resolve(item.sourcePath)}`;
+      if (options2.exclude?.has(path19.resolve(item.sourcePath)) || seen.has(identity2)) continue;
       seen.add(identity2);
       if (item.kind === "instruction" || item.kind === "rule") {
         const textComponent = compileTextComponent(loadout.name, item);
@@ -38121,7 +38125,7 @@ function compileSkillComponent(loadoutName, item) {
 }
 function resolveSkillEntryPath(sourcePath) {
   if (isDirectory(sourcePath)) {
-    return path18.join(sourcePath, "SKILL.md");
+    return path19.join(sourcePath, "SKILL.md");
   }
   return sourcePath;
 }
@@ -38158,7 +38162,7 @@ function buildInjectionBuckets(components) {
 }
 function createSkillRef(component) {
   const skillEntryPath = resolveSkillEntryPath(component.sourcePath);
-  let name = path18.basename(component.relativePath);
+  let name = path19.basename(component.relativePath);
   let description;
   if (fileExists(skillEntryPath)) {
     try {
@@ -38211,18 +38215,18 @@ async function compileSession(directory, names, options2) {
     for (const root of await discoverLoadoutRoots(directory)) {
       const state = loadState(root.path);
       if (!state) continue;
-      for (const drift of detectDrift(state, path19.dirname(root.path))) {
-        const target = path19.resolve(path19.dirname(root.path), drift.entry.targetPath);
+      for (const drift of detectDrift(state, path20.dirname(root.path))) {
+        const target = path20.resolve(path20.dirname(root.path), drift.entry.targetPath);
         const sameLiveSource = isSymlink(target) && canonical(target) === canonical(drift.entry.sourcePath);
-        const native = drift.entry.kind === "skill" || drift.entry.kind === "instruction" && path19.basename(target) === "AGENTS.md";
+        const native = drift.entry.kind === "skill" || drift.entry.kind === "instruction" && path20.basename(target) === "AGENTS.md";
         if (native && (drift.status === "ok" || sameLiveSource) && drift.entry.tools.includes("opencode")) {
           rendered.add(canonical(drift.entry.sourcePath));
         }
       }
     }
     for (const component of full.components) {
-      const entrypoint = component.kind === "skill" && isDirectory(component.sourcePath) ? path19.join(component.sourcePath, "SKILL.md") : component.sourcePath;
-      if (rendered.has(canonical(component.sourcePath)) || rendered.has(canonical(entrypoint))) exclude.add(path19.resolve(component.sourcePath));
+      const entrypoint = component.kind === "skill" && isDirectory(component.sourcePath) ? path20.join(component.sourcePath, "SKILL.md") : component.sourcePath;
+      if (rendered.has(canonical(component.sourcePath)) || rendered.has(canonical(entrypoint))) exclude.add(path20.resolve(component.sourcePath));
     }
   }
   const bundle = compileRuntimeBundle("opencode", loadouts, {
@@ -38237,7 +38241,7 @@ async function compileSession(directory, names, options2) {
 ${item.content}`);
     const refs = bundle.injection.skills.filter((skill) => skill.loadout === loadout.name);
     if (refs.length) text.push("## Additional skill entrypoints\n" + refs.map((skill) => `- ${skill.name}${skill.description ? `: ${skill.description}` : ""}
-  Read: ${isDirectory(skill.sourcePath) ? path19.join(skill.sourcePath, "SKILL.md") : skill.sourcePath}`).join("\n"));
+  Read: ${isDirectory(skill.sourcePath) ? path20.join(skill.sourcePath, "SKILL.md") : skill.sourcePath}`).join("\n"));
     if (text.length) entries3[entryKey(loadout.name)] = text.join("\n\n");
   }
   return {
@@ -38252,19 +38256,19 @@ function canonical(file) {
   try {
     return realpathSync2(file);
   } catch {
-    return path19.resolve(file);
+    return path20.resolve(file);
   }
 }
 
 // src/integrations/opencode/client.ts
 init_promise();
-import * as path20 from "node:path";
+import * as path21 from "node:path";
 import { realpathSync as realpathSync3 } from "node:fs";
 
 // node_modules/@opencode/client/dist/promise/service.js
 import { readFile as readFile3, rm as rm2 } from "node:fs/promises";
-import { homedir as homedir9 } from "node:os";
-import { join as join18 } from "node:path";
+import { homedir as homedir10 } from "node:os";
+import { join as join19 } from "node:path";
 
 // node_modules/@opencode/client/dist/service-contender.js
 import { spawn } from "node:child_process";
@@ -38558,7 +38562,7 @@ async function stop(options2 = {}) {
     await terminate(info, options2, defaultEnsureTiming);
 }
 function fallback() {
-  return join18(process.env["XDG_STATE_HOME"] ?? join18(homedir9(), ".local", "state"), "opencode", "service.json");
+  return join19(process.env["XDG_STATE_HOME"] ?? join19(homedir10(), ".local", "state"), "opencode", "service.json");
 }
 function headers(endpoint) {
   if (endpoint.auth === void 0)
@@ -38668,7 +38672,7 @@ async function terminate(info, options2, timing) {
   await rm2(options2.file ?? fallback(), { force: true });
 }
 function delay3(milliseconds) {
-  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
+  return new Promise((resolve8) => setTimeout(resolve8, milliseconds));
 }
 var Service2 = { discover, ensure: ensure2, stop, headers };
 
@@ -39058,7 +39062,7 @@ var opencode_default = plugin_exports.define({
       if (!compiled) continue;
       for (const ref of compiled.bundle.injection.skills) {
         if (virtual.has(ref.name)) continue;
-        const location = isDirectory(ref.sourcePath) ? path21.join(ref.sourcePath, "SKILL.md") : ref.sourcePath;
+        const location = isDirectory(ref.sourcePath) ? path22.join(ref.sourcePath, "SKILL.md") : ref.sourcePath;
         const parsed = parseMarkdownFrontmatter(readFile(location));
         virtual.set(ref.name, {
           name: ref.name,

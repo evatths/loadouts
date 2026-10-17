@@ -111,17 +111,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path20) {
-      const ctrl = callVisitor(key, node, visitor, path20);
+    function visit_(key, node, visitor, path21) {
+      const ctrl = callVisitor(key, node, visitor, path21);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path20, ctrl);
-        return visit_(key, ctrl, visitor, path20);
+        replaceNode(key, path21, ctrl);
+        return visit_(key, ctrl, visitor, path21);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path20 = Object.freeze(path20.concat(node));
+          path21 = Object.freeze(path21.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = visit_(i, node.items[i], visitor, path20);
+            const ci = visit_(i, node.items[i], visitor, path21);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -132,13 +132,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path20 = Object.freeze(path20.concat(node));
-          const ck = visit_("key", node.key, visitor, path20);
+          path21 = Object.freeze(path21.concat(node));
+          const ck = visit_("key", node.key, visitor, path21);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path20);
+          const cv = visit_("value", node.value, visitor, path21);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -159,17 +159,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path20) {
-      const ctrl = await callVisitor(key, node, visitor, path20);
+    async function visitAsync_(key, node, visitor, path21) {
+      const ctrl = await callVisitor(key, node, visitor, path21);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path20, ctrl);
-        return visitAsync_(key, ctrl, visitor, path20);
+        replaceNode(key, path21, ctrl);
+        return visitAsync_(key, ctrl, visitor, path21);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path20 = Object.freeze(path20.concat(node));
+          path21 = Object.freeze(path21.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = await visitAsync_(i, node.items[i], visitor, path20);
+            const ci = await visitAsync_(i, node.items[i], visitor, path21);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -180,13 +180,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path20 = Object.freeze(path20.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path20);
+          path21 = Object.freeze(path21.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path21);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path20);
+          const cv = await visitAsync_("value", node.value, visitor, path21);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -213,23 +213,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path20) {
+    function callVisitor(key, node, visitor, path21) {
       if (typeof visitor === "function")
-        return visitor(key, node, path20);
+        return visitor(key, node, path21);
       if (identity.isMap(node))
-        return visitor.Map?.(key, node, path20);
+        return visitor.Map?.(key, node, path21);
       if (identity.isSeq(node))
-        return visitor.Seq?.(key, node, path20);
+        return visitor.Seq?.(key, node, path21);
       if (identity.isPair(node))
-        return visitor.Pair?.(key, node, path20);
+        return visitor.Pair?.(key, node, path21);
       if (identity.isScalar(node))
-        return visitor.Scalar?.(key, node, path20);
+        return visitor.Scalar?.(key, node, path21);
       if (identity.isAlias(node))
-        return visitor.Alias?.(key, node, path20);
+        return visitor.Alias?.(key, node, path21);
       return void 0;
     }
-    function replaceNode(key, path20, node) {
-      const parent = path20[path20.length - 1];
+    function replaceNode(key, path21, node) {
+      const parent = path21[path21.length - 1];
       if (identity.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity.isPair(parent)) {
@@ -839,10 +839,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path20, value) {
+    function collectionFromPath(schema, path21, value) {
       let v = value;
-      for (let i = path20.length - 1; i >= 0; --i) {
-        const k = path20[i];
+      for (let i = path21.length - 1; i >= 0; --i) {
+        const k = path21[i];
         if (typeof k === "number" && Number.isInteger(k) && k >= 0) {
           const a = [];
           a[k] = v;
@@ -861,7 +861,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path20) => path20 == null || typeof path20 === "object" && !!path20[Symbol.iterator]().next().done;
+    var isEmptyPath = (path21) => path21 == null || typeof path21 === "object" && !!path21[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -891,11 +891,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path20, value) {
-        if (isEmptyPath(path20))
+      addIn(path21, value) {
+        if (isEmptyPath(path21))
           this.add(value);
         else {
-          const [key, ...rest] = path20;
+          const [key, ...rest] = path21;
           const node = this.get(key, true);
           if (identity.isCollection(node))
             node.addIn(rest, value);
@@ -909,8 +909,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path20) {
-        const [key, ...rest] = path20;
+      deleteIn(path21) {
+        const [key, ...rest] = path21;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -924,8 +924,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path20, keepScalar) {
-        const [key, ...rest] = path20;
+      getIn(path21, keepScalar) {
+        const [key, ...rest] = path21;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity.isScalar(node) ? node.value : node;
@@ -943,8 +943,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path20) {
-        const [key, ...rest] = path20;
+      hasIn(path21) {
+        const [key, ...rest] = path21;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -954,8 +954,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path20, value) {
-        const [key, ...rest] = path20;
+      setIn(path21, value) {
+        const [key, ...rest] = path21;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -3470,9 +3470,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path20, value) {
+      addIn(path21, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path20, value);
+          this.contents.addIn(path21, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -3547,14 +3547,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path20) {
-        if (Collection.isEmptyPath(path20)) {
+      deleteIn(path21) {
+        if (Collection.isEmptyPath(path21)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path20) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path21) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -3569,10 +3569,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path20, keepScalar) {
-        if (Collection.isEmptyPath(path20))
+      getIn(path21, keepScalar) {
+        if (Collection.isEmptyPath(path21))
           return !keepScalar && identity.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity.isCollection(this.contents) ? this.contents.getIn(path20, keepScalar) : void 0;
+        return identity.isCollection(this.contents) ? this.contents.getIn(path21, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -3583,10 +3583,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path20) {
-        if (Collection.isEmptyPath(path20))
+      hasIn(path21) {
+        if (Collection.isEmptyPath(path21))
           return this.contents !== void 0;
-        return identity.isCollection(this.contents) ? this.contents.hasIn(path20) : false;
+        return identity.isCollection(this.contents) ? this.contents.hasIn(path21) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -3603,13 +3603,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path20, value) {
-        if (Collection.isEmptyPath(path20)) {
+      setIn(path21, value) {
+        if (Collection.isEmptyPath(path21)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path20), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path21), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path20, value);
+          this.contents.setIn(path21, value);
         }
       }
       /**
@@ -5569,9 +5569,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path20) => {
+    visit.itemAtPath = (cst, path21) => {
       let item = cst;
-      for (const [field, index] of path20) {
+      for (const [field, index] of path21) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -5580,23 +5580,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path20) => {
-      const parent = visit.itemAtPath(cst, path20.slice(0, -1));
-      const field = path20[path20.length - 1][0];
+    visit.parentCollection = (cst, path21) => {
+      const parent = visit.itemAtPath(cst, path21.slice(0, -1));
+      const field = path21[path21.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path20, item, visitor) {
-      let ctrl = visitor(item, path20);
+    function _visit(path21, item, visitor) {
+      let ctrl = visitor(item, path21);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i = 0; i < token.items.length; ++i) {
-            const ci = _visit(Object.freeze(path20.concat([[field, i]])), token.items[i], visitor);
+            const ci = _visit(Object.freeze(path21.concat([[field, i]])), token.items[i], visitor);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -5607,10 +5607,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path20);
+            ctrl = ctrl(item, path21);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path20) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path21) : ctrl;
     }
     exports.visit = visit;
   }
@@ -7371,7 +7371,7 @@ import { createElement as _$createElement2 } from "@opentui/solid";
 import { createComponent as _$createComponent2 } from "@opentui/solid";
 import { memo as _$memo2 } from "@opentui/solid";
 import { Plugin } from "@opencode/plugin/tui";
-import { createEffect, createSignal, onCleanup, For } from "solid-js";
+import { createEffect, createSignal as createSignal2, onCleanup, For } from "solid-js";
 
 // src/core/config.ts
 var yaml = __toESM(require_dist(), 1);
@@ -7989,8 +7989,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path20, errorMaps, issueData } = params;
-  const fullPath = [...path20, ...issueData.path || []];
+  const { data, path: path21, errorMaps, issueData } = params;
+  const fullPath = [...path21, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -8106,11 +8106,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path20, key) {
+  constructor(parent, value, path21, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path20;
+    this._path = path21;
     this._key = key;
   }
   get path() {
@@ -12438,8 +12438,8 @@ var Registry = class {
 var registry = new Registry();
 
 // src/tui/core/data.ts
-import * as path16 from "node:path";
-import * as os9 from "node:os";
+import * as path17 from "node:path";
+import * as os10 from "node:os";
 
 // src/core/discovery.ts
 var yaml2 = __toESM(require_dist(), 1);
@@ -12819,6 +12819,10 @@ function detectDrift(state, projectRoot) {
 }
 
 // src/core/render.ts
+import * as path13 from "node:path";
+import * as os8 from "node:os";
+
+// src/lib/gitignore.ts
 import * as path12 from "node:path";
 import * as os7 from "node:os";
 
@@ -12833,20 +12837,210 @@ function expandTemplate(template, scope, vars) {
   return path11.normalize(expanded);
 }
 
+// src/lib/gitignore.ts
+var START_MARKER = "# <loadouts>";
+var END_MARKER = "# </loadouts>";
+var HEADER_COMMENT = "# Auto-generated by loadouts. Do not edit this section.";
+var LEGACY_START_MARKER = "# <loadout>";
+var LEGACY_END_MARKER = "# </loadout>";
+var LOADOUTS_STATE_PATHS = [".fallback-applied", ".state.json"];
+function updateGitignoreFile(gitignorePath, managedPaths) {
+  const uniquePaths = [...new Set(managedPaths)].sort();
+  const managedSection = uniquePaths.length > 0 ? `${START_MARKER}
+${HEADER_COMMENT}
+${uniquePaths.join("\n")}
+${END_MARKER}` : "";
+  if (!fileExists(gitignorePath)) {
+    if (managedSection) {
+      writeFile(gitignorePath, managedSection + "\n");
+    }
+    return;
+  }
+  const content = readFile(gitignorePath);
+  let startIdx = content.indexOf(START_MARKER);
+  let endIdx = content.indexOf(END_MARKER);
+  let markerLength = END_MARKER.length;
+  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+    startIdx = content.indexOf(LEGACY_START_MARKER);
+    endIdx = content.indexOf(LEGACY_END_MARKER);
+    markerLength = LEGACY_END_MARKER.length;
+  }
+  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+    const before = content.slice(0, startIdx).trimEnd();
+    const after = content.slice(endIdx + markerLength).trimStart();
+    const parts = [before];
+    if (managedSection) parts.push(managedSection);
+    if (after) parts.push(after);
+    let newContent = parts.filter(Boolean).join("\n\n");
+    if (!newContent.endsWith("\n")) newContent += "\n";
+    writeFile(gitignorePath, newContent);
+  } else {
+    if (!managedSection) return;
+    let newContent = content.trimEnd();
+    newContent += "\n\n" + managedSection + "\n";
+    writeFile(gitignorePath, newContent);
+  }
+}
+function updateTargetGitignore(targetDir, relativePaths) {
+  updateGitignoreFile(path12.join(targetDir, ".gitignore"), relativePaths);
+}
+function updateLoadoutsGitignore(loadoutsDir) {
+  updateGitignoreFile(path12.join(loadoutsDir, ".gitignore"), LOADOUTS_STATE_PATHS);
+}
+function computeSourceArtifactGitignorePaths(kindId, relativePath, sourcePath, scope) {
+  const kind = registry.getKind(kindId);
+  if (!kind) return /* @__PURE__ */ new Map();
+  const byTarget = /* @__PURE__ */ new Map();
+  for (const tool of registry.allTools()) {
+    const mapping = registry.resolveMapping(tool.name, kindId);
+    if (!mapping) continue;
+    if (mapping.scopes && !mapping.scopes.includes(scope)) continue;
+    const targetBase = tool.basePath[scope];
+    const sourceExt = path12.extname(sourcePath);
+    const ext = mapping.ext ?? sourceExt;
+    const vars = {
+      base: targetBase,
+      home: os7.homedir(),
+      stem: path12.basename(sourcePath, sourceExt),
+      ext,
+      name: path12.basename(sourcePath),
+      relative: relativePath,
+      kind: kindId
+    };
+    const pathTemplate = typeof mapping.path === "string" ? mapping.path : mapping.path[scope];
+    try {
+      const expandedPath = expandTemplate(pathTemplate, scope, vars);
+      const target = getGitignoreTarget(expandedPath, targetBase, scope);
+      if (!target) continue;
+      const existing = byTarget.get(target.base) ?? [];
+      if (kind.layout === "dir") {
+        existing.push(target.relativePath.endsWith("/") ? target.relativePath : target.relativePath + "/");
+      } else {
+        existing.push(target.relativePath);
+      }
+      byTarget.set(target.base, existing);
+    } catch {
+    }
+  }
+  return byTarget;
+}
+function rebuildAllGitignores(loadoutsDir, projectRoot, scope) {
+  const allByTarget = collectArtifactPathsByTarget(loadoutsDir, scope);
+  const managedTargets = /* @__PURE__ */ new Set([...getManagedTargetBases(scope), ...allByTarget.keys()]);
+  for (const targetBase of managedTargets) {
+    const paths = allByTarget.get(targetBase) ?? [];
+    const absTargetDir = path12.isAbsolute(targetBase) ? targetBase : path12.join(projectRoot, targetBase);
+    updateTargetGitignore(absTargetDir, paths);
+  }
+}
+function collectArtifactPathsByTarget(loadoutsDir, scope) {
+  const allByTarget = /* @__PURE__ */ new Map();
+  const roots = [loadoutsDir, ...getSupplementalArtifactRoots(loadoutsDir, scope)];
+  for (const root of roots) {
+    for (const artifact of collectArtifacts(root)) {
+      mergeIntoMap(allByTarget, computeSourceArtifactGitignorePaths(artifact.kindId, artifact.relativePath, artifact.sourcePath, scope));
+    }
+  }
+  return allByTarget;
+}
+function getSupplementalArtifactRoots(loadoutsDir, scope) {
+  if (scope !== "global") return [];
+  if (!isGlobalLoadoutsDir(loadoutsDir)) return [];
+  const bundled = getBundledRoot();
+  if (!bundled) return [];
+  return [bundled.path];
+}
+function isGlobalLoadoutsDir(loadoutsDir) {
+  const expected = path12.resolve(os7.homedir(), ".config", "loadouts");
+  return path12.resolve(loadoutsDir) === expected;
+}
+function getManagedTargetBases(scope) {
+  const bases = /* @__PURE__ */ new Set([getRootGitignoreBase(scope)]);
+  for (const tool of registry.allTools()) {
+    bases.add(tool.basePath[scope]);
+  }
+  return [...bases];
+}
+function collectArtifacts(loadoutsDir) {
+  const artifacts = [];
+  function walk(relativeDir) {
+    const absDir = path12.join(loadoutsDir, relativeDir);
+    for (const entry of listFiles(absDir).sort()) {
+      const relativePath = relativeDir ? path12.join(relativeDir, entry) : entry;
+      const sourcePath = path12.join(loadoutsDir, relativePath);
+      if (isDirectory(sourcePath)) {
+        const kindId2 = registry.inferKind(relativePath);
+        const kind2 = kindId2 ? registry.getKind(kindId2) : void 0;
+        if (kindId2 && kind2?.layout === "dir") {
+          artifacts.push({
+            kindId: kindId2,
+            relativePath,
+            sourcePath
+          });
+          continue;
+        }
+        walk(relativePath);
+        continue;
+      }
+      const kindId = registry.inferKind(relativePath);
+      const kind = kindId ? registry.getKind(kindId) : void 0;
+      if (kindId && kind?.layout === "file") {
+        artifacts.push({
+          kindId,
+          relativePath,
+          sourcePath
+        });
+      }
+    }
+  }
+  walk("");
+  return artifacts;
+}
+function getGitignoreTarget(targetPath, toolBase, scope) {
+  const normalizedTarget = path12.normalize(targetPath);
+  const normalizedBase = path12.normalize(toolBase);
+  const relativeToToolBase = path12.relative(normalizedBase, normalizedTarget);
+  if (relativeToToolBase && !relativeToToolBase.startsWith("..") && !path12.isAbsolute(relativeToToolBase)) {
+    return {
+      base: toolBase,
+      relativePath: relativeToToolBase
+    };
+  }
+  if (!path12.isAbsolute(normalizedTarget)) {
+    return {
+      base: getRootGitignoreBase(scope),
+      relativePath: normalizedTarget
+    };
+  }
+  return {
+    base: path12.dirname(normalizedTarget),
+    relativePath: path12.basename(normalizedTarget)
+  };
+}
+function getRootGitignoreBase(scope) {
+  return scope === "project" ? "." : os7.homedir();
+}
+function mergeIntoMap(target, source) {
+  for (const [key, values] of source) {
+    const existing = target.get(key) ?? [];
+    target.set(key, [...existing, ...values]);
+  }
+}
+
 // src/core/render.ts
 function resolveOutputSpec(toolName, item, scope) {
   const mapping = registry.resolveMapping(toolName, item.kind);
   if (!mapping) return null;
   if (mapping.scopes && !mapping.scopes.includes(scope)) return null;
   const tool = registry.getTool(toolName);
-  const sourceExt = path12.extname(item.sourcePath);
+  const sourceExt = path13.extname(item.sourcePath);
   const ext = mapping.ext ?? sourceExt;
   const vars = {
     base: tool.basePath[scope],
-    home: os7.homedir(),
-    stem: path12.basename(item.sourcePath, sourceExt),
+    home: os8.homedir(),
+    stem: path13.basename(item.sourcePath, sourceExt),
     ext,
-    name: path12.basename(item.sourcePath),
+    name: path13.basename(item.sourcePath),
     relative: item.relativePath,
     kind: item.kind
   };
@@ -12907,8 +13101,8 @@ function expandDirItem(item, kind) {
   const files = walkDir(item.sourcePath);
   return files.map((relativeFile) => ({
     kind: item.kind,
-    sourcePath: path12.join(item.sourcePath, relativeFile),
-    relativePath: path12.join(item.relativePath, relativeFile),
+    sourcePath: path13.join(item.sourcePath, relativeFile),
+    relativePath: path13.join(item.relativePath, relativeFile),
     tools: item.tools
   }));
 }
@@ -12917,21 +13111,21 @@ function resolveExpandedOutputSpec(toolName, baseItem, expandedItem, scope) {
   if (!mapping) return null;
   if (mapping.scopes && !mapping.scopes.includes(scope)) return null;
   const tool = registry.getTool(toolName);
-  const sourceExt = path12.extname(expandedItem.sourcePath);
+  const sourceExt = path13.extname(expandedItem.sourcePath);
   const ext = mapping.ext ?? sourceExt;
-  const relativeWithinDir = path12.relative(baseItem.sourcePath, expandedItem.sourcePath);
+  const relativeWithinDir = path13.relative(baseItem.sourcePath, expandedItem.sourcePath);
   const vars = {
     base: tool.basePath[scope],
-    home: os7.homedir(),
-    stem: path12.basename(baseItem.sourcePath),
+    home: os8.homedir(),
+    stem: path13.basename(baseItem.sourcePath),
     // Use the directory name as stem
     ext,
-    name: path12.basename(baseItem.sourcePath),
+    name: path13.basename(baseItem.sourcePath),
     relative: baseItem.relativePath,
     kind: baseItem.kind
   };
   const baseTargetPath = expandTemplate(mapping.path, scope, vars);
-  const targetPath = path12.join(baseTargetPath, relativeWithinDir);
+  const targetPath = path13.join(baseTargetPath, relativeWithinDir);
   const mode = resolveMappingMode(mapping, expandedItem);
   return {
     tool: toolName,
@@ -13006,19 +13200,26 @@ async function planRender(loadout, projectRoot, scope, statePath) {
     errors
   };
 }
+function refreshGitignores(loadoutRoot, projectRoot, scope) {
+  try {
+    rebuildAllGitignores(loadoutRoot, projectRoot, scope);
+    updateLoadoutsGitignore(loadoutRoot);
+  } catch {
+  }
+}
 function resolveTargetPath(targetPath, projectRoot) {
-  return path12.isAbsolute(targetPath) ? targetPath : path12.join(projectRoot, targetPath);
+  return path13.isAbsolute(targetPath) ? targetPath : path13.join(projectRoot, targetPath);
 }
 function collectParentDirs(targetPaths, projectRoot) {
   const dirs = /* @__PURE__ */ new Set();
   for (const targetPath of targetPaths) {
-    let dir = path12.dirname(resolveTargetPath(targetPath, projectRoot));
-    while (dir !== projectRoot && dir !== path12.dirname(dir)) {
+    let dir = path13.dirname(resolveTargetPath(targetPath, projectRoot));
+    while (dir !== projectRoot && dir !== path13.dirname(dir)) {
       dirs.add(dir);
-      dir = path12.dirname(dir);
+      dir = path13.dirname(dir);
     }
   }
-  return [...dirs].sort((a, b) => b.split(path12.sep).length - a.split(path12.sep).length);
+  return [...dirs].sort((a, b) => b.split(path13.sep).length - a.split(path13.sep).length);
 }
 async function removeEmptyParentDirs(targetPaths, projectRoot) {
   if (targetPaths.length === 0) return;
@@ -13034,16 +13235,16 @@ async function removeEmptyParentDirs(targetPaths, projectRoot) {
 }
 function prepareOutputTarget(targetPath) {
   removePath(targetPath);
-  ensureDir(path12.dirname(targetPath));
+  ensureDir(path13.dirname(targetPath));
 }
 async function applyMultiPlan(plans, loadoutRoot, projectRoot, mode = "symlink", scope = "project") {
   const outputsByTarget = /* @__PURE__ */ new Map();
   const mergedShadowed = [];
   const seenShadowedTargets = /* @__PURE__ */ new Set();
   for (const {
-    plan: plan2
+    plan
   } of plans) {
-    for (const output of plan2.outputs) {
+    for (const output of plan.outputs) {
       const existing = outputsByTarget.get(output.spec.targetPath);
       if (existing) {
         existing.tools.add(output.spec.tool);
@@ -13054,7 +13255,7 @@ async function applyMultiPlan(plans, loadoutRoot, projectRoot, mode = "symlink",
         });
       }
     }
-    for (const s of plan2.shadowed) {
+    for (const s of plan.shadowed) {
       if (!seenShadowedTargets.has(s.targetPath)) {
         seenShadowedTargets.add(s.targetPath);
         mergedShadowed.push(s);
@@ -13129,10 +13330,11 @@ async function applyMultiPlan(plans, loadoutRoot, projectRoot, mode = "symlink",
     shadowed: mergedShadowed
   };
   saveState(loadoutRoot, newState);
-  const fallbackMarker = path12.join(loadoutRoot, ".fallback-applied");
+  const fallbackMarker = path13.join(loadoutRoot, ".fallback-applied");
   if (fileExists(fallbackMarker)) {
     removeFile(fallbackMarker);
   }
+  refreshGitignores(loadoutRoot, projectRoot, scope);
   return {
     totalOutputs: mergedOutputs.length,
     byTool,
@@ -13161,6 +13363,7 @@ async function removeManaged(loadoutRoot, projectRoot, scope = "project") {
     }
   }
   await removeEmptyParentDirs(state.entries.map((entry) => entry.targetPath), projectRoot);
+  refreshGitignores(loadoutRoot, projectRoot, scope);
   return {
     removed,
     missing
@@ -13168,11 +13371,11 @@ async function removeManaged(loadoutRoot, projectRoot, scope = "project") {
 }
 
 // src/core/resolve.ts
-import * as path14 from "node:path";
+import * as path15 from "node:path";
 
 // src/core/kindLoader.ts
 var yaml3 = __toESM(require_dist(), 1);
-import * as path13 from "node:path";
+import * as path14 from "node:path";
 var yamlKindSources = /* @__PURE__ */ new Map();
 var YamlOutputMappingSchema = external_exports.object({
   path: external_exports.union([external_exports.string(), external_exports.object({
@@ -13237,11 +13440,11 @@ function buildDetect(spec) {
 }
 function loadYamlKindsFromRoots(roots, options = {}) {
   for (const root of roots) {
-    const kindsDir = path13.join(root.path, "kinds");
+    const kindsDir = path14.join(root.path, "kinds");
     if (!isDirectory(kindsDir)) continue;
     const files = listFiles(kindsDir).filter((f) => f.endsWith(".yaml") || f.endsWith(".yml"));
     for (const file of files) {
-      const filePath = path13.join(kindsDir, file);
+      const filePath = path14.join(kindsDir, file);
       if (!fileExists(filePath)) continue;
       try {
         const kind = parseYamlKind(filePath);
@@ -13305,7 +13508,7 @@ function resolveLoadout(name, roots, rootConfig, options = {}) {
 function resolveInclude(include, rootPath, defaultTools) {
   const relativePath = typeof include === "string" ? include : include.path;
   const tools = typeof include === "object" && include.tools ? include.tools : defaultTools;
-  const sourcePath = path14.join(rootPath, relativePath);
+  const sourcePath = path15.join(rootPath, relativePath);
   if (!fileExists(sourcePath) && !isDirectory(sourcePath)) {
     throw new Error(`Include not found: ${relativePath} (in ${rootPath})`);
   }
@@ -13321,7 +13524,7 @@ function resolveInclude(include, rootPath, defaultTools) {
   };
 }
 function getInstructionItem(loadoutRoot, tools) {
-  const sourcePath = path14.join(loadoutRoot, "AGENTS.md");
+  const sourcePath = path15.join(loadoutRoot, "AGENTS.md");
   if (!fileExists(sourcePath)) {
     return null;
   }
@@ -13576,7 +13779,7 @@ var ansi_styles_default = ansiStyles;
 
 // node_modules/chalk/source/vendor/supports-color/index.js
 import process2 from "node:process";
-import os8 from "node:os";
+import os9 from "node:os";
 import tty from "node:tty";
 function hasFlag(flag, argv = globalThis.Deno ? globalThis.Deno.args : process2.argv) {
   const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
@@ -13641,7 +13844,7 @@ function _supportsColor(haveStream, { streamIsTTY, sniffFlags = true } = {}) {
     return min;
   }
   if (process2.platform === "win32") {
-    const osRelease = os8.release().split(".");
+    const osRelease = os9.release().split(".");
     if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
       return Number(osRelease[2]) >= 14931 ? 3 : 2;
     }
@@ -13884,7 +14087,7 @@ var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
 var source_default = chalk;
 
 // src/lib/artifact-paths.ts
-import * as path15 from "node:path";
+import * as path16 from "node:path";
 
 // src/lib/artifact-table.ts
 var KIND_SORT_ORDER = {
@@ -14070,7 +14273,7 @@ function ownerStateMap(entries) {
     map.set(owner, {
       active: new Set(loadState(primary.root.path)?.active ?? []),
       configPath: primary.root.path,
-      projectRoot: owner === "project" ? path16.dirname(primary.root.path) : os9.homedir(),
+      projectRoot: owner === "project" ? path17.dirname(primary.root.path) : os10.homedir(),
       scope: owner
     });
   }
@@ -14080,12 +14283,12 @@ async function loadActiveIssue(state, name, roots) {
   const applied = loadState(state.configPath);
   if (!applied) return "active state missing";
   const loadout = resolveLoadout(name, roots, parseRootConfig(state.configPath));
-  const plan2 = await planRender(loadout, state.projectRoot, state.scope, state.configPath);
-  if (plan2.errors.length > 0) return plan2.errors[0];
-  if (plan2.shadowed.length > 0) return `${plan2.shadowed.length} shadowed output(s)`;
-  const targets = new Set(plan2.outputs.map((output) => output.spec.targetPath));
-  const sourcePaths = new Set(plan2.outputs.map((output) => output.spec.sourcePath));
-  const added = plan2.outputs.some((output) => !applied.entries.some((entry) => entry.targetPath === output.spec.targetPath));
+  const plan = await planRender(loadout, state.projectRoot, state.scope, state.configPath);
+  if (plan.errors.length > 0) return plan.errors[0];
+  if (plan.shadowed.length > 0) return `${plan.shadowed.length} shadowed output(s)`;
+  const targets = new Set(plan.outputs.map((output) => output.spec.targetPath));
+  const sourcePaths = new Set(plan.outputs.map((output) => output.spec.sourcePath));
+  const added = plan.outputs.some((output) => !applied.entries.some((entry) => entry.targetPath === output.spec.targetPath));
   const removed = applied.entries.some((entry) => !targets.has(entry.targetPath));
   if (added || removed) return "configuration drift";
   const worst = detectDrift(applied, state.projectRoot).filter((result) => sourcePaths.has(result.entry.sourcePath)).sort((a, b) => DRIFT_PRIORITY[b.status] - DRIFT_PRIORITY[a.status])[0];
@@ -14100,8 +14303,8 @@ function countSlots(slots) {
   };
 }
 function loadoutDefinitionPath(root, name) {
-  const yamlPath = path16.join(root, "loadouts", `${name}.yaml`);
-  return fileExists(yamlPath) ? yamlPath : path16.join(root, "loadouts", `${name}.yml`);
+  const yamlPath = path17.join(root, "loadouts", `${name}.yaml`);
+  return fileExists(yamlPath) ? yamlPath : path17.join(root, "loadouts", `${name}.yml`);
 }
 function scopeFromRoot(root) {
   return root.level === "global" ? "global" : "project";
@@ -14117,14 +14320,14 @@ function sortRows(rows) {
 }
 
 // src/integrations/opencode/delta.ts
-import * as path19 from "node:path";
+import * as path20 from "node:path";
 import { realpathSync as realpathSync2 } from "node:fs";
 
 // src/core/runtime.ts
-import * as path18 from "node:path";
+import * as path19 from "node:path";
 
 // src/core/tokens.ts
-import * as path17 from "node:path";
+import * as path18 from "node:path";
 var CHARS_PER_TOKEN = 4;
 function estimateTokens(content) {
   return Math.ceil(content.length / CHARS_PER_TOKEN);
@@ -14195,8 +14398,8 @@ function compileRuntimeBundle(tool, resolved, options = {}) {
   for (const loadout of loadouts) {
     for (const item of loadout.items) {
       if (!item.tools.includes(tool)) continue;
-      const identity = `${item.kind}:${path18.resolve(item.sourcePath)}`;
-      if (options.exclude?.has(path18.resolve(item.sourcePath)) || seen.has(identity)) continue;
+      const identity = `${item.kind}:${path19.resolve(item.sourcePath)}`;
+      if (options.exclude?.has(path19.resolve(item.sourcePath)) || seen.has(identity)) continue;
       seen.add(identity);
       if (item.kind === "instruction" || item.kind === "rule") {
         const textComponent = compileTextComponent(loadout.name, item);
@@ -14338,7 +14541,7 @@ function compileSkillComponent(loadoutName, item) {
 }
 function resolveSkillEntryPath(sourcePath) {
   if (isDirectory(sourcePath)) {
-    return path18.join(sourcePath, "SKILL.md");
+    return path19.join(sourcePath, "SKILL.md");
   }
   return sourcePath;
 }
@@ -14375,7 +14578,7 @@ function buildInjectionBuckets(components) {
 }
 function createSkillRef(component) {
   const skillEntryPath = resolveSkillEntryPath(component.sourcePath);
-  let name = path18.basename(component.relativePath);
+  let name = path19.basename(component.relativePath);
   let description;
   if (fileExists(skillEntryPath)) {
     try {
@@ -14428,18 +14631,18 @@ async function compileSession(directory, names, options) {
     for (const root of await discoverLoadoutRoots(directory)) {
       const state = loadState(root.path);
       if (!state) continue;
-      for (const drift of detectDrift(state, path19.dirname(root.path))) {
-        const target = path19.resolve(path19.dirname(root.path), drift.entry.targetPath);
+      for (const drift of detectDrift(state, path20.dirname(root.path))) {
+        const target = path20.resolve(path20.dirname(root.path), drift.entry.targetPath);
         const sameLiveSource = isSymlink(target) && canonical(target) === canonical(drift.entry.sourcePath);
-        const native = drift.entry.kind === "skill" || drift.entry.kind === "instruction" && path19.basename(target) === "AGENTS.md";
+        const native = drift.entry.kind === "skill" || drift.entry.kind === "instruction" && path20.basename(target) === "AGENTS.md";
         if (native && (drift.status === "ok" || sameLiveSource) && drift.entry.tools.includes("opencode")) {
           rendered.add(canonical(drift.entry.sourcePath));
         }
       }
     }
     for (const component of full.components) {
-      const entrypoint = component.kind === "skill" && isDirectory(component.sourcePath) ? path19.join(component.sourcePath, "SKILL.md") : component.sourcePath;
-      if (rendered.has(canonical(component.sourcePath)) || rendered.has(canonical(entrypoint))) exclude.add(path19.resolve(component.sourcePath));
+      const entrypoint = component.kind === "skill" && isDirectory(component.sourcePath) ? path20.join(component.sourcePath, "SKILL.md") : component.sourcePath;
+      if (rendered.has(canonical(component.sourcePath)) || rendered.has(canonical(entrypoint))) exclude.add(path20.resolve(component.sourcePath));
     }
   }
   const bundle = compileRuntimeBundle("opencode", loadouts, {
@@ -14454,7 +14657,7 @@ async function compileSession(directory, names, options) {
 ${item.content}`);
     const refs = bundle.injection.skills.filter((skill) => skill.loadout === loadout.name);
     if (refs.length) text.push("## Additional skill entrypoints\n" + refs.map((skill) => `- ${skill.name}${skill.description ? `: ${skill.description}` : ""}
-  Read: ${isDirectory(skill.sourcePath) ? path19.join(skill.sourcePath, "SKILL.md") : skill.sourcePath}`).join("\n"));
+  Read: ${isDirectory(skill.sourcePath) ? path20.join(skill.sourcePath, "SKILL.md") : skill.sourcePath}`).join("\n"));
     if (text.length) entries[entryKey(loadout.name)] = text.join("\n\n");
   }
   return {
@@ -14469,7 +14672,7 @@ function canonical(file) {
   try {
     return realpathSync2(file);
   } catch {
-    return path19.resolve(file);
+    return path20.resolve(file);
   }
 }
 
@@ -14516,11 +14719,11 @@ async function resolvePlans(ctx, targets) {
   });
   const plans = [];
   for (const loadout of loadouts) {
-    const plan2 = await planRender(loadout, ctx.projectRoot, ctx.scope, ctx.configPath);
-    if (plan2.errors.length > 0) throw new Error(plan2.errors.join("\n"));
+    const plan = await planRender(loadout, ctx.projectRoot, ctx.scope, ctx.configPath);
+    if (plan.errors.length > 0) throw new Error(plan.errors.join("\n"));
     plans.push({
       loadout,
-      plan: plan2
+      plan
     });
   }
   return plans;
@@ -14531,14 +14734,14 @@ async function planLines(ctx, targets) {
   const state = loadState(ctx.configPath);
   const stateTargets = new Set(state?.entries.map((entry) => entry.targetPath) ?? []);
   const planTargets = new Set(plans.flatMap(({
-    plan: plan2
-  }) => plan2.outputs.map((output) => output.spec.targetPath)));
+    plan
+  }) => plan.outputs.map((output) => output.spec.targetPath)));
   const lines = [];
   for (const {
-    plan: plan2
+    plan
   } of plans) {
-    for (const output of plan2.outputs) lines.push(`${stateTargets.has(output.spec.targetPath) ? "~" : "+"} ${output.spec.kind} ${output.spec.targetPath} (${output.spec.tool})`);
-    for (const shadowed of plan2.shadowed) lines.push(`! shadowed ${shadowed.targetPath} (${shadowed.tool})`);
+    for (const output of plan.outputs) lines.push(`${stateTargets.has(output.spec.targetPath) ? "~" : "+"} ${output.spec.kind} ${output.spec.targetPath} (${output.spec.tool})`);
+    for (const shadowed of plan.shadowed) lines.push(`! shadowed ${shadowed.targetPath} (${shadowed.tool})`);
   }
   for (const entry of state?.entries ?? []) {
     if (!planTargets.has(entry.targetPath)) lines.push(`- ${entry.kind} ${entry.targetPath} (${entry.tools.join(",")})`);
@@ -14566,11 +14769,11 @@ function createInitialModel(data, options = {}) {
       text: ""
     },
     filtering: false,
-    layer: options.layer ?? "project",
-    layers: options.layers ?? ["global", "project"],
-    scope: options.scope ?? "project",
-    staged: /* @__PURE__ */ new Set(),
+    mode: options.sessionAvailable ? options.mode ?? "filesystem" : "filesystem",
+    sessionAvailable: options.sessionAvailable ?? false,
+    sessionScope: options.sessionScope ?? "project",
     overlay: null,
+    overlayScroll: 0,
     busy: null,
     lastResult: data.issues.length ? {
       text: `${data.issues.length} issue(s) detected`,
@@ -14598,413 +14801,49 @@ function firstCursor(sections) {
   };
 }
 
-// src/tui/core/update.ts
+// src/tui/core/selection.ts
 var SECTIONS = ["active", "available", "issues"];
-function update(model, intent) {
-  if (intent.t === "closeOverlay") return model.filtering ? cancelFilter(model) : {
-    model: {
-      ...model,
-      overlay: null,
-      diffLines: void 0
-    }
-  };
-  if (intent.t === "filterStart") return withCursor({
-    ...model,
-    filtering: true
-  });
-  if (intent.t === "filterInput") return withCursor({
-    ...model,
-    filter: {
-      ...model.filter,
-      text: intent.text
-    }
-  });
-  if (intent.t === "filterChar") return withCursor({
-    ...model,
-    filter: {
-      ...model.filter,
-      text: model.filter.text + intent.char
-    }
-  });
-  if (intent.t === "filterBackspace") return withCursor({
-    ...model,
-    filter: {
-      ...model.filter,
-      text: model.filter.text.slice(0, -1)
-    }
-  });
-  if (intent.t === "filterCommit") return {
-    model: {
-      ...model,
-      filtering: false
-    }
-  };
-  if (intent.t === "filterCancel") return cancelFilter(model);
-  if (intent.t === "effectDone") return effectDone(model, intent);
-  if (model.busy) return {
-    model
-  };
-  if (model.filtering) return {
-    model
-  };
-  if (intent.t === "openHelp") return {
-    model: {
-      ...model,
-      overlay: "help"
-    }
-  };
-  if (intent.t === "quit") return {
-    model: {
-      ...model,
-      quitRequested: true
-    }
-  };
-  if (intent.t === "cycleScope") return withCursor({
-    ...model,
-    filter: {
-      ...model.filter,
-      scope: nextScope(model.filter.scope)
-    }
-  });
-  if (intent.t === "cycleTool") return withCursor({
-    ...model,
-    filter: {
-      ...model.filter,
-      tool: nextTool(model)
-    }
-  });
-  if (intent.t === "cycleLayer") {
-    const layer = model.layers[(model.layers.indexOf(model.layer) + 1) % model.layers.length];
-    return {
-      model: {
-        ...model,
-        layer,
-        scope: layer === "session" ? model.scope : layer,
-        undo: void 0
-      }
-    };
-  }
-  if (intent.t === "move") return {
-    model: move(model, intent.delta)
-  };
-  if (intent.t === "section") return {
-    model: moveSection(model, intent.dir)
-  };
-  if (intent.t === "enter") return {
-    model: toggleDetail(model)
-  };
-  if (intent.t === "refresh") return {
-    model: {
-      ...model,
-      busy: {
-        label: "Refreshing"
-      }
-    },
-    effect: {
-      t: "reload"
-    }
-  };
-  if (intent.t === "edit") return edit(model);
-  if (intent.t === "diffPreview") return plan(model);
-  if (intent.t === "sync") return apply(model, activeNames(model, model.layer), "Syncing");
-  if (intent.t === "clear") return clear(model);
-  if (intent.t === "undo") return undo(model);
-  if (intent.t === "activate" || intent.t === "deactivate" || intent.t === "toggle") return toggle(model, intent.t);
-  return {
-    model
-  };
-}
-function cancelFilter(model) {
-  return withCursor({
-    ...model,
-    filtering: false,
-    filter: {
-      ...model.filter,
-      text: ""
-    }
-  });
-}
-function toggle(model, action) {
-  const row = cursorRow(model);
-  if (!row || row.status === "broken") return {
-    model
-  };
-  if (model.layer !== "session" && row.scope !== model.layer) {
-    return {
-      model: {
-        ...model,
-        lastResult: {
-          text: `Select the ${row.scope} equip layer with m for this loadout.`,
-          variant: "error"
-        }
-      }
-    };
-  }
-  const active = row.equipped.includes(model.layer);
-  const shouldActivate = action === "activate" || action === "toggle" && !active;
-  if (shouldActivate && active || !shouldActivate && !active) return {
-    model
-  };
-  const nextRows = model.rows.map((candidate) => {
-    let equipped2 = candidate.equipped;
-    if (model.layer === "session" && candidate.scope !== row.scope) equipped2 = equipped2.filter((layer) => layer !== "session");
-    if (candidate.id === row.id) equipped2 = shouldActivate ? [...equipped2, model.layer] : equipped2.filter((layer) => layer !== model.layer);
-    return {
-      ...candidate,
-      equipped: equipped2,
-      status: candidate.status === "broken" ? "broken" : equipped2.length ? "active" : "available"
-    };
-  });
-  const sections = buildSections(nextRows);
-  const targetSet = activeNames({
-    ...model,
-    rows: nextRows
-  }, model.layer);
-  return {
-    model: {
-      ...model,
-      rows: nextRows,
-      scope: row.scope,
-      sections,
-      cursor: cursorForId(sections, row.id),
-      undo: snapshot(model),
-      busy: {
-        label: shouldActivate ? "Activating" : "Deactivating"
-      },
-      lastResult: void 0
-    },
-    effect: {
-      t: "apply",
-      targetSet,
-      layer: model.layer,
-      scope: row.scope
-    }
-  };
-}
-function undo(model) {
-  if (!model.undo) return {
-    model
-  };
-  return {
-    model: {
-      ...model,
-      rows: model.undo.rows,
-      sections: model.undo.sections,
-      cursor: model.undo.cursor,
-      scope: model.undo.scope,
-      layer: model.undo.layer,
-      undo: void 0,
-      busy: {
-        label: "Undoing"
-      }
-    },
-    effect: {
-      t: "apply",
-      targetSet: model.undo.targetSet,
-      layer: model.undo.layer,
-      scope: model.undo.scope
-    }
-  };
-}
-function clear(model) {
-  const nextRows = model.rows.map((row) => {
-    const equipped2 = row.equipped.filter((layer) => layer !== model.layer);
-    return {
-      ...row,
-      equipped: equipped2,
-      status: row.status === "broken" ? "broken" : equipped2.length ? "active" : "available"
-    };
-  });
-  return {
-    model: {
-      ...model,
-      rows: nextRows,
-      sections: buildSections(nextRows),
-      cursor: firstCursor(buildSections(nextRows)),
-      undo: snapshot(model),
-      busy: {
-        label: "Clearing"
-      }
-    },
-    effect: {
-      t: "clear",
-      layer: model.layer,
-      scope: model.scope
-    }
-  };
-}
-function apply(model, targetSet, label) {
-  return {
-    model: {
-      ...model,
-      busy: {
-        label
-      },
-      undo: snapshot(model)
-    },
-    effect: {
-      t: "apply",
-      targetSet,
-      layer: model.layer,
-      scope: model.scope
-    }
-  };
-}
-function plan(model) {
-  const targetSet = activeNames(model, model.layer);
-  return {
-    model: {
-      ...model,
-      busy: {
-        label: "Planning diff"
-      },
-      overlay: "diff"
-    },
-    effect: {
-      t: "plan",
-      targetSet,
-      layer: model.layer,
-      scope: model.scope
-    }
-  };
-}
-function edit(model) {
-  const row = cursorRow(model);
-  if (!row?.filePath) return {
-    model
-  };
-  return {
-    model,
-    effect: {
-      t: "editFile",
-      path: row.filePath
-    }
-  };
-}
-function effectDone(model, intent) {
-  const rollback = !intent.ok && model.undo ? model.undo : void 0;
-  return {
-    model: {
-      ...model,
-      ...rollback ? {
-        rows: rollback.rows,
-        sections: rollback.sections,
-        cursor: rollback.cursor,
-        scope: rollback.scope,
-        layer: rollback.layer,
-        undo: void 0
-      } : {},
-      busy: null,
-      diffLines: intent.effect === "plan" ? intent.data ?? [intent.message ?? "No changes"] : model.diffLines,
-      lastResult: intent.message ? {
-        text: intent.message,
-        variant: intent.ok ? "success" : "error"
-      } : model.lastResult
-    }
-  };
-}
-function move(model, delta) {
-  const ids = visibleIds(model, model.cursor.section);
-  if (ids.length === 0) return model;
-  const index = clamp(model.cursor.index + delta, 0, ids.length - 1);
-  return {
-    ...model,
-    cursor: {
-      ...model.cursor,
-      index
-    }
-  };
-}
-function moveSection(model, dir) {
-  const current = SECTIONS.indexOf(model.cursor.section);
-  for (let step = 1; step <= SECTIONS.length; step++) {
-    const section = SECTIONS[(current + step * dir + SECTIONS.length) % SECTIONS.length];
-    if (visibleIds(model, section).length > 0) return {
-      ...model,
-      cursor: {
-        section,
-        index: 0
-      }
-    };
-  }
-  return model;
-}
-function toggleDetail(model) {
-  const row = cursorRow(model);
-  if (!row) return model;
-  return {
-    ...model,
-    detail: model.detail?.rowId === row.id ? void 0 : {
-      rowId: row.id
-    }
-  };
-}
-function withCursor(model) {
-  const ids = visibleIds(model, model.cursor.section);
-  if (ids.length > 0) return {
-    model: {
-      ...model,
-      cursor: {
-        ...model.cursor,
-        index: clamp(model.cursor.index, 0, ids.length - 1)
-      }
-    }
-  };
-  return {
-    model: moveSection({
-      ...model,
-      cursor: firstCursor(model.sections)
-    }, 1)
-  };
+var SCOPES = [void 0, "global", "project"];
+function visibleRows(model, section) {
+  const text = model.filter.text.trim().toLowerCase();
+  const byId = new Map(model.rows.map((row) => [row.id, row]));
+  return model.sections[section].map((id) => byId.get(id)).filter((row) => Boolean(row)).filter((row) => (!model.filter.scope || row.scope === model.filter.scope) && (!model.filter.tool || row.tools.includes(model.filter.tool)) && (!text || `${row.name} ${row.description ?? ""}`.toLowerCase().includes(text)));
 }
 function cursorRow(model) {
-  const id = visibleIds(model, model.cursor.section)[model.cursor.index];
-  return model.rows.find((row) => row.id === id);
+  return visibleRows(model, model.cursor.section)[model.cursor.index];
 }
-function visibleIds(model, section) {
-  return model.sections[section].filter((id) => {
-    const row = model.rows.find((candidate) => candidate.id === id);
-    if (!row) return false;
-    if (model.filter.scope && row.scope !== model.filter.scope) return false;
-    if (model.filter.tool && !row.tools.includes(model.filter.tool)) return false;
-    const text = model.filter.text.trim().toLowerCase();
-    return !text || `${row.name} ${row.description ?? ""}`.toLowerCase().includes(text);
-  });
-}
-function cursorForId(sections, id) {
-  for (const section of SECTIONS) {
-    const index = sections[section].indexOf(id);
-    if (index >= 0) return {
-      section,
-      index
-    };
+function normalizeCursor(model, rowId) {
+  const sections = Object.fromEntries(SECTIONS.map((section) => [section, visibleRows(model, section).map((row) => row.id)]));
+  if (rowId) {
+    for (const section of SECTIONS) {
+      const index = sections[section].indexOf(rowId);
+      if (index >= 0) return {
+        ...model,
+        cursor: {
+          section,
+          index
+        }
+      };
+    }
   }
-  return firstCursor(sections);
-}
-function snapshot(model) {
+  const ids = sections[model.cursor.section];
+  const cursor = ids.length ? {
+    ...model.cursor,
+    index: Math.max(0, Math.min(model.cursor.index, ids.length - 1))
+  } : firstCursor(sections);
   return {
-    rows: model.rows,
-    sections: model.sections,
-    cursor: model.cursor,
-    targetSet: activeNames(model, model.layer),
-    scope: model.scope,
-    layer: model.layer
+    ...model,
+    cursor
   };
+}
+function rowLayer(model, row) {
+  return model.mode === "session" ? "session" : row.scope;
 }
 function activeNames(model, layer) {
   return model.rows.filter((row) => row.equipped.includes(layer)).map((row) => row.name);
 }
-function nextScope(scope) {
-  return scope === void 0 ? "project" : scope === "project" ? "global" : void 0;
-}
-function nextTool(model) {
-  const tools = Array.from(new Set(model.rows.flatMap((row) => row.tools))).sort();
-  if (tools.length === 0) return void 0;
-  const index = model.filter.tool ? tools.indexOf(model.filter.tool) : -1;
-  return index < 0 ? tools[0] : index === tools.length - 1 ? void 0 : tools[index + 1];
-}
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
+function sessionScope(model) {
+  return model.rows.find((row) => row.equipped.includes("session"))?.scope ?? model.sessionScope;
 }
 
 // src/tui/core/keymap.ts
@@ -15035,6 +14874,75 @@ var keymap = [{
   intent: {
     t: "section",
     dir: -1
+  }
+}, {
+  keys: ["1"],
+  label: "Active section",
+  intent: {
+    t: "selectSection",
+    section: "active"
+  }
+}, {
+  keys: ["2"],
+  label: "Available section",
+  intent: {
+    t: "selectSection",
+    section: "available"
+  }
+}, {
+  keys: ["3"],
+  label: "Issues section",
+  intent: {
+    t: "selectSection",
+    section: "issues"
+  }
+}, {
+  keys: ["["],
+  label: "prev scope tab",
+  intent: {
+    t: "cycleScope",
+    dir: -1
+  }
+}, {
+  keys: ["]"],
+  label: "next scope tab",
+  intent: {
+    t: "cycleScope",
+    dir: 1
+  }
+}, {
+  keys: ["g"],
+  label: "first row (gg)",
+  intent: {
+    t: "topPrefix"
+  }
+}, {
+  keys: ["home"],
+  label: "first row",
+  intent: {
+    t: "edge",
+    edge: "first"
+  }
+}, {
+  keys: ["G", "end"],
+  label: "last row",
+  intent: {
+    t: "edge",
+    edge: "last"
+  }
+}, {
+  keys: ["pageup"],
+  label: "scroll details up",
+  intent: {
+    t: "detailScroll",
+    delta: -5
+  }
+}, {
+  keys: ["pagedown"],
+  label: "scroll details down",
+  intent: {
+    t: "detailScroll",
+    delta: 5
   }
 }, {
   keys: ["space"],
@@ -15093,9 +15001,9 @@ var keymap = [{
   hint: true
 }, {
   keys: ["m"],
-  label: "equip layer",
+  label: "filesystem/session",
   intent: {
-    t: "cycleLayer"
+    t: "cycleMode"
   },
   hint: true
 }, {
@@ -15103,12 +15011,6 @@ var keymap = [{
   label: "choose session",
   intent: {
     t: "selectSession"
-  }
-}, {
-  keys: ["g"],
-  label: "scope",
-  intent: {
-    t: "cycleScope"
   }
 }, {
   keys: ["t"],
@@ -15188,11 +15090,522 @@ var keymap = [{
 function intentForKey(key) {
   return keymap.find((binding) => binding.mode !== "filter" && binding.keys.includes(key))?.intent;
 }
-function footerKeyHints() {
-  return keymap.filter((binding) => binding.mode !== "filter" && binding.hint).map((binding) => ({
+function footerKeyHints(model) {
+  if (model.overlay === "confirm") return [{
+    key: "h/l",
+    label: "scope"
+  }, {
+    key: "enter",
+    label: "confirm"
+  }, {
+    key: "esc",
+    label: "cancel"
+  }];
+  if (model.overlay) return [{
+    key: "j/k",
+    label: "scroll"
+  }, {
+    key: "esc",
+    label: "close"
+  }];
+  if (model.filtering) return [{
+    key: "enter",
+    label: "keep filter"
+  }, {
+    key: "esc",
+    label: "clear filter"
+  }];
+  const row = cursorRow(model);
+  const active = row && row.equipped.includes(rowLayer(model, row));
+  const keys = keymap.filter((binding) => binding.mode !== "filter" && binding.hint).filter(({
+    intent
+  }) => {
+    if (["activate", "deactivate", "toggle"].includes(intent.t)) {
+      return row && row.status !== "broken" && (intent.t === "toggle" || (intent.t === "deactivate" ? active : !active));
+    }
+    if (intent.t === "edit") return Boolean(row?.filePath);
+    if (intent.t === "cycleMode") return model.sessionAvailable;
+    if (intent.t === "undo") return Boolean(model.undo);
+    return true;
+  }).map((binding) => ({
     key: binding.keys[0],
     label: binding.label
   }));
+  return [{
+    key: "h/l",
+    label: "section"
+  }, {
+    key: "[/]",
+    label: "scope"
+  }, {
+    key: "?",
+    label: "help"
+  }, ...keys.filter((key) => key.key !== "?")];
+}
+
+// src/tui/core/update.ts
+function update(model, intent) {
+  if (intent.t === "effectDone") return effectDone(model, intent);
+  if (model.busy) {
+    if (intent.t === "closeOverlay" && model.overlay) return {
+      model: closeOverlay(model)
+    };
+    return {
+      model
+    };
+  }
+  if (intent.t !== "topPrefix" && model.pendingTop) model = {
+    ...model,
+    pendingTop: false
+  };
+  if (model.overlay) return updateOverlay(model, intent);
+  if (intent.t === "closeOverlay") return escape(model);
+  if (intent.t === "filterStart") return {
+    model: {
+      ...model,
+      filtering: true
+    }
+  };
+  if (intent.t === "filterInput") return refilter(model, {
+    ...model.filter,
+    text: intent.text
+  });
+  if (intent.t === "filterChar") return refilter(model, {
+    ...model.filter,
+    text: model.filter.text + intent.char
+  });
+  if (intent.t === "filterBackspace") return refilter(model, {
+    ...model.filter,
+    text: model.filter.text.slice(0, -1)
+  });
+  if (intent.t === "filterCommit") return {
+    model: {
+      ...model,
+      filtering: false
+    }
+  };
+  if (intent.t === "filterCancel") return refilter({
+    ...model,
+    filtering: false
+  }, {
+    ...model.filter,
+    text: ""
+  });
+  if (model.filtering) return {
+    model
+  };
+  if (intent.t === "openHelp") return {
+    model: {
+      ...model,
+      overlay: "help",
+      overlayScroll: 0
+    }
+  };
+  if (intent.t === "quit") return {
+    model: {
+      ...model,
+      quitRequested: true
+    }
+  };
+  if (intent.t === "cycleScope") {
+    const index = SCOPES.indexOf(model.filter.scope);
+    return refilter(model, {
+      ...model.filter,
+      scope: SCOPES[(index + intent.dir + SCOPES.length) % SCOPES.length]
+    });
+  }
+  if (intent.t === "cycleTool") return refilter(model, {
+    ...model.filter,
+    tool: nextTool(model)
+  });
+  if (intent.t === "cycleMode") return {
+    model: model.sessionAvailable ? {
+      ...model,
+      mode: model.mode === "session" ? "filesystem" : "session"
+    } : model
+  };
+  if (intent.t === "topPrefix") return model.pendingTop ? {
+    model: move({
+      ...model,
+      pendingTop: false
+    }, -Infinity)
+  } : {
+    model: {
+      ...model,
+      pendingTop: true
+    }
+  };
+  if (intent.t === "edge") return {
+    model: move(model, intent.edge === "first" ? -Infinity : Infinity)
+  };
+  if (intent.t === "move") return {
+    model: move(model, intent.delta)
+  };
+  if (intent.t === "section") return {
+    model: moveSection(model, intent.dir)
+  };
+  if (intent.t === "selectSection") return {
+    model: {
+      ...model,
+      cursor: {
+        section: intent.section,
+        index: 0
+      }
+    }
+  };
+  if (intent.t === "detailScroll") {
+    const row = cursorRow(model);
+    if (!row) return {
+      model
+    };
+    const scroll = model.detail?.rowId === row.id ? model.detail.scroll ?? 0 : 0;
+    return {
+      model: {
+        ...model,
+        detail: {
+          rowId: row.id,
+          scroll: Math.max(0, Math.min(row.slots.length + 4, scroll + intent.delta))
+        }
+      }
+    };
+  }
+  if (intent.t === "enter") {
+    const row = cursorRow(model);
+    return {
+      model: row ? {
+        ...model,
+        detail: model.detail?.rowId === row.id ? void 0 : {
+          rowId: row.id
+        }
+      } : model
+    };
+  }
+  if (intent.t === "refresh") return {
+    model: {
+      ...model,
+      busy: {
+        label: "Refreshing"
+      }
+    },
+    effect: {
+      t: "reload"
+    }
+  };
+  if (intent.t === "edit") {
+    const row = cursorRow(model);
+    return {
+      model,
+      effect: row?.filePath ? {
+        t: "editFile",
+        path: row.filePath
+      } : void 0
+    };
+  }
+  if (intent.t === "diffPreview" || intent.t === "sync" || intent.t === "clear") return bulk(model, intent.t);
+  if (intent.t === "undo") return undo(model);
+  if (intent.t === "activate" || intent.t === "deactivate" || intent.t === "toggle") return toggle(model, intent.t);
+  return {
+    model
+  };
+}
+function closeOverlay(model) {
+  return {
+    ...model,
+    overlay: null,
+    confirm: void 0,
+    diffLines: void 0,
+    overlayScroll: 0,
+    pendingTop: false
+  };
+}
+function escape(model) {
+  if (model.filtering || model.filter.text || model.filter.tool) return refilter({
+    ...model,
+    filtering: false
+  }, {
+    scope: model.filter.scope,
+    text: ""
+  });
+  if (model.detail) return {
+    model: {
+      ...model,
+      detail: void 0
+    }
+  };
+  if (model.filter.scope) return refilter(model, {
+    ...model.filter,
+    scope: void 0
+  });
+  return {
+    model: {
+      ...model,
+      quitRequested: true
+    }
+  };
+}
+function updateOverlay(model, intent) {
+  if (intent.t === "closeOverlay" || intent.t === "quit") return {
+    model: closeOverlay(model)
+  };
+  if (model.confirm) {
+    if (intent.t === "enter") return bulk(closeOverlay(model), model.confirm.action, model.confirm.scope);
+    if (["move", "section", "cycleScope"].includes(intent.t)) return {
+      model: {
+        ...model,
+        confirm: {
+          ...model.confirm,
+          scope: model.confirm.scope === "global" ? "project" : "global"
+        }
+      }
+    };
+    return {
+      model
+    };
+  }
+  if (intent.t === "openHelp") return {
+    model: {
+      ...model,
+      overlay: "help",
+      overlayScroll: 0
+    }
+  };
+  const last = Math.max(0, (model.overlay === "help" ? keymap.length : model.diffLines?.length ?? 1) - 1);
+  if (intent.t === "move" || intent.t === "detailScroll") return {
+    model: {
+      ...model,
+      overlayScroll: Math.max(0, Math.min(last, model.overlayScroll + intent.delta))
+    }
+  };
+  if (intent.t === "edge") return {
+    model: {
+      ...model,
+      overlayScroll: intent.edge === "first" ? 0 : last
+    }
+  };
+  return {
+    model
+  };
+}
+function refilter(model, filter) {
+  const next = normalizeCursor({
+    ...model,
+    filter
+  }, cursorRow(model)?.id);
+  return {
+    model: {
+      ...next,
+      detail: cursorRow(next)?.id === model.detail?.rowId ? model.detail : void 0
+    }
+  };
+}
+function toggle(model, action) {
+  const row = cursorRow(model);
+  if (!row || row.status === "broken") return {
+    model
+  };
+  const layer = rowLayer(model, row);
+  const active = row.equipped.includes(layer);
+  const shouldActivate = action === "activate" || action === "toggle" && !active;
+  if (shouldActivate && active || !shouldActivate && !active) return {
+    model
+  };
+  const rows = model.rows.map((candidate) => {
+    let equipped2 = candidate.equipped;
+    if (layer === "session" && candidate.scope !== row.scope) equipped2 = equipped2.filter((item) => item !== "session");
+    if (candidate.id === row.id) equipped2 = shouldActivate ? [...equipped2, layer] : equipped2.filter((item) => item !== layer);
+    return withEquipment(candidate, equipped2);
+  });
+  const next = normalizeCursor({
+    ...model,
+    rows,
+    sections: buildSections(rows),
+    sessionScope: layer === "session" ? row.scope : model.sessionScope
+  }, row.id);
+  return mutation(model, next, {
+    t: "apply",
+    targetSet: activeNames(next, layer),
+    layer,
+    scope: row.scope
+  }, shouldActivate ? "Activating" : "Deactivating");
+}
+function bulk(model, action, chosenScope) {
+  const scope = model.mode === "session" ? sessionScope(model) : chosenScope ?? model.filter.scope;
+  if (!scope) return {
+    model: {
+      ...model,
+      overlay: "confirm",
+      overlayScroll: 0,
+      confirm: {
+        action,
+        scope: cursorRow(model)?.scope ?? "project"
+      }
+    }
+  };
+  if (model.mode === "session" && model.filter.scope && model.filter.scope !== scope) {
+    return {
+      model: {
+        ...model,
+        lastResult: {
+          text: `No session loadouts from ${model.filter.scope}.`,
+          variant: "info"
+        }
+      }
+    };
+  }
+  const layer = model.mode === "session" ? "session" : scope;
+  const targetSet = activeNames(model, layer);
+  if (action === "diffPreview") return {
+    model: {
+      ...model,
+      busy: {
+        label: "Planning diff"
+      },
+      overlay: "diff",
+      overlayScroll: 0,
+      diffLines: void 0
+    },
+    effect: {
+      t: "plan",
+      targetSet,
+      layer,
+      scope
+    }
+  };
+  if (action === "sync") return mutation(model, model, {
+    t: "apply",
+    targetSet,
+    layer,
+    scope
+  }, "Syncing");
+  const rows = model.rows.map((row) => withEquipment(row, row.equipped.filter((item) => item !== layer)));
+  const next = normalizeCursor({
+    ...model,
+    rows,
+    sections: buildSections(rows)
+  }, cursorRow(model)?.id);
+  return mutation(model, next, {
+    t: "clear",
+    layer,
+    scope
+  }, "Clearing");
+}
+function mutation(before, next, effect, label) {
+  const saved = snapshot(before, effect.layer, effect.scope);
+  return {
+    model: {
+      ...next,
+      undo: saved,
+      rollback: saved,
+      busy: {
+        label
+      },
+      lastResult: void 0
+    },
+    effect
+  };
+}
+function undo(model) {
+  const saved = model.undo;
+  if (!saved) return {
+    model
+  };
+  return {
+    model: {
+      ...restore(model, saved),
+      undo: void 0,
+      rollback: snapshot(model, saved.layer, saved.scope),
+      busy: {
+        label: "Undoing"
+      }
+    },
+    effect: {
+      t: "apply",
+      targetSet: saved.targetSet,
+      layer: saved.layer,
+      scope: saved.scope
+    }
+  };
+}
+function effectDone(model, intent) {
+  const rollback = !intent.ok && model.rollback;
+  return {
+    model: {
+      ...rollback ? {
+        ...restore(model, rollback),
+        undo: void 0
+      } : model,
+      rollback: void 0,
+      busy: null,
+      diffLines: intent.effect === "plan" ? intent.data ?? [intent.message ?? "No changes"] : model.diffLines,
+      lastResult: intent.message ? {
+        text: intent.message,
+        variant: intent.ok ? "success" : "error"
+      } : model.lastResult
+    }
+  };
+}
+function withEquipment(row, equipped2) {
+  if (equipped2.length === row.equipped.length && equipped2.every((layer, i) => layer === row.equipped[i])) return row;
+  return {
+    ...row,
+    equipped: equipped2,
+    status: row.status === "broken" || row.status === "drift" && equipped2.includes(row.scope) ? row.status : equipped2.length ? "active" : "available"
+  };
+}
+function move(model, delta) {
+  const rows = visibleRows(model, model.cursor.section);
+  return {
+    ...model,
+    cursor: {
+      ...model.cursor,
+      index: Math.max(0, Math.min(model.cursor.index + delta, rows.length - 1))
+    }
+  };
+}
+function moveSection(model, dir) {
+  const current = SECTIONS.indexOf(model.cursor.section);
+  for (let step = 1; step <= SECTIONS.length; step++) {
+    const section = SECTIONS[(current + step * dir + SECTIONS.length) % SECTIONS.length];
+    if (visibleRows(model, section).length > 0) return {
+      ...model,
+      cursor: {
+        section,
+        index: 0
+      }
+    };
+  }
+  return model;
+}
+function snapshot(model, layer, scope) {
+  return {
+    rows: model.rows,
+    sections: model.sections,
+    cursor: model.cursor,
+    targetSet: activeNames(model, layer),
+    scope: layer === "session" ? sessionScope(model) : scope,
+    layer
+  };
+}
+function restore(model, saved) {
+  const rowId = cursorRow({
+    ...model,
+    rows: saved.rows,
+    sections: saved.sections,
+    cursor: saved.cursor
+  })?.id;
+  return normalizeCursor({
+    ...model,
+    rows: saved.rows,
+    sections: saved.sections,
+    cursor: saved.cursor,
+    mode: saved.layer === "session" ? "session" : "filesystem",
+    sessionScope: saved.layer === "session" ? saved.scope : model.sessionScope
+  }, rowId);
+}
+function nextTool(model) {
+  const tools = Array.from(new Set(model.rows.flatMap((row) => row.tools))).sort();
+  const index = model.filter.tool ? tools.indexOf(model.filter.tool) : -1;
+  return tools[index + 1];
 }
 
 // src/tui/core/view.ts
@@ -15211,13 +15624,33 @@ function view(model) {
     id,
     title
   }) => pane(model, id, title));
-  const row = cursorRow2(model);
+  const row = cursorRow(model);
   return {
+    tabs: [...SCOPES.map((scope) => ({
+      text: `${model.filter.scope === scope ? "[" : " "}${scope ? scope[0].toUpperCase() + scope.slice(1) : "All"}${model.filter.scope === scope ? "]" : " "} `,
+      style: model.filter.scope === scope ? "accent" : "muted"
+    })), {
+      text: " \u2039 [ / ] \u203A",
+      style: "dim"
+    }],
+    mode: [{
+      text: `MODE: ${model.mode}`,
+      style: "accent"
+    }, {
+      text: model.sessionAvailable ? "  m switch" : "",
+      style: "dim"
+    }, {
+      text: model.mode === "filesystem" ? "  \xB7 row scope \u2192 destination" : `  \xB7 source: ${sessionScope(model)}`,
+      style: "muted"
+    }],
     panes,
-    detail: row ? detail(row, model.detail?.rowId === row.id) : emptyDetail(model),
+    detail: row ? {
+      ...detail(row, model.detail?.rowId === row.id, rowLayer(model, row)),
+      scroll: model.detail?.rowId === row.id ? model.detail.scroll : 0
+    } : emptyDetail(model),
     footer: {
       equipped: equipped(model),
-      keys: footerKeyHints(),
+      keys: footerKeyHints(model),
       filter: {
         active: model.filtering,
         text: model.filter.text
@@ -15229,7 +15662,8 @@ function view(model) {
 function pane(model, section, title) {
   const rows = visibleRows(model, section);
   return {
-    title: `${title} (${rows.length})`,
+    title: `${SECTIONS2.findIndex((item) => item.id === section) + 1} ${title} (${rows.length})`,
+    focused: model.cursor.section === section,
     rows: rows.map((row, index) => ({
       id: row.id,
       glyph: glyph(row),
@@ -15238,8 +15672,8 @@ function pane(model, section, title) {
     }))
   };
 }
-function detail(row, expanded) {
-  const blocks = [kv("scope", row.scope), kv("equipped", row.equipped.join(" / ") || "\u2014"), kv("status", row.issue ? `${row.status}: ${row.issue}` : row.status)];
+function detail(row, expanded, target) {
+  const blocks = [kv("scope", row.scope), kv("equipped", row.equipped.join(" / ") || "\u2014"), kv("action target", target), kv("status", row.issue ? `${row.status}: ${row.issue}` : row.status)];
   if (row.description) blocks.push([{
     text: `"${row.description}"`,
     style: "muted"
@@ -15289,6 +15723,7 @@ function overlay(model) {
     return {
       kind: "help",
       title: "Keymap",
+      scroll: model.overlayScroll,
       lines: keymap.map((binding) => [{
         text: binding.keys.join("/"),
         style: "accent"
@@ -15302,20 +15737,33 @@ function overlay(model) {
     return {
       kind: "diff",
       title: model.busy ? "Diff (loading)" : "Diff",
+      scroll: model.overlayScroll,
       lines: (model.diffLines?.length ? model.diffLines : [model.busy?.label ?? "No diff loaded"]).map((line) => [{
         text: line,
         style: lineStyle(line)
       }])
     };
   }
-  if (model.overlay === "confirm") return {
-    kind: "confirm",
-    title: "Confirm",
-    lines: [[{
-      text: "Press enter to confirm",
-      style: "warning"
-    }]]
-  };
+  if (model.overlay === "confirm" && model.confirm) {
+    const action = model.confirm.action === "diffPreview" ? "Diff" : model.confirm.action === "sync" ? "Sync" : "Clear";
+    return {
+      kind: "confirm",
+      title: `${action} \xB7 choose scope`,
+      lines: [[{
+        text: "Which filesystem scope?",
+        style: "text"
+      }], ...["global", "project"].map((scope) => [{
+        text: `${model.confirm?.scope === scope ? "\u25B8" : " "} ${scope}`,
+        style: model.confirm?.scope === scope ? "accent" : "muted"
+      }]), [{
+        text: `${action} all equipped loadouts in ${model.confirm.scope}.`,
+        style: "warning"
+      }], [{
+        text: "h/l or j/k choose \xB7 enter confirms",
+        style: "dim"
+      }]]
+    };
+  }
   return void 0;
 }
 function equipped(model) {
@@ -15326,9 +15774,9 @@ function equipped(model) {
     style: "accent"
   }, ...["global", "project", "session"].map((layer) => ({
     text: `${layer[0].toUpperCase()} ${active.filter((row) => row.equipped.includes(layer)).map((row) => row.name).join("\xB7") || "\u2014"}  `,
-    style: layer === model.layer ? "accent" : "muted"
+    style: (model.mode === "session" ? layer === "session" : layer !== "session") ? "accent" : "muted"
   })), {
-    text: `[${model.layer}] `,
+    text: `[${model.mode}] `,
     style: "dim"
   }, {
     text: drift ? "drift" : "in sync",
@@ -15345,6 +15793,9 @@ function equipped(model) {
   }, {
     text: model.filter.text || " ",
     style: model.filter.text ? "text" : "dim"
+  }] : [], ...model.filter.tool ? [{
+    text: `  tool:${model.filter.tool}`,
+    style: "accent"
   }] : []];
 }
 function artifactKindColumn(kind) {
@@ -15387,17 +15838,6 @@ function glyph(row) {
     style: "dim"
   };
 }
-function visibleRows(model, section) {
-  return model.sections[section].map((id) => model.rows.find((row) => row.id === id)).filter((row) => Boolean(row)).filter((row) => {
-    if (model.filter.scope && row.scope !== model.filter.scope) return false;
-    if (model.filter.tool && !row.tools.includes(model.filter.tool)) return false;
-    const text = model.filter.text.trim().toLowerCase();
-    return !text || `${row.name} ${row.description ?? ""}`.toLowerCase().includes(text);
-  });
-}
-function cursorRow2(model) {
-  return visibleRows(model, model.cursor.section)[model.cursor.index];
-}
 function kv(key, value) {
   return [{
     text: `${key}: `,
@@ -15427,8 +15867,8 @@ var DashboardController = class {
       issues: [],
       warnings: []
     }, {
-      layer: options.layer ?? (options.session ? "session" : "project"),
-      layers: options.session ? ["global", "project", "session"] : ["global", "project"]
+      mode: options.mode ?? (options.session ? "session" : "filesystem"),
+      sessionAvailable: Boolean(options.session)
     });
   }
   get spec() {
@@ -15447,8 +15887,8 @@ var DashboardController = class {
     this.model = {
       ...this.model,
       undo: void 0,
-      layer: session ? "session" : "project",
-      layers: session ? ["global", "project", "session"] : ["global", "project"]
+      mode: session ? "session" : "filesystem",
+      sessionAvailable: Boolean(session)
     };
     await this.refresh();
   }
@@ -15458,18 +15898,16 @@ var DashboardController = class {
       const data = await loadDashboardData(this.options.cwd);
       const session = this.options.session;
       const status = session ? await session.activator.status(session.id) : void 0;
-      if (this.disposed || version !== this.refreshVersion) return;
-      const next = createInitialModel(withSessionEquipment(data, status), {
-        layer: this.model.layer,
-        layers: this.model.layers,
-        scope: status?.scope ?? this.model.scope
-      });
-      this.model = {
+      if (this.disposed || version !== this.refreshVersion || this.model.busy) return;
+      const {
+        rows
+      } = withSessionEquipment(data, status);
+      this.model = normalizeCursor({
         ...this.model,
-        rows: next.rows,
-        sections: next.sections,
-        scope: next.scope
-      };
+        rows,
+        sections: buildSections(rows),
+        sessionScope: status?.scope ?? this.model.sessionScope
+      }, cursorRow(this.model)?.id);
     } catch (error) {
       this.model = {
         ...this.model,
@@ -15483,12 +15921,6 @@ var DashboardController = class {
   }
   async dispatch(intent) {
     if (this.disposed) return;
-    if ((intent.t === "quit" || intent.t === "closeOverlay") && this.model.overlay) intent = {
-      t: "closeOverlay"
-    };
-    else if (intent.t === "closeOverlay" && !this.model.filtering) intent = {
-      t: "quit"
-    };
     const result = update(this.model, intent);
     this.model = result.model;
     if (this.model.quitRequested) {
@@ -15522,19 +15954,21 @@ var DashboardController = class {
 
 // src/tui/skins/opentui/Dashboard.tsx
 import { effect as _$effect } from "@opentui/solid";
-import { createComponent as _$createComponent } from "@opentui/solid";
 import { memo as _$memo } from "@opentui/solid";
-import { insert as _$insert } from "@opentui/solid";
 import { createTextNode as _$createTextNode } from "@opentui/solid";
 import { insertNode as _$insertNode } from "@opentui/solid";
+import { insert as _$insert } from "@opentui/solid";
+import { createComponent as _$createComponent } from "@opentui/solid";
 import { setProp as _$setProp } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
+import { createSignal } from "solid-js";
 
 // src/tui/skins/opentui/input.ts
 function intentFromOpenTuiKey(event, spec) {
   if (event.ctrl && event.name?.toLowerCase() === "c") return {
     t: "quit"
   };
+  if (event.ctrl || event.meta || event.option) return void 0;
   if (spec?.footer.filter?.active) return filterIntentFromKey(event);
   return intentForKey(normalizeKey(event));
 }
@@ -15563,8 +15997,7 @@ function normalizeKey(event) {
   if (name === "tab" && event.shift) return "shift+tab";
   if (name === "space" || event.sequence === " ") return "space";
   if (name === "up" || name === "down" || name === "tab" || name === "enter" || name === "esc" || name === "backspace") return name;
-  if (event.shift && name === "d") return "D";
-  if (event.shift && name === "s") return "S";
+  if (event.shift && /^[a-z]$/.test(name)) return name.toUpperCase();
   const printable = printableChar(event);
   return printable ?? name;
 }
@@ -15608,8 +16041,44 @@ function colorFor(theme, token = "text") {
   return theme?.[token] ?? defaultThemeTokens[token];
 }
 
+// src/tui/core/viewport.ts
+function windowPanes(panes, height) {
+  const shown = height < panes.length * 2 ? panes.filter((pane2) => pane2.focused) : panes;
+  const budgets = shown.map(() => 1);
+  let remaining = Math.max(0, Math.floor(height) - shown.length * 2);
+  while (remaining > 0) {
+    let used = false;
+    for (let i = 0; i < shown.length && remaining > 0; i++) {
+      if (budgets[i] < shown[i].rows.length) {
+        budgets[i]++;
+        remaining--;
+        used = true;
+      }
+    }
+    if (!used) break;
+  }
+  return shown.map((pane2, i) => {
+    const count2 = budgets[i];
+    if (pane2.rows.length <= count2) return pane2;
+    const selected = Math.max(0, pane2.rows.findIndex((row) => row.selected));
+    const start = Math.max(0, Math.min(selected - Math.floor(count2 / 2), pane2.rows.length - count2));
+    return {
+      ...pane2,
+      title: `${pane2.title} \xB7 ${start + 1}\u2013${start + count2}`,
+      rows: pane2.rows.slice(start, start + count2)
+    };
+  });
+}
+function windowLines(lines, height, scroll = 0) {
+  const count2 = Math.max(1, Math.floor(height));
+  const start = Math.max(0, Math.min(scroll, lines.length - count2));
+  return lines.slice(start, start + count2);
+}
+
 // src/tui/skins/opentui/Dashboard.tsx
 function Dashboard(props) {
+  const [listHeight, setListHeight] = createSignal(20);
+  const [detailHeight, setDetailHeight] = createSignal(20);
   const onKey = (event) => {
     const intent = intentFromOpenTuiKey(event, props.spec);
     if (!intent) return;
@@ -15617,54 +16086,93 @@ function Dashboard(props) {
     event.stopPropagation();
     props.onIntent?.(intent);
   };
+  const onScroll = (event, target) => {
+    const direction = event.scroll?.direction;
+    if (direction !== "up" && direction !== "down") return;
+    event.preventDefault();
+    event.stopPropagation();
+    props.onIntent?.({
+      t: target,
+      delta: (direction === "up" ? -1 : 1) * (target === "move" ? 1 : 5)
+    });
+  };
   return (() => {
-    var _el$ = _$createElement("box"), _el$2 = _$createElement("box"), _el$3 = _$createElement("scrollbox"), _el$4 = _$createElement("text"), _el$5 = _$createElement("b"), _el$7 = _$createElement("scrollbox"), _el$8 = _$createElement("text"), _el$9 = _$createElement("b"), _el$0 = _$createElement("box"), _el$1 = _$createElement("box"), _el$10 = _$createElement("text");
+    var _el$ = _$createElement("box"), _el$2 = _$createElement("box"), _el$3 = _$createElement("box"), _el$4 = _$createElement("box"), _el$5 = _$createElement("text"), _el$6 = _$createElement("b"), _el$8 = _$createElement("box"), _el$9 = _$createElement("text"), _el$0 = _$createElement("b"), _el$1 = _$createElement("box"), _el$10 = _$createElement("text"), _el$12 = _$createElement("box"), _el$13 = _$createElement("text");
     _$insertNode(_el$, _el$2);
-    _$insertNode(_el$, _el$1);
+    _$insertNode(_el$, _el$3);
+    _$insertNode(_el$, _el$12);
     _$setProp(_el$, "width", "100%");
     _$setProp(_el$, "height", "100%");
     _$setProp(_el$, "flexDirection", "column");
     _$setProp(_el$, "focusable", true);
     _$setProp(_el$, "onKeyDown", onKey);
     _$setProp(_el$, "focused", true);
-    _$insertNode(_el$2, _el$3);
-    _$insertNode(_el$2, _el$7);
-    _$setProp(_el$2, "flexGrow", 1);
-    _$setProp(_el$2, "minHeight", 0);
-    _$setProp(_el$2, "flexDirection", "row");
-    _$setProp(_el$2, "paddingLeft", 1);
-    _$setProp(_el$2, "paddingRight", 1);
-    _$setProp(_el$2, "paddingTop", 1);
-    _$setProp(_el$2, "gap", 1);
+    _$setProp(_el$2, "height", 2);
+    _$setProp(_el$2, "flexShrink", 0);
+    _$setProp(_el$2, "paddingLeft", 2);
+    _$setProp(_el$2, "flexDirection", "column");
+    _$insert(_el$2, _$createComponent(SpanLine, {
+      get spans() {
+        return props.spec.tabs;
+      },
+      get theme() {
+        return props.theme;
+      }
+    }), null);
+    _$insert(_el$2, _$createComponent(SpanLine, {
+      get spans() {
+        return props.spec.mode;
+      },
+      get theme() {
+        return props.theme;
+      }
+    }), null);
     _$insertNode(_el$3, _el$4);
-    _$setProp(_el$3, "width", "52%");
-    _$setProp(_el$3, "minWidth", 20);
-    _$setProp(_el$3, "border", true);
-    _$setProp(_el$3, "flexDirection", "column");
+    _$insertNode(_el$3, _el$8);
+    _$setProp(_el$3, "flexGrow", 1);
+    _$setProp(_el$3, "minHeight", 0);
+    _$setProp(_el$3, "flexDirection", "row");
     _$setProp(_el$3, "paddingLeft", 1);
     _$setProp(_el$3, "paddingRight", 1);
+    _$setProp(_el$3, "paddingTop", 1);
+    _$setProp(_el$3, "gap", 1);
     _$insertNode(_el$4, _el$5);
-    _$insertNode(_el$5, _$createTextNode(`LOADOUTS`));
-    _$insert(_el$3, () => props.spec.panes.map((pane2) => (() => {
-      var _el$11 = _$createElement("box"), _el$12 = _$createElement("text"), _el$13 = _$createTextNode(`\u25B8 `);
-      _$insertNode(_el$11, _el$12);
-      _$setProp(_el$11, "flexDirection", "column");
-      _$setProp(_el$11, "marginTop", 1);
-      _$insertNode(_el$12, _el$13);
-      _$insert(_el$12, () => pane2.title, null);
-      _$insert(_el$11, (() => {
+    _$setProp(_el$4, "width", "52%");
+    _$setProp(_el$4, "minWidth", 20);
+    _$setProp(_el$4, "border", true);
+    _$setProp(_el$4, "flexDirection", "column");
+    _$setProp(_el$4, "paddingLeft", 1);
+    _$setProp(_el$4, "paddingRight", 1);
+    _$setProp(_el$4, "onMouseScroll", (event) => onScroll(event, "move"));
+    _$setProp(_el$4, "onSizeChange", function() {
+      setListHeight(Math.max(2, this.height - 3));
+    });
+    _$insertNode(_el$5, _el$6);
+    _$setProp(_el$5, "height", 1);
+    _$setProp(_el$5, "flexShrink", 0);
+    _$insertNode(_el$6, _$createTextNode(`LOADOUTS`));
+    _$insert(_el$4, () => windowPanes(props.spec.panes, listHeight()).map((pane2) => (() => {
+      var _el$14 = _$createElement("box"), _el$15 = _$createElement("text"), _el$16 = _$createTextNode(` `);
+      _$insertNode(_el$14, _el$15);
+      _$setProp(_el$14, "flexDirection", "column");
+      _$setProp(_el$14, "flexShrink", 0);
+      _$insertNode(_el$15, _el$16);
+      _$setProp(_el$15, "height", 1);
+      _$insert(_el$15, () => pane2.focused ? "\u25B8" : " ", _el$16);
+      _$insert(_el$15, () => pane2.title, null);
+      _$insert(_el$14, (() => {
         var _c$3 = _$memo(() => pane2.rows.length === 0);
         return () => _c$3() ? (() => {
-          var _el$14 = _$createElement("text");
-          _$insertNode(_el$14, _$createTextNode(` -- empty --`));
-          _$effect((_$p) => _$setProp(_el$14, "fg", colorFor(props.theme, "dim"), _$p));
-          return _el$14;
+          var _el$17 = _$createElement("text");
+          _$insertNode(_el$17, _$createTextNode(` -- empty --`));
+          _$effect((_$p) => _$setProp(_el$17, "fg", colorFor(props.theme, "dim"), _$p));
+          return _el$17;
         })() : pane2.rows.map((row) => (() => {
-          var _el$16 = _$createElement("box");
-          _$setProp(_el$16, "height", 1);
-          _$setProp(_el$16, "flexShrink", 0);
-          _$setProp(_el$16, "flexDirection", "row");
-          _$insert(_el$16, _$createComponent(SpanLine, {
+          var _el$19 = _$createElement("box");
+          _$setProp(_el$19, "height", 1);
+          _$setProp(_el$19, "flexShrink", 0);
+          _$setProp(_el$19, "flexDirection", "row");
+          _$insert(_el$19, _$createComponent(SpanLine, {
             get spans() {
               return [{
                 text: row.selected ? "\u25B8 " : "  ",
@@ -15678,35 +16186,46 @@ function Dashboard(props) {
               return props.theme;
             }
           }));
-          _$effect((_$p) => _$setProp(_el$16, "backgroundColor", row.selected ? props.theme?.selectedBackground : void 0, _$p));
-          return _el$16;
+          _$effect((_$p) => _$setProp(_el$19, "backgroundColor", row.selected ? props.theme?.selectedBackground : void 0, _$p));
+          return _el$19;
         })());
       })(), null);
-      _$effect((_$p) => _$setProp(_el$12, "fg", colorFor(props.theme, "accent"), _$p));
-      return _el$11;
+      _$effect((_$p) => _$setProp(_el$15, "fg", colorFor(props.theme, pane2.focused ? "accent" : "muted"), _$p));
+      return _el$14;
     })()), null);
-    _$insertNode(_el$7, _el$8);
-    _$insertNode(_el$7, _el$0);
-    _$setProp(_el$7, "flexGrow", 1);
-    _$setProp(_el$7, "minWidth", 18);
-    _$setProp(_el$7, "border", true);
-    _$setProp(_el$7, "flexDirection", "column");
-    _$setProp(_el$7, "paddingLeft", 1);
-    _$setProp(_el$7, "paddingRight", 1);
     _$insertNode(_el$8, _el$9);
-    _$insert(_el$9, () => props.spec.detail?.title ?? "Detail");
-    _$setProp(_el$0, "flexDirection", "column");
-    _$setProp(_el$0, "marginTop", 1);
-    _$setProp(_el$0, "gap", 0);
-    _$insert(_el$0, () => (props.spec.detail?.blocks ?? [[{
+    _$insertNode(_el$8, _el$1);
+    _$insertNode(_el$8, _el$10);
+    _$setProp(_el$8, "flexGrow", 1);
+    _$setProp(_el$8, "minWidth", 18);
+    _$setProp(_el$8, "border", true);
+    _$setProp(_el$8, "flexDirection", "column");
+    _$setProp(_el$8, "paddingLeft", 1);
+    _$setProp(_el$8, "paddingRight", 1);
+    _$setProp(_el$8, "onMouseScroll", (event) => onScroll(event, "detailScroll"));
+    _$setProp(_el$8, "onSizeChange", function() {
+      setDetailHeight(Math.max(1, this.height - 5));
+    });
+    _$insertNode(_el$9, _el$0);
+    _$setProp(_el$9, "height", 1);
+    _$setProp(_el$9, "flexShrink", 0);
+    _$insert(_el$0, () => props.spec.detail?.title ?? "Detail");
+    _$setProp(_el$1, "flexDirection", "column");
+    _$setProp(_el$1, "marginTop", 1);
+    _$setProp(_el$1, "gap", 0);
+    _$setProp(_el$1, "flexGrow", 1);
+    _$insert(_el$1, () => windowLines(props.spec.detail?.blocks ?? [[{
       text: "No detail",
       style: "dim"
-    }]]).map((block) => _$createComponent(SpanLine, {
+    }]], detailHeight(), props.spec.detail?.scroll).map((block) => _$createComponent(SpanLine, {
       spans: block,
       get theme() {
         return props.theme;
       }
     })));
+    _$insertNode(_el$10, _$createTextNode(`pgup/pgdn scroll details`));
+    _$setProp(_el$10, "height", 1);
+    _$setProp(_el$10, "flexShrink", 0);
     _$insert(_el$, (() => {
       var _c$ = _$memo(() => !!props.spec.overlay);
       return () => _c$() ? _$createComponent(Overlay, {
@@ -15715,39 +16234,41 @@ function Dashboard(props) {
         },
         get theme() {
           return props.theme;
-        }
+        },
+        onScroll: (event) => onScroll(event, "move")
       }) : null;
-    })(), _el$1);
-    _$insertNode(_el$1, _el$10);
-    _$setProp(_el$1, "height", 4);
-    _$setProp(_el$1, "flexShrink", 0);
-    _$setProp(_el$1, "border", true);
-    _$setProp(_el$1, "paddingLeft", 1);
-    _$setProp(_el$1, "paddingRight", 1);
-    _$setProp(_el$1, "flexDirection", "column");
-    _$insert(_el$1, _$createComponent(SpanLine, {
+    })(), _el$12);
+    _$insertNode(_el$12, _el$13);
+    _$setProp(_el$12, "height", 4);
+    _$setProp(_el$12, "flexShrink", 0);
+    _$setProp(_el$12, "border", true);
+    _$setProp(_el$12, "paddingLeft", 1);
+    _$setProp(_el$12, "paddingRight", 1);
+    _$setProp(_el$12, "flexDirection", "column");
+    _$insert(_el$12, _$createComponent(SpanLine, {
       get spans() {
         return props.spec.footer.equipped;
       },
       get theme() {
         return props.theme;
       }
-    }), _el$10);
-    _$setProp(_el$10, "height", 1);
-    _$insert(_el$10, () => props.spec.footer.keys.map((key) => `[${key.key}] ${key.label}`).join("  "), null);
-    _$insert(_el$10, (() => {
+    }), _el$13);
+    _$setProp(_el$13, "height", 1);
+    _$insert(_el$13, () => props.spec.footer.keys.map((key) => `${key.key === "[/]" ? "[ / ]" : `[${key.key}]`} ${key.label}`).join("  "), null);
+    _$insert(_el$13, (() => {
       var _c$2 = _$memo(() => !!props.spec.footer.filter?.active);
       return () => _c$2() ? `  filter: ${props.spec.footer.filter.text}` : "";
     })(), null);
     _$effect((_p$) => {
-      var _v$ = props.theme?.background, _v$2 = colorFor(props.theme, "border"), _v$3 = colorFor(props.theme, "accent"), _v$4 = colorFor(props.theme, "border"), _v$5 = colorFor(props.theme, "accent"), _v$6 = colorFor(props.theme, "border"), _v$7 = colorFor(props.theme, "dim");
+      var _v$ = props.theme?.background, _v$2 = colorFor(props.theme, "border"), _v$3 = colorFor(props.theme, "accent"), _v$4 = colorFor(props.theme, "border"), _v$5 = colorFor(props.theme, "accent"), _v$6 = colorFor(props.theme, "dim"), _v$7 = colorFor(props.theme, "border"), _v$8 = colorFor(props.theme, "dim");
       _v$ !== _p$.e && (_p$.e = _$setProp(_el$, "backgroundColor", _v$, _p$.e));
-      _v$2 !== _p$.t && (_p$.t = _$setProp(_el$3, "borderColor", _v$2, _p$.t));
-      _v$3 !== _p$.a && (_p$.a = _$setProp(_el$4, "fg", _v$3, _p$.a));
-      _v$4 !== _p$.o && (_p$.o = _$setProp(_el$7, "borderColor", _v$4, _p$.o));
-      _v$5 !== _p$.i && (_p$.i = _$setProp(_el$8, "fg", _v$5, _p$.i));
-      _v$6 !== _p$.n && (_p$.n = _$setProp(_el$1, "borderColor", _v$6, _p$.n));
-      _v$7 !== _p$.s && (_p$.s = _$setProp(_el$10, "fg", _v$7, _p$.s));
+      _v$2 !== _p$.t && (_p$.t = _$setProp(_el$4, "borderColor", _v$2, _p$.t));
+      _v$3 !== _p$.a && (_p$.a = _$setProp(_el$5, "fg", _v$3, _p$.a));
+      _v$4 !== _p$.o && (_p$.o = _$setProp(_el$8, "borderColor", _v$4, _p$.o));
+      _v$5 !== _p$.i && (_p$.i = _$setProp(_el$9, "fg", _v$5, _p$.i));
+      _v$6 !== _p$.n && (_p$.n = _$setProp(_el$10, "fg", _v$6, _p$.n));
+      _v$7 !== _p$.s && (_p$.s = _$setProp(_el$12, "borderColor", _v$7, _p$.s));
+      _v$8 !== _p$.h && (_p$.h = _$setProp(_el$13, "fg", _v$8, _p$.h));
       return _p$;
     }, {
       e: void 0,
@@ -15756,70 +16277,83 @@ function Dashboard(props) {
       o: void 0,
       i: void 0,
       n: void 0,
-      s: void 0
+      s: void 0,
+      h: void 0
     });
     return _el$;
   })();
 }
 function Overlay(props) {
+  const [height, setHeight] = createSignal(12);
   return (() => {
-    var _el$17 = _$createElement("box"), _el$18 = _$createElement("text"), _el$19 = _$createElement("b"), _el$20 = _$createElement("box"), _el$21 = _$createElement("text");
-    _$insertNode(_el$17, _el$18);
-    _$insertNode(_el$17, _el$20);
-    _$insertNode(_el$17, _el$21);
-    _$setProp(_el$17, "position", "absolute");
-    _$setProp(_el$17, "left", "12%");
-    _$setProp(_el$17, "top", "10%");
-    _$setProp(_el$17, "width", "76%");
-    _$setProp(_el$17, "maxHeight", "78%");
-    _$setProp(_el$17, "border", true);
-    _$setProp(_el$17, "flexDirection", "column");
-    _$setProp(_el$17, "paddingLeft", 2);
-    _$setProp(_el$17, "paddingRight", 2);
-    _$setProp(_el$17, "paddingTop", 1);
-    _$setProp(_el$17, "paddingBottom", 1);
-    _$insertNode(_el$18, _el$19);
-    _$insert(_el$19, () => props.spec.title);
+    var _el$20 = _$createElement("box"), _el$21 = _$createElement("text"), _el$22 = _$createElement("b"), _el$23 = _$createElement("box"), _el$24 = _$createElement("text");
+    _$insertNode(_el$20, _el$21);
+    _$insertNode(_el$20, _el$23);
+    _$insertNode(_el$20, _el$24);
+    _$setProp(_el$20, "position", "absolute");
+    _$setProp(_el$20, "left", "12%");
+    _$setProp(_el$20, "top", "10%");
+    _$setProp(_el$20, "width", "76%");
+    _$setProp(_el$20, "height", "78%");
+    _$setProp(_el$20, "border", true);
     _$setProp(_el$20, "flexDirection", "column");
-    _$setProp(_el$20, "marginTop", 1);
-    _$insert(_el$20, () => props.spec.lines.map((line) => _$createComponent(SpanLine, {
+    _$setProp(_el$20, "paddingLeft", 2);
+    _$setProp(_el$20, "paddingRight", 2);
+    _$setProp(_el$20, "paddingTop", 1);
+    _$setProp(_el$20, "paddingBottom", 1);
+    _$setProp(_el$20, "onSizeChange", function() {
+      setHeight(Math.max(1, this.height - 8));
+    });
+    _$insertNode(_el$21, _el$22);
+    _$setProp(_el$21, "height", 1);
+    _$setProp(_el$21, "flexShrink", 0);
+    _$insert(_el$22, () => props.spec.title);
+    _$setProp(_el$23, "flexDirection", "column");
+    _$setProp(_el$23, "marginTop", 1);
+    _$setProp(_el$23, "flexGrow", 1);
+    _$setProp(_el$23, "flexShrink", 0);
+    _$insert(_el$23, () => windowLines(props.spec.lines, height(), props.spec.scroll).map((line) => _$createComponent(SpanLine, {
       spans: line,
       get theme() {
         return props.theme;
       }
     })));
-    _$insertNode(_el$21, _$createTextNode(`esc to close`));
+    _$setProp(_el$24, "height", 1);
+    _$setProp(_el$24, "flexShrink", 0);
+    _$insert(_el$24, () => props.spec.kind === "confirm" ? "h/l choose \xB7 enter confirm \xB7 esc cancel" : "j/k scroll \xB7 esc to close");
     _$effect((_p$) => {
-      var _v$8 = colorFor(props.theme, props.spec.kind === "diff" ? "warning" : "accent"), _v$9 = props.theme?.background, _v$0 = colorFor(props.theme, "accent"), _v$1 = colorFor(props.theme, "dim");
-      _v$8 !== _p$.e && (_p$.e = _$setProp(_el$17, "borderColor", _v$8, _p$.e));
-      _v$9 !== _p$.t && (_p$.t = _$setProp(_el$17, "backgroundColor", _v$9, _p$.t));
-      _v$0 !== _p$.a && (_p$.a = _$setProp(_el$18, "fg", _v$0, _p$.a));
-      _v$1 !== _p$.o && (_p$.o = _$setProp(_el$21, "fg", _v$1, _p$.o));
+      var _v$9 = colorFor(props.theme, props.spec.kind === "diff" ? "warning" : "accent"), _v$0 = props.theme?.background, _v$1 = props.onScroll, _v$10 = colorFor(props.theme, "accent"), _v$11 = colorFor(props.theme, "dim");
+      _v$9 !== _p$.e && (_p$.e = _$setProp(_el$20, "borderColor", _v$9, _p$.e));
+      _v$0 !== _p$.t && (_p$.t = _$setProp(_el$20, "backgroundColor", _v$0, _p$.t));
+      _v$1 !== _p$.a && (_p$.a = _$setProp(_el$20, "onMouseScroll", _v$1, _p$.a));
+      _v$10 !== _p$.o && (_p$.o = _$setProp(_el$21, "fg", _v$10, _p$.o));
+      _v$11 !== _p$.i && (_p$.i = _$setProp(_el$24, "fg", _v$11, _p$.i));
       return _p$;
     }, {
       e: void 0,
       t: void 0,
       a: void 0,
-      o: void 0
+      o: void 0,
+      i: void 0
     });
-    return _el$17;
+    return _el$20;
   })();
 }
 function SpanLine(props) {
   return (() => {
-    var _el$23 = _$createElement("text");
-    _$setProp(_el$23, "height", 1);
-    _$setProp(_el$23, "flexShrink", 0);
-    _$insert(_el$23, () => props.spans.map((span) => (() => {
-      var _el$24 = _$createElement("span");
-      _$insert(_el$24, () => span.text);
-      _$effect((_$p) => _$setProp(_el$24, "style", {
+    var _el$25 = _$createElement("text");
+    _$setProp(_el$25, "height", 1);
+    _$setProp(_el$25, "flexShrink", 0);
+    _$insert(_el$25, () => props.spans.map((span) => (() => {
+      var _el$26 = _$createElement("span");
+      _$insert(_el$26, () => span.text);
+      _$effect((_$p) => _$setProp(_el$26, "style", {
         fg: colorFor(props.theme, span.style ?? "text")
       }, _$p));
-      return _el$24;
+      return _el$26;
     })()));
-    _$effect((_$p) => _$setProp(_el$23, "fg", colorFor(props.theme, "text"), _$p));
-    return _el$23;
+    _$effect((_$p) => _$setProp(_el$25, "fg", colorFor(props.theme, "text"), _$p));
+    return _el$25;
   })();
 }
 
@@ -16116,7 +16650,7 @@ var tui_default = Plugin.define({
   setup(context) {
     if (!registry.getTool("opencode")) registerBuiltins(createPluginAPI(registry));
     const equipment = new SessionActivator(context.client);
-    const [revision, changed] = createSignal(0);
+    const [revision, changed] = createSignal2(0);
     const notify = () => changed((n) => n + 1);
     const stopInstructions = context.data.on("session.instructions.updated", notify);
     const stopPermissions = context.data.on("session.permissions.updated", notify);
@@ -16215,7 +16749,7 @@ var tui_default = Plugin.define({
       })
     });
     function Page(props) {
-      const [spec, setSpec] = createSignal();
+      const [spec, setSpec] = createSignal2();
       const controller = new DashboardController({
         cwd: location().directory,
         session: props.sessionID ? {
@@ -16253,7 +16787,7 @@ var tui_default = Plugin.define({
       });
     }
     function Equipped(props) {
-      const [text, setText] = createSignal("G \u2014  P \u2014  S \u2014");
+      const [text, setText] = createSignal2("G \u2014  P \u2014  S \u2014");
       let version = 0;
       createEffect(() => {
         revision();
@@ -16277,10 +16811,10 @@ var tui_default = Plugin.define({
       })();
     }
     function QuickEquip(props) {
-      const [rows, setRows] = createSignal([]);
-      const [selected, setSelected] = createSignal(/* @__PURE__ */ new Set());
-      const [cursor, setCursor] = createSignal(0);
-      const [busy, setBusy] = createSignal(false);
+      const [rows, setRows] = createSignal2([]);
+      const [selected, setSelected] = createSignal2(/* @__PURE__ */ new Set());
+      const [cursor, setCursor] = createSignal2(0);
+      const [busy, setBusy] = createSignal2(false);
       void loadDashboardData(location().directory).then((data) => setRows(data.rows.filter((row) => row.status !== "broken"))).catch(toastError);
       const key = (event) => {
         event.preventDefault();
