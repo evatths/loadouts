@@ -14,12 +14,14 @@ export interface SpecRow {
 
 export interface SpecPane {
   title: string;
+  focused: boolean;
   rows: SpecRow[];
 }
 
 export interface SpecDetail {
   title: string;
   blocks: SpecSpan[][];
+  scroll?: number;
 }
 
 export interface SpecFooter {
@@ -29,6 +31,8 @@ export interface SpecFooter {
 }
 
 export interface ViewSpec {
+  tabs: SpecSpan[];
+  mode: SpecSpan[];
   panes: SpecPane[];
   detail?: SpecDetail;
   footer: SpecFooter;
@@ -36,5 +40,6 @@ export interface ViewSpec {
     kind: "help" | "diff" | "confirm";
     title: string;
     lines: SpecSpan[][];
+    scroll?: number;
   };
 }

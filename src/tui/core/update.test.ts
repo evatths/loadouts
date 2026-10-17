@@ -4,7 +4,7 @@ import { update } from "./update.js";
 import type { DashboardData } from "./data.js";
 
 function model(): Model {
-  return createInitialModel(data(), { scope: "project" });
+  return createInitialModel(data());
 }
 
 function data(): DashboardData {
@@ -49,7 +49,7 @@ describe("update", () => {
     result = update(result.model, { t: "filterInput", text: "base" });
     expect(result.model.cursor).toEqual({ section: "active", index: 0 });
 
-    result = update(result.model, { t: "cycleScope" });
+    result = update(result.model, { t: "cycleScope", dir: -1 });
     expect(result.model.filter.scope).toBe("project");
 
     result = update(result.model, { t: "cycleTool" });
@@ -59,21 +59,13 @@ describe("update", () => {
     expect(result.model.detail).toEqual({ rowId: "project:base" });
   });
 
-  it("cycles equip layers with m, including session when configured", () => {
-    let result = update(model(), { t: "cycleLayer" });
-    expect(result.model.layer).toBe("global");
-    result = update(result.model, { t: "cycleLayer" });
-    expect(result.model.layer).toBe("project");
-
-    const withSession = createInitialModel(data(), { layers: ["global", "project", "session"] });
-    let cycled = update(withSession, { t: "cycleLayer" });
-    expect(cycled.model.layer).toBe("session");
-    cycled = update(cycled.model, { t: "cycleLayer" });
-    expect(cycled.model.layer).toBe("global");
-    cycled = update(cycled.model, { t: "cycleLayer" });
-    expect(cycled.model.layer).toBe("project");
-    cycled = update(cycled.model, { t: "cycleLayer" });
-    expect(cycled.model.layer).toBe("session");
+  it("switches filesystem/session only when a session is available", () => {
+    expect(update(model(), { t: "cycleMode" }).model.mode).toBe("filesystem");
+    const withSession = createInitialModel(data(), { sessionAvailable: true });
+    let cycled = update(withSession, { t: "cycleMode" });
+    expect(cycled.model.mode).toBe("session");
+    cycled = update(cycled.model, { t: "cycleMode" });
+    expect(cycled.model.mode).toBe("filesystem");
   });
 
   it("supports live filter entry, commit, cancel, and ignores normal bindings while filtering", () => {
@@ -117,23 +109,16 @@ describe("update", () => {
     expect(result.model.overlay).toBeNull();
   });
 
-  it("toggles only when the row scope matches the selected layer", () => {
+  it("infers the filesystem target from the row", () => {
     let result = update(model(), { t: "section", dir: 1 });
     expect(result.model.cursor).toEqual({ section: "available", index: 0 });
 
-    const rejected = update(result.model, { t: "toggle" });
-    expect(rejected.effect).toBeUndefined();
-    expect(rejected.model.rows.find((row) => row.id === "global:meta")?.equipped).toEqual([]);
-    expect(rejected.model.lastResult?.variant).toBe("error");
-
-    result = update(result.model, { t: "cycleLayer" });
     result = update(result.model, { t: "toggle" });
     expect(result.effect).toEqual({ t: "apply", targetSet: ["meta"], layer: "global", scope: "global" });
   });
 
   it("toggles immediately and can undo the previous layer state", () => {
-    let result = update(model(), { t: "cycleLayer" });
-    result = update(result.model, { t: "section", dir: 1 });
+    let result = update(model(), { t: "section", dir: 1 });
     result = update(result.model, { t: "toggle" });
 
     expect(result.effect).toEqual({ t: "apply", targetSet: ["meta"], layer: "global", scope: "global" });
@@ -151,8 +136,7 @@ describe("update", () => {
   });
 
   it("blocks mutating intents while an effect is in flight", () => {
-    let result = update(model(), { t: "cycleLayer" });
-    result = update(result.model, { t: "section", dir: 1 });
+    let result = update(model(), { t: "section", dir: 1 });
     result = update(result.model, { t: "toggle" });
     const busy = result.model;
     expect(busy.busy).toEqual({ label: "Activating" });
@@ -171,8 +155,7 @@ describe("update", () => {
   });
 
   it("rolls the optimistic row back when the effect fails", () => {
-    let result = update(model(), { t: "cycleLayer" });
-    result = update(result.model, { t: "section", dir: 1 });
+    let result = update(model(), { t: "section", dir: 1 });
     result = update(result.model, { t: "toggle" });
     expect(result.model.rows.find((row) => row.id === "global:meta")?.equipped).toEqual(["global"]);
 
@@ -190,12 +173,12 @@ describe("update", () => {
         row.id === "global:meta" ? { ...row, equipped: ["global", "session"] as EquipLayer[], status: "active" as const } : row
       ),
     };
-    const base = createInitialModel(sessionData, { layers: ["global", "project", "session"] });
+    const base = createInitialModel(sessionData, { sessionAvailable: true });
     let result = update(base, { t: "move", delta: 2 });
     expect(result.model.cursor).toEqual({ section: "active", index: 2 });
 
-    result = update(result.model, { t: "cycleLayer" });
-    expect(result.model.layer).toBe("session");
+    result = update(result.model, { t: "cycleMode" });
+    expect(result.model.mode).toBe("session");
 
     result = update(result.model, { t: "toggle" });
     expect(result.effect).toEqual({ t: "apply", targetSet: [], layer: "session", scope: "global" });
@@ -208,11 +191,12 @@ describe("update", () => {
     result = update(result.model, { t: "undo" });
     const restored = result.model.rows.find((row) => row.id === "global:meta");
     expect(restored?.equipped).toEqual(["global", "session"]);
-    expect(result.effect).toEqual({ t: "apply", targetSet: ["meta"], layer: "session", scope: "project" });
+    expect(result.effect).toEqual({ t: "apply", targetSet: ["meta"], layer: "session", scope: "global" });
   });
 
   it("returns effects for async intents and records results", () => {
-    let result = update(model(), { t: "diffPreview" });
+    const scoped = update(model(), { t: "cycleScope", dir: -1 }).model;
+    let result = update(scoped, { t: "diffPreview" });
     expect(result.effect).toEqual({ t: "plan", targetSet: ["base", "data"], layer: "project", scope: "project" });
     expect(result.model.overlay).toBe("diff");
 
@@ -224,5 +208,117 @@ describe("update", () => {
     expect(result.model.overlay).toBe("help");
     result = update(result.model, { t: "closeOverlay" });
     expect(result.model.overlay).toBeNull();
+  });
+
+  it("cycles All/Global/Project in both directions and keeps filtering independent of mode", () => {
+    let next = model();
+    expect(next.filter.scope).toBeUndefined();
+    next = update(next, { t: "cycleScope", dir: 1 }).model;
+    expect(next.filter.scope).toBe("global");
+    expect(next.cursor).toEqual({ section: "available", index: 0 });
+    expect(next.mode).toBe("filesystem");
+    next = update(next, { t: "cycleScope", dir: 1 }).model;
+    expect(next.filter.scope).toBe("project");
+    next = update(next, { t: "cycleScope", dir: 1 }).model;
+    expect(next.filter.scope).toBeUndefined();
+    expect(update(next, { t: "cycleScope", dir: -1 }).model.filter.scope).toBe("project");
+  });
+
+  it("uses the tab for bulk effects and asks for a scope in All", () => {
+    for (const action of ["sync", "clear", "diffPreview"] as const) {
+      const prompt = update(model(), { t: action });
+      expect(prompt.effect).toBeUndefined();
+      expect(prompt.model.confirm).toEqual({ action, scope: "project" });
+      const chosen = update(prompt.model, { t: "section", dir: 1 }).model;
+      expect(chosen.confirm?.scope).toBe("global");
+      const confirmed = update(chosen, { t: "enter" });
+      expect(confirmed.effect).toMatchObject({ layer: "global", scope: "global" });
+      expect(confirmed.model.filter.scope).toBeUndefined();
+      expect(update(prompt.model, { t: "closeOverlay" }).model.confirm).toBeUndefined();
+      expect(update(prompt.model, { t: "activate" }).effect).toBeUndefined();
+    }
+    const project = update(model(), { t: "cycleScope", dir: -1 }).model;
+    expect(update(project, { t: "sync" }).effect).toEqual({ t: "apply", targetSet: ["base", "data"], layer: "project", scope: "project" });
+    expect(update(project, { t: "clear" }).effect).toEqual({ t: "clear", layer: "project", scope: "project" });
+  });
+
+  it("keeps duplicate names scope-isolated and undo targets the inferred scope after tab changes", () => {
+    const both = data();
+    both.rows.push(row("global:base", "base", "global", "available", []));
+    let next = createInitialModel(both);
+    next = update(next, { t: "cycleScope", dir: 1 }).model;
+    next = update(next, { t: "move", delta: 1 }).model;
+    const equipped = update(next, { t: "toggle" });
+    expect(equipped.effect).toEqual({ t: "apply", targetSet: ["base"], layer: "global", scope: "global" });
+    expect(equipped.model.cursor).toEqual({ section: "active", index: 0 });
+    next = update(equipped.model, { t: "effectDone", effect: "apply", ok: true }).model;
+    next = update(next, { t: "cycleScope", dir: 1 }).model;
+    const undone = update(next, { t: "undo" });
+    expect(undone.effect).toEqual({ t: "apply", targetSet: [], layer: "global", scope: "global" });
+    expect(undone.model.rows.find((row) => row.id === "project:base")?.equipped).toEqual(["project"]);
+  });
+
+  it("restores the previous source scope after switching a session's equipment", () => {
+    const sessionData = data();
+    sessionData.rows[0].equipped.push("session");
+    let next = createInitialModel(sessionData, { mode: "session", sessionAvailable: true });
+    next = update(next, { t: "section", dir: 1 }).model;
+    const equipped = update(next, { t: "activate" });
+    expect(equipped.effect).toEqual({ t: "apply", targetSet: ["meta"], layer: "session", scope: "global" });
+    expect(equipped.model.rows[0].equipped).toEqual(["project"]);
+    next = update(equipped.model, { t: "effectDone", effect: "apply", ok: true }).model;
+    expect(update(next, { t: "undo" }).effect).toEqual({ t: "apply", targetSet: ["base"], layer: "session", scope: "project" });
+    next = update(next, { t: "cycleScope", dir: -1 }).model;
+    expect(update(next, { t: "clear" }).effect).toBeUndefined();
+    expect(update(next, { t: "sync" }).effect).toBeUndefined();
+  });
+
+  it("unwinds overlays, filters, expanded detail, and scope before quitting", () => {
+    let next = update(model(), { t: "cycleScope", dir: -1 }).model;
+    next = update(next, { t: "enter" }).model;
+    next = { ...next, filter: { ...next.filter, text: "base" } };
+    next = update(next, { t: "openHelp" }).model;
+    expect(update(next, { t: "toggle" }).effect).toBeUndefined();
+    next = update(next, { t: "closeOverlay" }).model;
+    expect(next.overlay).toBeNull();
+    next = update(next, { t: "closeOverlay" }).model;
+    expect(next.filter.text).toBe("");
+    expect(next.quitRequested).toBeUndefined();
+    next = update(next, { t: "closeOverlay" }).model;
+    expect(next.detail).toBeUndefined();
+    expect(next.filter.scope).toBe("project");
+    next = update(next, { t: "closeOverlay" }).model;
+    expect(next.filter.scope).toBeUndefined();
+    expect(next.quitRequested).toBeUndefined();
+    next = update(next, { t: "closeOverlay" }).model;
+    expect(next.quitRequested).toBe(true);
+    const detail = update(model(), { t: "enter" }).model;
+    expect(update(detail, { t: "closeOverlay" }).model.detail).toBeUndefined();
+  });
+
+  it("jumps to sections and list edges, and interrupts gg with another action", () => {
+    let next = update(model(), { t: "edge", edge: "last" }).model;
+    expect(next.cursor.index).toBe(1);
+    next = update(next, { t: "topPrefix" }).model;
+    expect(next.cursor.index).toBe(1);
+    next = update(next, { t: "topPrefix" }).model;
+    expect(next.cursor.index).toBe(0);
+    next = update(next, { t: "topPrefix" }).model;
+    next = update(next, { t: "move", delta: 1 }).model;
+    next = update(next, { t: "topPrefix" }).model;
+    expect(next.cursor.index).toBe(1);
+    next = update(next, { t: "selectSection", section: "issues" }).model;
+    expect(next.cursor).toEqual({ section: "issues", index: 0 });
+    expect(update(next, { t: "toggle" }).effect).toBeUndefined();
+  });
+
+  it("does not roll back the last successful mutation when a subsequent diff fails", () => {
+    let next = update(model(), { t: "toggle" }).model;
+    next = update(next, { t: "effectDone", effect: "apply", ok: true }).model;
+    next = update(next, { t: "cycleScope", dir: -1 }).model;
+    next = update(next, { t: "diffPreview" }).model;
+    next = update(next, { t: "effectDone", effect: "plan", ok: false, message: "diff failed" }).model;
+    expect(next.rows[0].equipped).toEqual([]);
+    expect(next.undo).toBeDefined();
   });
 });

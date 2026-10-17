@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createInitialModel, type EquipLayer, type Model } from "./model.js";
 import { view } from "./view.js";
 import type { DashboardData } from "./data.js";
+import { update } from "./update.js";
 
 describe("view", () => {
   it("renders active, available, issue, detail, and equipped states", () => {
@@ -11,6 +12,7 @@ describe("view", () => {
           "blocks": [
             "scope: project",
             "equipped: project",
+            "action target: project",
             "status: active",
             ""base description"",
             "Artifacts (press enter to expand)",
@@ -20,7 +22,7 @@ describe("view", () => {
           ],
           "title": "base",
         },
-        "equipped": "EQUIPPED: G —  P base·data  S —  [project] drift  1 issue(s) detected",
+        "equipped": "EQUIPPED: G —  P base·data  S —  [filesystem] drift  1 issue(s) detected",
         "overlay": undefined,
         "panes": [
           {
@@ -28,23 +30,42 @@ describe("view", () => {
               "*✓ base  project  1 rule  1 skill  1 instr  [P]",
               " ~ data  project  1 rule  [P]  configuration drift",
             ],
-            "title": "Active (2)",
+            "title": "1 Active (2)",
           },
           {
             "rows": [
               " - meta  global  1 rule",
             ],
-            "title": "Available (1)",
+            "title": "2 Available (1)",
           },
           {
             "rows": [
               " ! bad  project  1 rule  missing include",
             ],
-            "title": "Issues (1)",
+            "title": "3 Issues (1)",
           },
         ],
       }
     `);
+  });
+
+  it("shows the selected scope and contextual action hints", () => {
+    let next = model();
+    expect(view(next).tabs.find((span) => span.style === "accent")?.text).toContain("[All]");
+    expect(view(next).footer.keys.map((hint) => hint.key)).toContain("d");
+    expect(view(next).footer.keys.map((hint) => hint.key)).not.toContain("a");
+    expect(view(next).footer.keys.map((hint) => hint.key)).not.toContain("m");
+    next = update(next, { t: "cycleScope", dir: 1 }).model;
+    expect(view(next).tabs.find((span) => span.style === "accent")?.text).toContain("[Global]");
+    expect(view(next).footer.keys.map((hint) => hint.key)).toContain("a");
+    next = update(next, { t: "closeOverlay" }).model;
+    next = update(next, { t: "selectSection", section: "issues" }).model;
+    const keys = view(next).footer.keys.map((hint) => hint.key);
+    expect(keys).not.toContain("a");
+    expect(keys).not.toContain("d");
+    expect(keys).not.toContain("space");
+    expect(keys).toContain("h/l");
+    expect(keys).toContain("[/]");
   });
 
   it("renders filtered, expanded detail, help, diff, and empty states", () => {
@@ -56,6 +77,7 @@ describe("view", () => {
           "blocks": [
             "scope: global",
             "equipped: —",
+            "action target: global",
             "status: available",
             ""meta description"",
             "Artifacts (press enter to expand)",
@@ -63,22 +85,22 @@ describe("view", () => {
           ],
           "title": "meta",
         },
-        "equipped": "EQUIPPED: G —  P base·data  S —  [project] drift  1 issue(s) detected  /meta",
+        "equipped": "EQUIPPED: G —  P base·data  S —  [filesystem] drift  1 issue(s) detected  /meta",
         "overlay": undefined,
         "panes": [
           {
             "rows": [],
-            "title": "Active (0)",
+            "title": "1 Active (0)",
           },
           {
             "rows": [
               "*- meta  global  1 rule",
             ],
-            "title": "Available (1)",
+            "title": "2 Available (1)",
           },
           {
             "rows": [],
-            "title": "Issues (0)",
+            "title": "3 Issues (0)",
           },
         ],
       }
@@ -102,20 +124,20 @@ describe("view", () => {
           ],
           "title": "Loadouts",
         },
-        "equipped": "EQUIPPED: G —  P —  S —  [project] in sync",
+        "equipped": "EQUIPPED: G —  P —  S —  [filesystem] in sync",
         "overlay": undefined,
         "panes": [
           {
             "rows": [],
-            "title": "Active (0)",
+            "title": "1 Active (0)",
           },
           {
             "rows": [],
-            "title": "Available (0)",
+            "title": "2 Available (0)",
           },
           {
             "rows": [],
-            "title": "Issues (0)",
+            "title": "3 Issues (0)",
           },
         ],
       }
@@ -124,7 +146,7 @@ describe("view", () => {
 });
 
 function model(): Model {
-  return createInitialModel(data(), { scope: "project" });
+  return createInitialModel(data());
 }
 
 function data(): DashboardData {

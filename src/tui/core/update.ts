@@ -1,123 +1,147 @@
-import { buildSections, firstCursor, type EquipLayer, type Model, type ScopeFilter, type Section } from "./model.js";
+import { buildSections, type BulkAction, type EquipLayer, type Model, type ScopeFilter, type UndoSnapshot } from "./model.js";
 import type { Effect, Intent } from "./intent.js";
 import type { LoadoutRow } from "./data.js";
+import { activeNames, cursorRow, normalizeCursor, rowLayer, SCOPES, SECTIONS, sessionScope, visibleRows } from "./selection.js";
+import { keymap } from "./keymap.js";
 
 export interface UpdateResult {
   model: Model;
   effect?: Effect;
 }
 
-const SECTIONS: Section[] = ["active", "available", "issues"];
-
 export function update(model: Model, intent: Intent): UpdateResult {
-  if (intent.t === "closeOverlay") return model.filtering ? cancelFilter(model) : { model: { ...model, overlay: null, diffLines: undefined } };
-  if (intent.t === "filterStart") return withCursor({ ...model, filtering: true });
-  if (intent.t === "filterInput") return withCursor({ ...model, filter: { ...model.filter, text: intent.text } });
-  if (intent.t === "filterChar") return withCursor({ ...model, filter: { ...model.filter, text: model.filter.text + intent.char } });
-  if (intent.t === "filterBackspace") return withCursor({ ...model, filter: { ...model.filter, text: model.filter.text.slice(0, -1) } });
-  if (intent.t === "filterCommit") return { model: { ...model, filtering: false } };
-  if (intent.t === "filterCancel") return cancelFilter(model);
   if (intent.t === "effectDone") return effectDone(model, intent);
-  if (model.busy) return { model };
-  if (model.filtering) return { model };
-  if (intent.t === "openHelp") return { model: { ...model, overlay: "help" } };
-  if (intent.t === "quit") return { model: { ...model, quitRequested: true } };
-  if (intent.t === "cycleScope") return withCursor({ ...model, filter: { ...model.filter, scope: nextScope(model.filter.scope) } });
-  if (intent.t === "cycleTool") return withCursor({ ...model, filter: { ...model.filter, tool: nextTool(model) } });
-  if (intent.t === "cycleLayer") {
-    const layer = model.layers[(model.layers.indexOf(model.layer) + 1) % model.layers.length];
-    return { model: { ...model, layer, scope: layer === "session" ? model.scope : layer, undo: undefined } };
+  if (model.busy) {
+    if (intent.t === "closeOverlay" && model.overlay) return { model: closeOverlay(model) };
+    return { model };
   }
+  if (intent.t !== "topPrefix" && model.pendingTop) model = { ...model, pendingTop: false };
+  if (model.overlay) return updateOverlay(model, intent);
+  if (intent.t === "closeOverlay") return escape(model);
+  if (intent.t === "filterStart") return { model: { ...model, filtering: true } };
+  if (intent.t === "filterInput") return refilter(model, { ...model.filter, text: intent.text });
+  if (intent.t === "filterChar") return refilter(model, { ...model.filter, text: model.filter.text + intent.char });
+  if (intent.t === "filterBackspace") return refilter(model, { ...model.filter, text: model.filter.text.slice(0, -1) });
+  if (intent.t === "filterCommit") return { model: { ...model, filtering: false } };
+  if (intent.t === "filterCancel") return refilter({ ...model, filtering: false }, { ...model.filter, text: "" });
+  if (model.filtering) return { model };
+  if (intent.t === "openHelp") return { model: { ...model, overlay: "help", overlayScroll: 0 } };
+  if (intent.t === "quit") return { model: { ...model, quitRequested: true } };
+  if (intent.t === "cycleScope") {
+    const index = SCOPES.indexOf(model.filter.scope);
+    return refilter(model, { ...model.filter, scope: SCOPES[(index + intent.dir + SCOPES.length) % SCOPES.length] });
+  }
+  if (intent.t === "cycleTool") return refilter(model, { ...model.filter, tool: nextTool(model) });
+  if (intent.t === "cycleMode") return { model: model.sessionAvailable ? { ...model, mode: model.mode === "session" ? "filesystem" : "session" } : model };
+  if (intent.t === "topPrefix") return model.pendingTop ? { model: move({ ...model, pendingTop: false }, -Infinity) } : { model: { ...model, pendingTop: true } };
+  if (intent.t === "edge") return { model: move(model, intent.edge === "first" ? -Infinity : Infinity) };
   if (intent.t === "move") return { model: move(model, intent.delta) };
   if (intent.t === "section") return { model: moveSection(model, intent.dir) };
-  if (intent.t === "enter") return { model: toggleDetail(model) };
+  if (intent.t === "selectSection") return { model: { ...model, cursor: { section: intent.section, index: 0 } } };
+  if (intent.t === "detailScroll") {
+    const row = cursorRow(model);
+    if (!row) return { model };
+    const scroll = model.detail?.rowId === row.id ? model.detail.scroll ?? 0 : 0;
+    return { model: { ...model, detail: { rowId: row.id, scroll: Math.max(0, Math.min(row.slots.length + 4, scroll + intent.delta)) } } };
+  }
+  if (intent.t === "enter") {
+    const row = cursorRow(model);
+    return { model: row ? { ...model, detail: model.detail?.rowId === row.id ? undefined : { rowId: row.id } } : model };
+  }
   if (intent.t === "refresh") return { model: { ...model, busy: { label: "Refreshing" } }, effect: { t: "reload" } };
-  if (intent.t === "edit") return edit(model);
-  if (intent.t === "diffPreview") return plan(model);
-  if (intent.t === "sync") return apply(model, activeNames(model, model.layer), "Syncing");
-  if (intent.t === "clear") return clear(model);
+  if (intent.t === "edit") {
+    const row = cursorRow(model);
+    return { model, effect: row?.filePath ? { t: "editFile", path: row.filePath } : undefined };
+  }
+  if (intent.t === "diffPreview" || intent.t === "sync" || intent.t === "clear") return bulk(model, intent.t);
   if (intent.t === "undo") return undo(model);
   if (intent.t === "activate" || intent.t === "deactivate" || intent.t === "toggle") return toggle(model, intent.t);
   return { model };
 }
 
-function cancelFilter(model: Model): UpdateResult {
-  return withCursor({ ...model, filtering: false, filter: { ...model.filter, text: "" } });
+function closeOverlay(model: Model): Model {
+  return { ...model, overlay: null, confirm: undefined, diffLines: undefined, overlayScroll: 0, pendingTop: false };
+}
+
+function escape(model: Model): UpdateResult {
+  if (model.filtering || model.filter.text || model.filter.tool) return refilter({ ...model, filtering: false }, { scope: model.filter.scope, text: "" });
+  if (model.detail) return { model: { ...model, detail: undefined } };
+  if (model.filter.scope) return refilter(model, { ...model.filter, scope: undefined });
+  return { model: { ...model, quitRequested: true } };
+}
+
+function updateOverlay(model: Model, intent: Intent): UpdateResult {
+  if (intent.t === "closeOverlay" || intent.t === "quit") return { model: closeOverlay(model) };
+  if (model.confirm) {
+    if (intent.t === "enter") return bulk(closeOverlay(model), model.confirm.action, model.confirm.scope);
+    if (["move", "section", "cycleScope"].includes(intent.t)) return { model: { ...model, confirm: { ...model.confirm, scope: model.confirm.scope === "global" ? "project" : "global" } } };
+    return { model };
+  }
+  if (intent.t === "openHelp") return { model: { ...model, overlay: "help", overlayScroll: 0 } };
+  const last = Math.max(0, (model.overlay === "help" ? keymap.length : model.diffLines?.length ?? 1) - 1);
+  if (intent.t === "move" || intent.t === "detailScroll") return { model: { ...model, overlayScroll: Math.max(0, Math.min(last, model.overlayScroll + intent.delta)) } };
+  if (intent.t === "edge") return { model: { ...model, overlayScroll: intent.edge === "first" ? 0 : last } };
+  return { model };
+}
+
+function refilter(model: Model, filter: Model["filter"]): UpdateResult {
+  const next = normalizeCursor({ ...model, filter }, cursorRow(model)?.id);
+  return { model: { ...next, detail: cursorRow(next)?.id === model.detail?.rowId ? model.detail : undefined } };
 }
 
 function toggle(model: Model, action: "activate" | "deactivate" | "toggle"): UpdateResult {
   const row = cursorRow(model);
   if (!row || row.status === "broken") return { model };
-  if (model.layer !== "session" && row.scope !== model.layer) {
-    return { model: { ...model, lastResult: { text: `Select the ${row.scope} equip layer with m for this loadout.`, variant: "error" } } };
-  }
-  const active = row.equipped.includes(model.layer);
+  const layer = rowLayer(model, row);
+  const active = row.equipped.includes(layer);
   const shouldActivate = action === "activate" || (action === "toggle" && !active);
   if ((shouldActivate && active) || (!shouldActivate && !active)) return { model };
 
-  const nextRows: LoadoutRow[] = model.rows.map((candidate) => {
+  const rows = model.rows.map((candidate) => {
     let equipped = candidate.equipped;
-    if (model.layer === "session" && candidate.scope !== row.scope) equipped = equipped.filter((layer) => layer !== "session");
-    if (candidate.id === row.id) equipped = shouldActivate ? [...equipped, model.layer] : equipped.filter((layer) => layer !== model.layer);
-    return { ...candidate, equipped, status: candidate.status === "broken" ? "broken" : equipped.length ? "active" : "available" };
+    if (layer === "session" && candidate.scope !== row.scope) equipped = equipped.filter((item) => item !== "session");
+    if (candidate.id === row.id) equipped = shouldActivate ? [...equipped, layer] : equipped.filter((item) => item !== layer);
+    return withEquipment(candidate, equipped);
   });
-  const sections = buildSections(nextRows);
-  const targetSet = activeNames({ ...model, rows: nextRows }, model.layer);
-  return {
-    model: {
-      ...model,
-      rows: nextRows,
-      scope: row.scope,
-      sections,
-      cursor: cursorForId(sections, row.id),
-      undo: snapshot(model),
-      busy: { label: shouldActivate ? "Activating" : "Deactivating" },
-      lastResult: undefined,
-    },
-    effect: { t: "apply", targetSet, layer: model.layer, scope: row.scope },
-  };
+  const next = normalizeCursor({ ...model, rows, sections: buildSections(rows), sessionScope: layer === "session" ? row.scope : model.sessionScope }, row.id);
+  return mutation(model, next, { t: "apply", targetSet: activeNames(next, layer), layer, scope: row.scope }, shouldActivate ? "Activating" : "Deactivating");
+}
+
+function bulk(model: Model, action: BulkAction, chosenScope?: ScopeFilter): UpdateResult {
+  const scope = model.mode === "session" ? sessionScope(model) : chosenScope ?? model.filter.scope;
+  if (!scope) return { model: { ...model, overlay: "confirm", overlayScroll: 0, confirm: { action, scope: cursorRow(model)?.scope ?? "project" } } };
+  if (model.mode === "session" && model.filter.scope && model.filter.scope !== scope) {
+    return { model: { ...model, lastResult: { text: `No session loadouts from ${model.filter.scope}.`, variant: "info" } } };
+  }
+  const layer = model.mode === "session" ? "session" : scope;
+  const targetSet = activeNames(model, layer);
+  if (action === "diffPreview") return { model: { ...model, busy: { label: "Planning diff" }, overlay: "diff", overlayScroll: 0, diffLines: undefined }, effect: { t: "plan", targetSet, layer, scope } };
+  if (action === "sync") return mutation(model, model, { t: "apply", targetSet, layer, scope }, "Syncing");
+  const rows = model.rows.map((row) => withEquipment(row, row.equipped.filter((item) => item !== layer)));
+  const next = normalizeCursor({ ...model, rows, sections: buildSections(rows) }, cursorRow(model)?.id);
+  return mutation(model, next, { t: "clear", layer, scope }, "Clearing");
+}
+
+function mutation(before: Model, next: Model, effect: Extract<Effect, { t: "apply" | "clear" }>, label: string): UpdateResult {
+  const saved = snapshot(before, effect.layer, effect.scope);
+  return { model: { ...next, undo: saved, rollback: saved, busy: { label }, lastResult: undefined }, effect };
 }
 
 function undo(model: Model): UpdateResult {
-  if (!model.undo) return { model };
+  const saved = model.undo;
+  if (!saved) return { model };
   return {
-    model: { ...model, rows: model.undo.rows, sections: model.undo.sections, cursor: model.undo.cursor, scope: model.undo.scope, layer: model.undo.layer, undo: undefined, busy: { label: "Undoing" } },
-    effect: { t: "apply", targetSet: model.undo.targetSet, layer: model.undo.layer, scope: model.undo.scope },
+    model: { ...restore(model, saved), undo: undefined, rollback: snapshot(model, saved.layer, saved.scope), busy: { label: "Undoing" } },
+    effect: { t: "apply", targetSet: saved.targetSet, layer: saved.layer, scope: saved.scope },
   };
-}
-
-function clear(model: Model): UpdateResult {
-  const nextRows = model.rows.map((row) => {
-    const equipped = row.equipped.filter((layer) => layer !== model.layer);
-    return { ...row, equipped, status: row.status === "broken" ? "broken" as const : equipped.length ? "active" as const : "available" as const };
-  });
-  return {
-    model: { ...model, rows: nextRows, sections: buildSections(nextRows), cursor: firstCursor(buildSections(nextRows)), undo: snapshot(model), busy: { label: "Clearing" } },
-    effect: { t: "clear", layer: model.layer, scope: model.scope },
-  };
-}
-
-function apply(model: Model, targetSet: string[], label: string): UpdateResult {
-  return { model: { ...model, busy: { label }, undo: snapshot(model) }, effect: { t: "apply", targetSet, layer: model.layer, scope: model.scope } };
-}
-
-function plan(model: Model): UpdateResult {
-  const targetSet = activeNames(model, model.layer);
-  return { model: { ...model, busy: { label: "Planning diff" }, overlay: "diff" }, effect: { t: "plan", targetSet, layer: model.layer, scope: model.scope } };
-}
-
-function edit(model: Model): UpdateResult {
-  const row = cursorRow(model);
-  if (!row?.filePath) return { model };
-  return { model, effect: { t: "editFile", path: row.filePath } };
 }
 
 function effectDone(model: Model, intent: Extract<Intent, { t: "effectDone" }>): UpdateResult {
-  const rollback = !intent.ok && model.undo ? model.undo : undefined;
+  const rollback = !intent.ok && model.rollback;
   return {
     model: {
-      ...model,
-      ...(rollback ? { rows: rollback.rows, sections: rollback.sections, cursor: rollback.cursor, scope: rollback.scope, layer: rollback.layer, undo: undefined } : {}),
+      ...(rollback ? { ...restore(model, rollback), undo: undefined } : model),
+      rollback: undefined,
       busy: null,
       diffLines: intent.effect === "plan" ? intent.data ?? [intent.message ?? "No changes"] : model.diffLines,
       lastResult: intent.message ? { text: intent.message, variant: intent.ok ? "success" : "error" } : model.lastResult,
@@ -125,77 +149,36 @@ function effectDone(model: Model, intent: Extract<Intent, { t: "effectDone" }>):
   };
 }
 
+function withEquipment(row: LoadoutRow, equipped: EquipLayer[]): LoadoutRow {
+  if (equipped.length === row.equipped.length && equipped.every((layer, i) => layer === row.equipped[i])) return row;
+  return { ...row, equipped, status: row.status === "broken" || (row.status === "drift" && equipped.includes(row.scope)) ? row.status : equipped.length ? "active" : "available" };
+}
+
 function move(model: Model, delta: number): Model {
-  const ids = visibleIds(model, model.cursor.section);
-  if (ids.length === 0) return model;
-  const index = clamp(model.cursor.index + delta, 0, ids.length - 1);
-  return { ...model, cursor: { ...model.cursor, index } };
+  const rows = visibleRows(model, model.cursor.section);
+  return { ...model, cursor: { ...model.cursor, index: Math.max(0, Math.min(model.cursor.index + delta, rows.length - 1)) } };
 }
 
 function moveSection(model: Model, dir: 1 | -1): Model {
   const current = SECTIONS.indexOf(model.cursor.section);
   for (let step = 1; step <= SECTIONS.length; step++) {
     const section = SECTIONS[(current + step * dir + SECTIONS.length) % SECTIONS.length];
-    if (visibleIds(model, section).length > 0) return { ...model, cursor: { section, index: 0 } };
+    if (visibleRows(model, section).length > 0) return { ...model, cursor: { section, index: 0 } };
   }
   return model;
 }
 
-function toggleDetail(model: Model): Model {
-  const row = cursorRow(model);
-  if (!row) return model;
-  return { ...model, detail: model.detail?.rowId === row.id ? undefined : { rowId: row.id } };
+function snapshot(model: Model, layer: EquipLayer, scope: ScopeFilter): UndoSnapshot {
+  return { rows: model.rows, sections: model.sections, cursor: model.cursor, targetSet: activeNames(model, layer), scope: layer === "session" ? sessionScope(model) : scope, layer };
 }
 
-function withCursor(model: Model): UpdateResult {
-  const ids = visibleIds(model, model.cursor.section);
-  if (ids.length > 0) return { model: { ...model, cursor: { ...model.cursor, index: clamp(model.cursor.index, 0, ids.length - 1) } } };
-  return { model: moveSection({ ...model, cursor: firstCursor(model.sections) }, 1) };
-}
-
-function cursorRow(model: Model): LoadoutRow | undefined {
-  const id = visibleIds(model, model.cursor.section)[model.cursor.index];
-  return model.rows.find((row) => row.id === id);
-}
-
-function visibleIds(model: Model, section: Section): string[] {
-  return model.sections[section].filter((id) => {
-    const row = model.rows.find((candidate) => candidate.id === id);
-    if (!row) return false;
-    if (model.filter.scope && row.scope !== model.filter.scope) return false;
-    if (model.filter.tool && !row.tools.includes(model.filter.tool)) return false;
-    const text = model.filter.text.trim().toLowerCase();
-    return !text || `${row.name} ${row.description ?? ""}`.toLowerCase().includes(text);
-  });
-}
-
-function cursorForId(sections: Record<Section, string[]>, id: string): Model["cursor"] {
-  for (const section of SECTIONS) {
-    const index = sections[section].indexOf(id);
-    if (index >= 0) return { section, index };
-  }
-  return firstCursor(sections);
-}
-
-function snapshot(model: Model) {
-  return { rows: model.rows, sections: model.sections, cursor: model.cursor, targetSet: activeNames(model, model.layer), scope: model.scope, layer: model.layer };
-}
-
-function activeNames(model: Pick<Model, "rows">, layer: EquipLayer): string[] {
-  return model.rows.filter((row) => row.equipped.includes(layer)).map((row) => row.name);
-}
-
-function nextScope(scope?: ScopeFilter): ScopeFilter | undefined {
-  return scope === undefined ? "project" : scope === "project" ? "global" : undefined;
+function restore(model: Model, saved: UndoSnapshot): Model {
+  const rowId = cursorRow({ ...model, rows: saved.rows, sections: saved.sections, cursor: saved.cursor })?.id;
+  return normalizeCursor({ ...model, rows: saved.rows, sections: saved.sections, cursor: saved.cursor, mode: saved.layer === "session" ? "session" : "filesystem", sessionScope: saved.layer === "session" ? saved.scope : model.sessionScope }, rowId);
 }
 
 function nextTool(model: Model): string | undefined {
   const tools = Array.from(new Set(model.rows.flatMap((row) => row.tools))).sort();
-  if (tools.length === 0) return undefined;
   const index = model.filter.tool ? tools.indexOf(model.filter.tool) : -1;
-  return index < 0 ? tools[0] : index === tools.length - 1 ? undefined : tools[index + 1];
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
+  return tools[index + 1];
 }

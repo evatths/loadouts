@@ -3,6 +3,7 @@ import type { Model, Section } from "./model.js";
 import type { LoadoutRow } from "./data.js";
 import type { SpecPane, SpecSpan, ViewSpec } from "./viewspec.js";
 import type { StyleToken } from "./theme.js";
+import { cursorRow, rowLayer, SCOPES, sessionScope, visibleRows } from "./selection.js";
 
 const SECTIONS: Array<{ id: Section; title: string }> = [
   { id: "active", title: "Active" },
@@ -14,9 +15,18 @@ export function view(model: Model): ViewSpec {
   const panes = SECTIONS.map(({ id, title }) => pane(model, id, title));
   const row = cursorRow(model);
   return {
+    tabs: [
+      ...SCOPES.map((scope): SpecSpan => ({ text: `${model.filter.scope === scope ? "[" : " "}${scope ? scope[0].toUpperCase() + scope.slice(1) : "All"}${model.filter.scope === scope ? "]" : " "} `, style: model.filter.scope === scope ? "accent" : "muted" })),
+      { text: " ‹ [ / ] ›", style: "dim" },
+    ],
+    mode: [
+      { text: `MODE: ${model.mode}`, style: "accent" },
+      { text: model.sessionAvailable ? "  m switch" : "", style: "dim" },
+      { text: model.mode === "filesystem" ? "  · row scope → destination" : `  · source: ${sessionScope(model)}`, style: "muted" },
+    ],
     panes,
-    detail: row ? detail(row, model.detail?.rowId === row.id) : emptyDetail(model),
-    footer: { equipped: equipped(model), keys: footerKeyHints(), filter: { active: model.filtering, text: model.filter.text } },
+    detail: row ? { ...detail(row, model.detail?.rowId === row.id, rowLayer(model, row)), scroll: model.detail?.rowId === row.id ? model.detail.scroll : 0 } : emptyDetail(model),
+    footer: { equipped: equipped(model), keys: footerKeyHints(model), filter: { active: model.filtering, text: model.filter.text } },
     overlay: overlay(model),
   };
 }
@@ -24,7 +34,8 @@ export function view(model: Model): ViewSpec {
 function pane(model: Model, section: Section, title: string): SpecPane {
   const rows = visibleRows(model, section);
   return {
-    title: `${title} (${rows.length})`,
+    title: `${SECTIONS.findIndex((item) => item.id === section) + 1} ${title} (${rows.length})`,
+    focused: model.cursor.section === section,
     rows: rows.map((row, index) => ({
       id: row.id,
       glyph: glyph(row),
@@ -34,10 +45,11 @@ function pane(model: Model, section: Section, title: string): SpecPane {
   };
 }
 
-function detail(row: LoadoutRow, expanded: boolean) {
+function detail(row: LoadoutRow, expanded: boolean, target: string) {
   const blocks: SpecSpan[][] = [
     kv("scope", row.scope),
     kv("equipped", row.equipped.join(" / ") || "—"),
+    kv("action target", target),
     kv("status", row.issue ? `${row.status}: ${row.issue}` : row.status),
   ];
   if (row.description) blocks.push([{ text: `"${row.description}"`, style: "muted" }]);
@@ -68,6 +80,7 @@ function overlay(model: Model): ViewSpec["overlay"] {
     return {
       kind: "help",
       title: "Keymap",
+      scroll: model.overlayScroll,
       lines: keymap.map((binding) => [
         { text: binding.keys.join("/"), style: "accent" },
         { text: ` ${binding.label}`, style: "text" },
@@ -78,10 +91,22 @@ function overlay(model: Model): ViewSpec["overlay"] {
     return {
       kind: "diff",
       title: model.busy ? "Diff (loading)" : "Diff",
+      scroll: model.overlayScroll,
       lines: (model.diffLines?.length ? model.diffLines : [model.busy?.label ?? "No diff loaded"]).map((line) => [{ text: line, style: lineStyle(line) }]),
     };
   }
-  if (model.overlay === "confirm") return { kind: "confirm", title: "Confirm", lines: [[{ text: "Press enter to confirm", style: "warning" }]] };
+  if (model.overlay === "confirm" && model.confirm) {
+    const action = model.confirm.action === "diffPreview" ? "Diff" : model.confirm.action === "sync" ? "Sync" : "Clear";
+    return {
+      kind: "confirm", title: `${action} · choose scope`,
+      lines: [
+        [{ text: "Which filesystem scope?", style: "text" }],
+        ...(["global", "project"] as const).map((scope): SpecSpan[] => [{ text: `${model.confirm?.scope === scope ? "▸" : " "} ${scope}`, style: model.confirm?.scope === scope ? "accent" : "muted" }]),
+        [{ text: `${action} all equipped loadouts in ${model.confirm.scope}.`, style: "warning" }],
+        [{ text: "h/l or j/k choose · enter confirms", style: "dim" }],
+      ],
+    };
+  }
   return undefined;
 }
 
@@ -92,9 +117,9 @@ function equipped(model: Model): SpecSpan[] {
     { text: "EQUIPPED: ", style: "accent" },
     ...(["global", "project", "session"] as const).map((layer): SpecSpan => ({
       text: `${layer[0].toUpperCase()} ${active.filter((row) => row.equipped.includes(layer)).map((row) => row.name).join("·") || "—"}  `,
-      style: layer === model.layer ? "accent" : "muted",
+      style: (model.mode === "session" ? layer === "session" : layer !== "session") ? "accent" : "muted",
     })),
-    { text: `[${model.layer}] `, style: "dim" },
+    { text: `[${model.mode}] `, style: "dim" },
     { text: drift ? "drift" : "in sync", style: drift ? "warning" : "success" },
     ...(model.busy ? [{ text: `  ${model.busy.label}…`, style: "warning" as const }] : []),
     ...(model.lastResult ? [{ text: `  ${model.lastResult.text}`, style: model.lastResult.variant === "error" ? "error" as const : "muted" as const }] : []),
@@ -104,6 +129,7 @@ function equipped(model: Model): SpecSpan[] {
           { text: model.filter.text || " ", style: model.filter.text ? "text" as const : "dim" as const },
         ]
       : []),
+    ...(model.filter.tool ? [{ text: `  tool:${model.filter.tool}`, style: "accent" as const }] : []),
   ];
 }
 
@@ -132,22 +158,6 @@ function glyph(row: LoadoutRow): { char: string; style: StyleToken } {
   if (row.status === "drift") return { char: "~", style: "warning" };
   if (row.equipped.length) return { char: "✓", style: "success" };
   return { char: "-", style: "dim" };
-}
-
-function visibleRows(model: Model, section: Section): LoadoutRow[] {
-  return model.sections[section]
-    .map((id) => model.rows.find((row) => row.id === id))
-    .filter((row): row is LoadoutRow => Boolean(row))
-    .filter((row) => {
-      if (model.filter.scope && row.scope !== model.filter.scope) return false;
-      if (model.filter.tool && !row.tools.includes(model.filter.tool)) return false;
-      const text = model.filter.text.trim().toLowerCase();
-      return !text || `${row.name} ${row.description ?? ""}`.toLowerCase().includes(text);
-    });
-}
-
-function cursorRow(model: Model): LoadoutRow | undefined {
-  return visibleRows(model, model.cursor.section)[model.cursor.index];
 }
 
 function kv(key: string, value: string): SpecSpan[] {

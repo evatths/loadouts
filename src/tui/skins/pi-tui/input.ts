@@ -34,6 +34,8 @@ export function isCtrlC(data: string): boolean {
 }
 
 function toPiTuiKey(key: string): KeyId {
+  if (key === "pageup") return Key.pageUp;
+  if (key === "pagedown") return Key.pageDown;
   if (/^[A-Z]$/.test(key)) return `shift+${key.toLowerCase()}` as KeyId;
   return key as KeyId;
 }

@@ -49,11 +49,40 @@ Inside OpenCode:
 /loadouts list
 ```
 
-The dashboard shows **G / P / S** equipment. `m` selects the equip layer;
-`j/k` moves, `tab` changes section, `space` toggles, `enter` expands artifacts,
-`/` searches, `u` undoes, and `q` returns to the originating session.
-Global/project rows are equipped through their matching filesystem layer.
-The footer updates from persisted session state and native events.
+The dashboard shows **G / P / S** equipment and **All / Global / Project**
+scope tabs. It opens on **All**. Tabs filter the catalog; in filesystem mode,
+each row automatically equips into its own scope. The action target appears in
+the detail pane. `m` switches **filesystem ↔ session** when a session is selected;
+embedded dashboards open in session mode.
+
+| Keys | Action |
+|---|---|
+| `j` / `k`, `↓` / `↑` | Move within a section |
+| `h` / `l`, `←` / `→`, `Tab` / `Shift+Tab` | Previous / next section |
+| `1` / `2` / `3` | Jump to Active / Available / Issues |
+| `[` / `]` | Previous / next scope tab |
+| `gg` / `G`, `Home` / `End` | First / last row |
+| `Space`, `a` / `d` | Toggle, activate / deactivate the selected row |
+| `m` | Switch filesystem / session mode |
+| `s` / `x` / `D` | Sync / clear / diff the current target |
+| `/`, `t` | Search, cycle tool filter |
+| `Enter`, `e` | Expand artifacts, edit definition |
+| `PgUp` / `PgDn` | Scroll artifact details (or the open overlay) |
+| `u`, `r` | Undo last mutation, refresh |
+| `?` | Help (`j` / `k` scroll) |
+| `Esc` | Close overlay → clear filters → collapse detail → All tab → exit |
+| `q` | Exit (or close the current overlay) |
+
+Filesystem bulk operations use the selected tab. In **All**, a scope chooser
+asks Global or Project (`h/l` or `j/k`, then `Enter`; `Esc` cancels). Search and
+tool filters do not narrow bulk operations. In session mode, bulk actions target
+the session's equipped set; a tab for the other source scope has no session
+equipment to change. Equipping a session loadout from a different scope replaces
+its previous source-scope set, and undo restores that set and scope.
+
+Long sections keep the selected row visible, with row ranges in their headings.
+The footer shows contextual shortcuts and updates from persisted session state
+and native events.
 
 The server plugin also filters skill advertisements (session permission denies
 alone do not hide them on 2.0.3), provides off-disk skills through a catalog
@@ -83,7 +112,7 @@ opencode:
 
 `loadouts tui` uses pi-tui and works without OpenCode. If a running service is
 available, press `S` to select a conversation at the current directory, then use
-the Session layer. Global/Project activation works independently of the service.
+session mode. Global/Project activation works independently of the service.
 The standalone dashboard requires Node 22.19+.
 
 Pi's bundled `loadouts-runtime` extension uses the same dashboard and layers.

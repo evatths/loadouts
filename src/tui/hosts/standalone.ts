@@ -22,7 +22,7 @@ export async function runStandaloneTui(cwd = process.cwd()): Promise<void> {
     tui.stop();
     try { await openEditor(file); } finally { tui.start(); }
   } });
-  const dashboard = new PiTuiDashboard({ spec: controller.spec, theme, onIntent: dispatch });
+  const dashboard = new PiTuiDashboard({ spec: controller.spec, theme, onIntent: dispatch, height: () => tui.terminal.rows });
   tui.addChild(dashboard);
   tui.setFocus(dashboard);
   tui.addInputListener((data) => { if (isCtrlC(data)) { stop(); return { consume: true }; } });
@@ -46,7 +46,7 @@ export async function runStandaloneTui(cwd = process.cwd()): Promise<void> {
       render();
       return;
     }
-    if (intent.t === "selectSession") {
+    if (intent.t === "selectSession" && !controller.model.overlay && !controller.model.filtering && !controller.model.busy) {
       if (!connection) {
         controller.model.lastResult = { text: "No running OpenCode service", variant: "info" };
         render();
@@ -70,7 +70,7 @@ export async function runStandaloneTui(cwd = process.cwd()): Promise<void> {
       kind: "help" as const, title: "Choose session · j/k, enter",
       lines: picker.sessions.length ? picker.sessions.map((session, index) => [{ text: `${index === picker!.index ? "▸" : " "} ${session.title ?? session.id} (${session.id})`, style: "text" as const }]) : [[{ text: "No sessions at this location", style: "dim" as const }]],
     } : spec.overlay;
-    if (selection) overlay = tui.showOverlay(new PiTuiOverlay(selection, theme, dispatch), { width: "90%", maxHeight: "75%", margin: 1 });
+    if (selection) overlay = tui.showOverlay(new PiTuiOverlay(selection, theme, dispatch, () => Math.floor(tui.terminal.rows * 0.75)), { width: "90%", maxHeight: "75%", margin: 1 });
     else tui.setFocus(dashboard);
     tui.requestRender();
   }

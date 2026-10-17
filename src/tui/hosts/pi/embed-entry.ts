@@ -65,7 +65,8 @@ async function dashboard(ctx: ExtensionCommandContext, activator: PiSessionActiv
     const component: Component = {
       render: (width) => {
         const spec = controller.spec;
-        return spec.overlay ? renderOverlay(spec.overlay, width, colors) : renderDashboard(spec, width, colors);
+        const height = Math.max(1, Math.floor(tui.terminal.rows * 0.86));
+        return spec.overlay ? renderOverlay(spec.overlay, width, colors, height) : renderDashboard(spec, width, colors, height);
       },
       handleInput: (input) => {
         const intent = isCtrlC(input) ? { t: "quit" as const } : intentFromPiTuiInput(input, controller.spec);

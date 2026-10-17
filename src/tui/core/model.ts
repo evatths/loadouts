@@ -2,10 +2,13 @@ import type { DashboardData, LoadoutRow } from "./data.js";
 
 export type Section = "active" | "available" | "issues";
 export type EquipLayer = "global" | "project" | "session";
+export type EquipMode = "filesystem" | "session";
 export type ScopeFilter = "global" | "project";
+export type BulkAction = "sync" | "clear" | "diffPreview";
 
 export interface DetailModel {
   rowId: string;
+  scroll?: number;
 }
 
 export interface UndoSnapshot {
@@ -23,13 +26,16 @@ export interface Model {
   cursor: { section: Section; index: number };
   filter: { text: string; scope?: ScopeFilter; tool?: string };
   filtering: boolean;
-  layer: EquipLayer;
-  layers: EquipLayer[];
-  scope: ScopeFilter;
-  staged?: Set<string>;
+  mode: EquipMode;
+  sessionAvailable: boolean;
+  sessionScope: ScopeFilter;
   undo?: UndoSnapshot;
+  rollback?: UndoSnapshot;
   detail?: DetailModel;
   overlay?: "help" | "diff" | "confirm" | null;
+  overlayScroll: number;
+  confirm?: { action: BulkAction; scope: ScopeFilter };
+  pendingTop?: boolean;
   busy?: { label: string } | null;
   lastResult?: { text: string; variant: "info" | "success" | "error" };
   diffLines?: string[];
@@ -38,7 +44,7 @@ export interface Model {
 
 export function createInitialModel(
   data: DashboardData,
-  options: { layer?: EquipLayer; layers?: EquipLayer[]; scope?: ScopeFilter } = {}
+  options: { mode?: EquipMode; sessionAvailable?: boolean; sessionScope?: ScopeFilter } = {}
 ): Model {
   const sections = buildSections(data.rows);
   return {
@@ -47,11 +53,11 @@ export function createInitialModel(
     cursor: firstCursor(sections),
     filter: { text: "" },
     filtering: false,
-    layer: options.layer ?? "project",
-    layers: options.layers ?? ["global", "project"],
-    scope: options.scope ?? "project",
-    staged: new Set(),
+    mode: options.sessionAvailable ? options.mode ?? "filesystem" : "filesystem",
+    sessionAvailable: options.sessionAvailable ?? false,
+    sessionScope: options.sessionScope ?? "project",
     overlay: null,
+    overlayScroll: 0,
     busy: null,
     lastResult: data.issues.length
       ? { text: `${data.issues.length} issue(s) detected`, variant: "error" }

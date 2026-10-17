@@ -74,8 +74,11 @@ directory. `-g`/`-p` select the loadout source scope. All subcommands accept `--
 The running service is discovered automatically and is never started by this command.
 
 ### `loadouts tui`
-Open the standalone dashboard (Node 22.19+). Press `m` to choose the equip layer,
-or `S` to target a running OpenCode conversation. The embedded OpenCode dashboard
+Open the standalone dashboard (Node 22.19+). Use `[` / `]` for All/Global/Project
+tabs and `h` / `l` or `Tab` to change sections. Row actions infer their filesystem
+scope. Press `S` to target a running OpenCode conversation, then `m` to switch
+filesystem/session mode. See [dashboard navigation](runtime.md#opencode-dashboard).
+The embedded OpenCode dashboard
 opens with `/loadouts` or `ctrl+l`; `/loadouts equip <names…> [-g|-p]`,
 `/loadouts unequip`, `/loadouts status`, and `/loadouts quick` run client-side.
 

@@ -1,8 +1,12 @@
-import type { EquipLayer, ScopeFilter } from "./model.js";
+import type { EquipLayer, ScopeFilter, Section } from "./model.js";
 
 export type Intent =
   | { t: "move"; delta: number }
   | { t: "section"; dir: 1 | -1 }
+  | { t: "selectSection"; section: Section }
+  | { t: "topPrefix" }
+  | { t: "edge"; edge: "first" | "last" }
+  | { t: "detailScroll"; delta: number }
   | { t: "toggle" }
   | { t: "activate" }
   | { t: "deactivate" }
@@ -17,9 +21,9 @@ export type Intent =
   | { t: "filterBackspace" }
   | { t: "filterCommit" }
   | { t: "filterCancel" }
-  | { t: "cycleScope" }
+  | { t: "cycleScope"; dir: 1 | -1 }
   | { t: "cycleTool" }
-  | { t: "cycleLayer" }
+  | { t: "cycleMode" }
   | { t: "selectSession" }
   | { t: "undo" }
   | { t: "refresh" }

@@ -5,6 +5,7 @@ import type { ViewSpec } from "../../core/viewspec.js";
 
 export function intentFromOpenTuiKey(event: KeyEvent, spec?: ViewSpec): Intent | undefined {
   if (event.ctrl && event.name?.toLowerCase() === "c") return { t: "quit" };
+  if (event.ctrl || event.meta || event.option) return undefined;
   if (spec?.footer.filter?.active) return filterIntentFromKey(event);
   return intentForKey(normalizeKey(event));
 }
@@ -37,8 +38,7 @@ function normalizeKey(event: KeyEvent): string {
   if (name === "tab" && event.shift) return "shift+tab";
   if (name === "space" || event.sequence === " ") return "space";
   if (name === "up" || name === "down" || name === "tab" || name === "enter" || name === "esc" || name === "backspace") return name;
-  if (event.shift && name === "d") return "D";
-  if (event.shift && name === "s") return "S";
+  if (event.shift && /^[a-z]$/.test(name)) return name.toUpperCase();
 
   const printable = printableChar(event);
   return printable ?? name;

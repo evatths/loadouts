@@ -1,6 +1,7 @@
 import { executeEffect } from "./actions.js";
 import { loadDashboardData, withSessionEquipment } from "./data.js";
-import { createInitialModel, type EquipLayer, type Model } from "./model.js";
+import { buildSections, createInitialModel, type EquipMode, type Model } from "./model.js";
+import { cursorRow, normalizeCursor } from "./selection.js";
 import { update } from "./update.js";
 import { view } from "./view.js";
 import type { Intent } from "./intent.js";
@@ -15,14 +16,14 @@ export class DashboardController {
   constructor(private readonly options: {
     cwd: string;
     session?: HostContext["session"];
-    layer?: EquipLayer;
+    mode?: EquipMode;
     changed: () => void;
     exit: () => void;
     edit: (file: string) => Promise<void>;
   }) {
     this.model = createInitialModel({ rows: [], active: [], tools: [], issues: [], warnings: [] }, {
-      layer: options.layer ?? (options.session ? "session" : "project"),
-      layers: options.session ? ["global", "project", "session"] : ["global", "project"],
+      mode: options.mode ?? (options.session ? "session" : "filesystem"),
+      sessionAvailable: Boolean(options.session),
     });
   }
 
@@ -33,7 +34,7 @@ export class DashboardController {
   async selectSession(session: HostContext["session"]): Promise<void> {
     if (this.model.busy) return;
     this.options.session = session;
-    this.model = { ...this.model, undo: undefined, layer: session ? "session" : "project", layers: session ? ["global", "project", "session"] : ["global", "project"] };
+    this.model = { ...this.model, undo: undefined, mode: session ? "session" : "filesystem", sessionAvailable: Boolean(session) };
     await this.refresh();
   }
 
@@ -43,11 +44,9 @@ export class DashboardController {
       const data = await loadDashboardData(this.options.cwd);
       const session = this.options.session;
       const status = session ? await session.activator.status(session.id) : undefined;
-      if (this.disposed || version !== this.refreshVersion) return;
-      const next = createInitialModel(withSessionEquipment(data, status), {
-        layer: this.model.layer, layers: this.model.layers, scope: status?.scope ?? this.model.scope,
-      });
-      this.model = { ...this.model, rows: next.rows, sections: next.sections, scope: next.scope };
+      if (this.disposed || version !== this.refreshVersion || this.model.busy) return;
+      const { rows } = withSessionEquipment(data, status);
+      this.model = normalizeCursor({ ...this.model, rows, sections: buildSections(rows), sessionScope: status?.scope ?? this.model.sessionScope }, cursorRow(this.model)?.id);
     } catch (error) {
       this.model = { ...this.model, lastResult: { variant: "error", text: error instanceof Error ? error.message : String(error) } };
     }
@@ -56,8 +55,6 @@ export class DashboardController {
 
   async dispatch(intent: Intent): Promise<void> {
     if (this.disposed) return;
-    if ((intent.t === "quit" || intent.t === "closeOverlay") && this.model.overlay) intent = { t: "closeOverlay" };
-    else if (intent.t === "closeOverlay" && !this.model.filtering) intent = { t: "quit" };
     const result = update(this.model, intent);
     this.model = result.model;
     if (this.model.quitRequested) { this.options.exit(); return; }
