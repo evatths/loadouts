@@ -1,5 +1,19 @@
 # MEMORY
 
+## Gitignore freshness is part of the render pipeline (2026-09-27)
+
+Gitignore used to be refreshed only by artifact lifecycle commands (add/
+delete/import). Now `refreshGitignores()` in `src/core/render.ts` runs at the
+end of `applyPlan`, `applyMultiPlan`, and `removeManaged`, so every real
+filesystem mutation (CLI activate/sync/deactivate/clear/remove, init
+auto-apply, and the TUI's apply path in `src/tui/core/actions.ts`) leaves
+per-target `.gitignore`s current — entries appear for new definitions and
+stale ones are pruned. Don't re-add per-command `rebuildAllGitignores` calls
+after `applyTargetSet`; only sync.ts keeps one, for the nothing-to-render
+(earlyExit) path. Best-effort (try/catch): gitignore failures never break a
+render. Bundled embedded runtimes must be regenerated (`npm run
+build:embedded`) after touching core/render.ts.
+
 ## OpenCode V2 naming reconciliation (2026-09-15)
 
 Fixed three pre-V2-runtime naming drifts against OpenCode 2.0.3

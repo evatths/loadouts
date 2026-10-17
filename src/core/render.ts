@@ -30,6 +30,7 @@ import {
 
 import { registry } from "./registry.js";
 import type { OutputMapping } from "./registry.js";
+import { rebuildAllGitignores, updateLoadoutsGitignore } from "../lib/gitignore.js";
 import { expandTemplate, type TemplateVars } from "./template.js";
 import { isUnmanagedCollision, saveState, loadState } from "./manifest.js";
 import type {
@@ -328,6 +329,27 @@ export async function planRender(
 }
 
 // ---------------------------------------------------------------------------
+// Gitignore freshness
+// ---------------------------------------------------------------------------
+
+/**
+ * Refresh gitignore files after a filesystem mutation (apply or remove).
+ *
+ * Every real render/remove now leaves gitignores current, not just artifact
+ * add/delete: the managed sections are rebuilt from current definitions, so
+ * entries appear for newly added artifacts and stale entries are pruned.
+ * Best-effort — gitignore maintenance must never fail a render.
+ */
+function refreshGitignores(loadoutRoot: string, projectRoot: string, scope: Scope): void {
+  try {
+    rebuildAllGitignores(loadoutRoot, projectRoot, scope);
+    updateLoadoutsGitignore(loadoutRoot);
+  } catch {
+    // Best-effort: a gitignore failure should never break activation/sync.
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Apply
 // ---------------------------------------------------------------------------
 
@@ -471,6 +493,7 @@ export async function applyPlan(
     removeFile(fallbackMarker);
   }
 
+  refreshGitignores(loadout.rootPath, projectRoot, scope);
 }
 
 export interface ApplyResult {
@@ -600,6 +623,8 @@ export async function applyMultiPlan(
     removeFile(fallbackMarker);
   }
 
+  refreshGitignores(loadoutRoot, projectRoot, scope);
+
   return {
     totalOutputs: mergedOutputs.length,
     byTool,
@@ -638,6 +663,8 @@ export async function removeManaged(
   }
 
   await removeEmptyParentDirs(state.entries.map((entry) => entry.targetPath), projectRoot);
+
+  refreshGitignores(loadoutRoot, projectRoot, scope);
 
   return { removed, missing };
 }

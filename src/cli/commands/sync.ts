@@ -50,6 +50,11 @@ export const syncCommand = new Command("sync")
 
       if (earlyExit) {
         log.dim(`[${ctx.scope}] ${earlyExit}`);
+        // Nothing to re-render, but sync still refreshes gitignores so
+        // definitions added/edited outside `add`/`install` are covered.
+        if (!options.dryRun) {
+          rebuildAllGitignores(ctx.configPath, ctx.projectRoot, ctx.scope);
+        }
         continue;
       }
 
@@ -58,12 +63,6 @@ export const syncCommand = new Command("sync")
         verb: state ? "Synced" : "Applied",
       });
       synced = true;
-
-      // Rebuild per-target .gitignore files so rendered artifacts are ignored
-      // even when definitions were added/edited outside `add`/`install`.
-      if (!options.dryRun) {
-        rebuildAllGitignores(ctx.configPath, ctx.projectRoot, ctx.scope);
-      }
     }
 
     if (!synced) {

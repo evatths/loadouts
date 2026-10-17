@@ -19,7 +19,6 @@ import {
 } from "../../core/scope.js";
 import { computeActivateSet } from "./policy.js";
 import { applyTargetSet } from "./render-engine.js";
-import { rebuildAllGitignores } from "../../lib/gitignore.js";
 import { log } from "../../lib/output.js";
 import type { Scope } from "../../core/types.js";
 
@@ -55,10 +54,6 @@ export const activateCommand = new Command("activate")
           verb: "Activated",
           showKindNamespaceNotes: true,
         });
-
-        if (!options.dryRun) {
-          rebuildAllGitignores(ctx.configPath, ctx.projectRoot, ctx.scope);
-        }
       }
       return;
     }
@@ -98,8 +93,4 @@ export const activateCommand = new Command("activate")
       verb: "Activated",
       showKindNamespaceNotes: true,
     });
-
-    if (!options.dryRun) {
-      rebuildAllGitignores(ctx.configPath, ctx.projectRoot, ctx.scope);
-    }
   });

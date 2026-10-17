@@ -9,9 +9,13 @@
  *  - Global scope is supported (same mechanism, absolute target dirs)
  *  - The project root .gitignore only contains root-level managed outputs
  *
- * Gitignore is part of the artifact lifecycle (add/delete/import), not the
- * render pipeline. Updates happen when artifacts are created or removed,
- * not when loadouts are activated or synced.
+ * Gitignore entries are derived from artifact *definitions* (the loadouts
+ * directory), independent of activation state. They are refreshed after any
+ * filesystem mutation — applies (activate/sync/init, via applyPlan and
+ * applyMultiPlan in core/render.ts) and removals (deactivate/clear/remove,
+ * via removeManaged) — as well as after artifact lifecycle operations
+ * (add/delete/import). Sync also refreshes them when there is nothing to
+ * re-render, so definitions edited outside the CLI stay covered.
  *
  * Uses markers to identify the managed section:
  *   # <loadouts>

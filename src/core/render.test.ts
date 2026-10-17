@@ -844,3 +844,155 @@ describe("full render pipeline compatibility", () => {
     }
   });
 });
+
+describe("gitignore freshness on render/remove", () => {
+  beforeAll(() => {
+    if (registry.allToolNames().length === 0) {
+      registerBuiltins(createPluginAPI(registry));
+    }
+  });
+
+  function createPipelineFixture(structure: Record<string, string>): {
+    tmpDir: string;
+    projectRoot: string;
+    loadoutRoot: string;
+  } {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "loadout-gitignore-render-"));
+    const projectRoot = path.join(tmpDir, "project");
+    const loadoutRoot = path.join(projectRoot, ".loadouts");
+
+    fs.mkdirSync(loadoutRoot, { recursive: true });
+
+    for (const [relativePath, content] of Object.entries(structure)) {
+      const fullPath = path.join(loadoutRoot, relativePath);
+      fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+      fs.writeFileSync(fullPath, content, "utf-8");
+    }
+
+    return { tmpDir, projectRoot, loadoutRoot };
+  }
+
+  function planBase(
+    projectRoot: string,
+    loadoutRoot: string
+  ): Promise<{ loadout: ReturnType<typeof resolveLoadout>; plan: ReturnType<typeof planRender> extends Promise<infer P> ? P : never }> {
+    const roots: LoadoutRoot[] = [{ path: loadoutRoot, level: "project", depth: 0 }];
+    const loadout = resolveLoadout("base", roots);
+    return planRender(loadout, projectRoot, "project").then((plan) => ({ loadout, plan }));
+  }
+
+  const RULE_YAML = `---\ndescription: TypeScript style\npaths:\n  - "**/*.ts"\nactivation: scoped\n---\n\n# TypeScript Style\n`;
+
+  it("applyPlan writes managed gitignore entries for rendered artifacts", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - cursor\ninclude:\n  - rules/ts-style.md\n`,
+      "rules/ts-style.md": RULE_YAML,
+    });
+
+    try {
+      const { loadout, plan } = await planBase(fixture.projectRoot, fixture.loadoutRoot);
+      await applyPlan(plan, loadout, fixture.projectRoot, "symlink", "project");
+
+      const cursorGitignore = fs.readFileSync(
+        path.join(fixture.projectRoot, ".cursor", ".gitignore"),
+        "utf-8"
+      );
+      expect(cursorGitignore).toContain("# <loadouts>");
+      expect(cursorGitignore).toContain("rules/ts-style.mdc");
+
+      const loadoutsGitignore = fs.readFileSync(
+        path.join(fixture.loadoutRoot, ".gitignore"),
+        "utf-8"
+      );
+      expect(loadoutsGitignore).toContain(".state.json");
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("applyMultiPlan writes managed gitignore entries for rendered artifacts", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - opencode\ninclude:\n  - skills/debugger\n`,
+      "skills/debugger/SKILL.md": `---\nname: debugger\ndescription: Debug issues\n---\n\n# Debugger\n`,
+    });
+
+    try {
+      const { loadout, plan } = await planBase(fixture.projectRoot, fixture.loadoutRoot);
+      await applyMultiPlan(
+        [{ loadout, plan }],
+        fixture.loadoutRoot,
+        fixture.projectRoot,
+        "symlink",
+        "project"
+      );
+
+      const opencodeGitignore = fs.readFileSync(
+        path.join(fixture.projectRoot, ".opencode", ".gitignore"),
+        "utf-8"
+      );
+      expect(opencodeGitignore).toContain("# <loadouts>");
+      // Dir-layout skills get a trailing slash
+      expect(opencodeGitignore).toContain("skills/debugger/");
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("re-applying after a definition is deleted prunes its stale gitignore entry", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - cursor\ninclude:\n  - rules/ts-style.md\n  - rules/go-style.md\n`,
+      "rules/ts-style.md": RULE_YAML,
+      "rules/go-style.md": `---\ndescription: Go style\npaths:\n  - "**/*.go"\n---\n\n# Go Style\n`,
+    });
+
+    try {
+      const first = await planBase(fixture.projectRoot, fixture.loadoutRoot);
+      await applyPlan(first.plan, first.loadout, fixture.projectRoot, "symlink", "project");
+
+      const gitignore = () =>
+        fs.readFileSync(path.join(fixture.projectRoot, ".cursor", ".gitignore"), "utf-8");
+
+      expect(gitignore()).toContain("rules/ts-style.mdc");
+      expect(gitignore()).toContain("rules/go-style.mdc");
+
+      // Delete the definition and drop it from the loadout
+      fs.rmSync(path.join(fixture.loadoutRoot, "rules", "ts-style.md"));
+      fs.writeFileSync(
+        path.join(fixture.loadoutRoot, "loadouts", "base.yaml"),
+        `name: base\ntools:\n  - cursor\ninclude:\n  - rules/go-style.md\n`
+      );
+
+      const second = await planBase(fixture.projectRoot, fixture.loadoutRoot);
+      await applyPlan(second.plan, second.loadout, fixture.projectRoot, "symlink", "project");
+
+      expect(gitignore()).not.toContain("rules/ts-style.mdc");
+      expect(gitignore()).toContain("rules/go-style.mdc");
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("removeManaged refreshes gitignore after definitions are deleted", async () => {
+    const fixture = createPipelineFixture({
+      "loadouts/base.yaml": `name: base\ntools:\n  - cursor\ninclude:\n  - rules/ts-style.md\n`,
+      "rules/ts-style.md": RULE_YAML,
+    });
+
+    try {
+      const { loadout, plan } = await planBase(fixture.projectRoot, fixture.loadoutRoot);
+      await applyPlan(plan, loadout, fixture.projectRoot, "symlink", "project");
+
+      // Definition disappears without any loadouts command knowing
+      fs.rmSync(path.join(fixture.loadoutRoot, "rules", "ts-style.md"));
+
+      await removeManaged(fixture.loadoutRoot, fixture.projectRoot, "project");
+
+      const gitignorePath = path.join(fixture.projectRoot, ".cursor", ".gitignore");
+      expect(fs.existsSync(gitignorePath)).toBe(true);
+      const content = fs.readFileSync(gitignorePath, "utf-8");
+      expect(content).not.toContain("rules/ts-style.mdc");
+    } finally {
+      fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
+    }
+  });
+});
