@@ -92,15 +92,17 @@ function updateGitignoreFile(gitignorePath: string, managedPaths: string[]): voi
     if (after) parts.push(after);
 
     let newContent = parts.filter(Boolean).join("\n\n");
-    if (!newContent.endsWith("\n")) newContent += "\n";
+    if (newContent && !newContent.endsWith("\n")) newContent += "\n";
 
     writeFile(gitignorePath, newContent);
   } else {
     // No existing section — append
     if (!managedSection) return;
 
-    let newContent = content.trimEnd();
-    newContent += "\n\n" + managedSection + "\n";
+    // A whitespace-only file (e.g. after its managed section was removed)
+    // restarts clean instead of accumulating leading blank lines.
+    const base = content.trim().length > 0 ? content.trimEnd() : "";
+    const newContent = base ? `${base}\n\n${managedSection}\n` : `${managedSection}\n`;
     writeFile(gitignorePath, newContent);
   }
 }

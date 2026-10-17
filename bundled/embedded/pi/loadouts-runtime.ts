@@ -15223,12 +15223,16 @@ ${END_MARKER}` : "";
     if (managedSection) parts.push(managedSection);
     if (after) parts.push(after);
     let newContent = parts.filter(Boolean).join("\n\n");
-    if (!newContent.endsWith("\n")) newContent += "\n";
+    if (newContent && !newContent.endsWith("\n")) newContent += "\n";
     writeFile(gitignorePath, newContent);
   } else {
     if (!managedSection) return;
-    let newContent = content.trimEnd();
-    newContent += "\n\n" + managedSection + "\n";
+    const base = content.trim().length > 0 ? content.trimEnd() : "";
+    const newContent = base ? `${base}
+
+${managedSection}
+` : `${managedSection}
+`;
     writeFile(gitignorePath, newContent);
   }
 }

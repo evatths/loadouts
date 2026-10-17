@@ -129,6 +129,34 @@ describe("gitignore", () => {
       expect(content).not.toContain("# <loadouts>");
       expect(content).toContain("*.log");
     });
+
+    it("leaves an empty file when a pure managed file's section is removed", () => {
+      const targetDir = path.join(tmpDir, ".claude");
+      fs.mkdirSync(targetDir, { recursive: true });
+      updateTargetGitignore(targetDir, ["rules/a.md"]);
+      updateTargetGitignore(targetDir, []);
+
+      const content = fs.readFileSync(
+        path.join(targetDir, ".gitignore"),
+        "utf-8"
+      );
+      expect(content).toBe("");
+    });
+
+    it("re-adds the managed section without leading blank lines after removal", () => {
+      const targetDir = path.join(tmpDir, ".claude");
+      fs.mkdirSync(targetDir, { recursive: true });
+      updateTargetGitignore(targetDir, ["rules/a.md"]);
+      updateTargetGitignore(targetDir, []);
+      updateTargetGitignore(targetDir, ["rules/b.md"]);
+
+      const content = fs.readFileSync(
+        path.join(targetDir, ".gitignore"),
+        "utf-8"
+      );
+      expect(content.startsWith("# <loadouts>")).toBe(true);
+      expect(content).toContain("rules/b.md");
+    });
   });
 
   // ---------------------------------------------------------------------------
