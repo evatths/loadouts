@@ -20,7 +20,7 @@ export default Plugin.define({
     const [revision, changed] = createSignal(0);
     const notify = () => changed((n) => n + 1);
     const stopInstructions = context.data.on("session.instructions.updated", notify);
-    const stopPermissions = context.data.on("session.permissions.updated", notify);
+    const stopPermissions = context.data.on("session.permissions", notify);
     const location = () => context.location ?? context.data.location.default();
     const sessionID = () => {
       const route = context.ui.router.current();
@@ -96,7 +96,7 @@ export default Plugin.define({
         }).catch(toastError);
       });
       onCleanup(() => { version++; });
-      return <text fg={context.theme.text.subdued}>EQUIPPED {text()}</text>;
+      return <text fg={context.theme.text.muted}>EQUIPPED {text()}</text>;
     }
 
     function QuickEquip(props: { sessionID: string }) {
@@ -127,8 +127,8 @@ export default Plugin.define({
         }
       };
       return <box flexDirection="column" focusable onKeyDown={key} focused padding={1}>
-        <text fg={context.theme.text.action.primary.default}>QUICK EQUIP · space selects · enter equips · esc closes</text>
-        <For each={rows()}>{(row, index) => <text fg={index() === cursor() ? context.theme.text.action.primary.default : context.theme.text.default}>
+        <text fg={context.theme.text.action.primary.base}>QUICK EQUIP · space selects · enter equips · esc closes</text>
+        <For each={rows()}>{(row, index) => <text fg={index() === cursor() ? context.theme.text.action.primary.base : context.theme.text.base}>
           {index() === cursor() ? "▸" : " "} {selected().has(`${row.scope}:${row.name}`) ? "✓" : "—"} {row.name} ({row.scope})
         </text>}</For>
         {busy() ? <text>Equipping…</text> : null}

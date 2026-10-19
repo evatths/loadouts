@@ -1,8 +1,8 @@
 # OpenCode V2 Runtime
 
-Implemented against **OpenCode 2.0.3**, `@opencode/client@2.0.3`,
-`@opencode/plugin@2.0.3`, OpenTUI 0.5.11, and the host's Solid 1.9.15.
-Verified 2026-09-14. See [runtime.md](runtime.md) for usage and
+Implemented against **OpenCode 2.0.3** (verified 2026-09-14); bumped to and
+re-verified against **2.0.32** (`@opencode/*@2.0.32`, OpenTUI 0.5.17) on
+2026-10-18. See [runtime.md](runtime.md) for usage and
 [the implementation plan](../plans/OPENCODE-V2-RUNTIME.md) for the original scope.
 The [beta investigation](archive/opencode-v2-runtime-beta-18707.md) is archived.
 
@@ -87,7 +87,7 @@ The manifest remains authoritative for off-disk advertisement selection.
 
 Headless `/loadouts equip`, auto-equip via
 `loadouts.yaml: opencode.defaultSession`, and typed RPC share the activator.
-In 2.0.3, `Plugin.Context.session` lacks instruction-entry methods, so these
+`Plugin.Context.session` lacks instruction-entry methods (still true in 2.0.32), so these
 optional server operations discover the managed local service. They require that
 service; the HTTP/TUI session activation path itself uses the connected client.
 Without managed-service discovery, ordinary instruction entries and on-disk
@@ -124,6 +124,6 @@ with experimental FFI, and is only used inside OpenCode.
   to `AGENTS.md`; never depend on that array.
 - `POST …/skill` works on 2.0.3; the archived beta's failure is obsolete.
 - Documentation uses `/api/experimental/session/…` for some operations while the
-  installed 2.0.3 API uses `/api/session/…`. Always use the pinned generated client.
+  installed API uses `/api/session/…`. Always use the generated client.
 - Native instruction updates retain earlier context with supersession notices.
   Unequip changes future turns; it does not erase information the model has seen.

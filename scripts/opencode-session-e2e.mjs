@@ -45,7 +45,7 @@ try {
   const [a, b] = sessions;
   const activator = new SessionActivator(client);
   await client.session.instructions.entry.put({ sessionID: a.id, key: "foreign", value: "Keep this entry." });
-  await client.permission.rules({ sessionID: a.id, permissions: [{ action: "shell", resource: "git push *", effect: "ask" }] });
+  await client.session.update({ sessionID: a.id, permissions: [{ action: "shell", resource: "git push *", effect: "ask" }] });
   await activator.equip(a.id, ["alpha"], { scope: "project" });
   await activator.equip(b.id, ["beta"], { scope: "project" });
   assert.deepEqual((await activator.status(a.id)).names, ["alpha"]);
@@ -83,7 +83,7 @@ try {
   assert.deepEqual((await reconnected.status(b.id)).names, ["beta"]);
   console.log("✓ Reconnection, clean unequip, prior permissions restored, control session untouched");
   const messages = (await client.session.context({ sessionID: a.id })).length;
-  await client.session.command({ sessionID: a.id, command: "loadouts", text: "equip alpha -p" });
+  await client.session.command({ sessionID: a.id, name: "loadouts", text: "equip alpha -p" });
   assert.deepEqual((await reconnected.status(a.id)).names, ["alpha"]);
   assert.equal((await client.session.context({ sessionID: a.id })).length, messages);
   console.log("✓ Headless equip is silent; typed RPC status and off-disk catalog available");
@@ -91,7 +91,7 @@ try {
   const existing = new Set(sessions.map(session => session.id));
   const defaultEquipped = (async () => {
     for await (const event of client.event.subscribe({ signal: AbortSignal.timeout(15000) })) {
-      if (event.type === "session.permissions.updated" && event.location?.directory === directory && !existing.has(event.data.sessionID)) return event.data.sessionID;
+      if (event.type === "session.permissions" && event.location?.directory === directory && !existing.has(event.data.sessionID)) return event.data.sessionID;
     }
     throw new Error("No auto-equip event received");
   })();

@@ -20,7 +20,7 @@ export default Plugin.define({
   async setup(ctx) {
     if (!registry.getTool("opencode")) registerBuiltins(createPluginAPI(registry));
     const directory = ctx.location.directory;
-    const virtual = new Map<string, { name: string; description: string; location: string; content: string }>();
+    const virtual = new Map<string, { name: string; description: string; path: string; content: string }>();
     const data = await loadDashboardData(directory);
     for (const row of data.rows) {
       if (row.status === "broken") continue;
@@ -31,9 +31,9 @@ export default Plugin.define({
       if (!compiled) continue;
       for (const ref of compiled.bundle.injection.skills) {
         if (virtual.has(ref.name)) continue;
-        const location = isDirectory(ref.sourcePath) ? path.join(ref.sourcePath, "SKILL.md") : ref.sourcePath;
-        const parsed = parseMarkdownFrontmatter(readFile(location));
-        virtual.set(ref.name, { name: ref.name, description: ref.description ?? "", location, content: parsed.body });
+        const file = isDirectory(ref.sourcePath) ? path.join(ref.sourcePath, "SKILL.md") : ref.sourcePath;
+        const parsed = parseMarkdownFrontmatter(readFile(file));
+        virtual.set(ref.name, { name: ref.name, description: ref.description ?? "", path: file, content: parsed.body });
       }
     }
     // Catalog entries are location-wide. Hide these by default; advertise selected
@@ -44,7 +44,7 @@ export default Plugin.define({
       for (const [name, skill] of virtual) {
         const id = Skill.ID.make(name);
         if (editor.get(id)) continue;
-        editor.add({ ...skill, id, name: Skill.Name.make(skill.name), location: AbsolutePath.make(skill.location), autoinvoke: false, slash: false });
+        editor.add({ ...skill, id, name: Skill.Name.make(skill.name), path: AbsolutePath.make(skill.path), autoinvoke: false });
         added.add(name);
       }
     });
@@ -54,7 +54,7 @@ export default Plugin.define({
       event.system = event.system.map((part) => part.type === "text"
         ? { ...part, text: filterSkillAdvertisement(part.text, (id) => !skillDenied(id, session.permissions ?? [])) } : part);
       if (!added.size) return;
-      // Instruction-entry APIs are absent from Plugin.Context in 2.0.3. Only
+      // Instruction-entry APIs are absent from Plugin.Context. Only
       // this optional off-disk extension uses managed-service discovery.
       const status = await activator().then((equipment) => equipment.status(event.sessionID)).catch(() => undefined);
       const selected = status?.skills.filter((id) => added.has(id) && !skillDenied(id, session.permissions ?? [])) ?? [];

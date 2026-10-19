@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { ProcessTerminal, TUI, type OverlayHandle } from "@earendil-works/pi-tui";
+import { ProcessTerminal, TuiMainScreen, type OverlayHandle } from "@earendil-works/pi-tui";
 import { discoverClient, sessionsAt } from "../../integrations/opencode/client.js";
 import { SessionActivator } from "../../integrations/opencode/session.js";
 import { DashboardController } from "../core/controller.js";
@@ -10,7 +10,7 @@ import { PiTuiDashboard, PiTuiOverlay } from "../skins/pi-tui/render.js";
 import { defaultPiTuiTokens } from "../skins/pi-tui/theme.js";
 
 export async function runStandaloneTui(cwd = process.cwd()): Promise<void> {
-  const tui = new TUI(new ProcessTerminal());
+  const tui = new TuiMainScreen(new ProcessTerminal());
   const theme = { ...defaultThemeTokens, ...defaultPiTuiTokens() };
   const connection = await discoverClient().catch(() => undefined);
   const activator = connection ? new SessionActivator(connection.client) : undefined;

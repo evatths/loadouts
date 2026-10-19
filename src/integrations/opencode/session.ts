@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { OpenCode, InstructionEntryInfo, JsonValue, PermissionRuleset } from "@opencode/client";
+import type { OpenCode, InstructionEntryInfo, JsonValue, PermissionRuleset, SessionInfo } from "@opencode/client";
 import { compileSession } from "./delta.js";
 import type { OpenCodeSelection, Scope } from "../../core/types.js";
 
@@ -28,10 +28,9 @@ export interface EquipResult { status: SessionStatus; warnings: string[] }
 
 type Client = ReturnType<typeof OpenCode.make>;
 export interface SessionClient {
-  session: Pick<Client["session"], "get" | "instructions" | "switchAgent" | "switchModel">;
-  permission: Pick<Client["permission"], "rules">;
+  session: Pick<Client["session"], "get" | "update" | "instructions" | "switchAgent" | "switchModel">;
   skill: Pick<Client["skill"], "list">;
-  plugin: Pick<Client["plugin"], "awaitActivation">;
+  plugin: Pick<Client["plugin"], "list">;
 }
 
 export interface SessionEquipment {
@@ -72,7 +71,7 @@ export class SessionActivator implements SessionEquipment {
     return serialized(sessionID, async () => {
       if (!names.length) throw new Error("Choose at least one loadout, or use unequip.");
       const session = await this.client.session.get({ sessionID });
-      await this.client.plugin.awaitActivation({ location: session.location });
+      await this.activated(session.location);
       const compiled = await this.compile(session.location.directory, [...new Set(names)], options);
       const catalog = await this.client.skill.list({ location: session.location });
       const entries = await this.client.session.instructions.entry.list({ sessionID });
@@ -122,6 +121,16 @@ export class SessionActivator implements SessionEquipment {
     });
   }
 
+  // A freshly booted location answers with an empty plugin list (and a partial
+  // skill catalog) until activation finishes; V2 has no explicit await for it.
+  private async activated(location: SessionInfo["location"]): Promise<void> {
+    for (let attempt = 0; attempt < 200; attempt++) {
+      if ((await this.client.plugin.list({ location })).data.length) return;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    throw new Error(`OpenCode plugins did not activate at ${location.directory}.`);
+  }
+
   private async replace(
     sessionID: string, entries: InstructionEntryInfo[], previous: SessionStatus | undefined,
     values: Record<string, JsonValue>, permissions: PermissionRuleset, beforePermissions: PermissionRuleset,
@@ -149,7 +158,7 @@ export class SessionActivator implements SessionEquipment {
       }
       // Publish permissions last. Its native event lets other clients refresh the
       // committed manifest even before the next model turn drains instruction updates.
-      await this.client.permission.rules({ sessionID, permissions });
+      await this.client.session.update({ sessionID, permissions });
     } catch (cause) {
       const failures: unknown[] = [];
       for (const key of keys) {
@@ -158,7 +167,7 @@ export class SessionActivator implements SessionEquipment {
           else await api.remove({ sessionID, key });
         } catch (error) { failures.push(error); }
       }
-      try { await this.client.permission.rules({ sessionID, permissions: beforePermissions }); }
+      try { await this.client.session.update({ sessionID, permissions: beforePermissions }); }
       catch (error) { failures.push(error); }
       if (agentChanged) {
         try {

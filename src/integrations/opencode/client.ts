@@ -3,16 +3,16 @@ import { realpathSync } from "node:fs";
 import { OpenCode, type SessionInfo } from "@opencode/client";
 import { Service } from "@opencode/client/service";
 
-export const TESTED_OPENCODE_VERSION = "2.0.3";
+export const TESTED_OPENCODE_VERSION = "2.0.32";
 export interface Connection { client: ReturnType<typeof OpenCode.make>; version: string; warning?: string }
 
 export async function discoverClient(): Promise<Connection | undefined> {
   const endpoint = await Service.discover();
   if (!endpoint) return undefined;
   const client = OpenCode.make({ baseUrl: endpoint.url, headers: Service.headers(endpoint) });
-  const health = await client.health.get();
-  return { client, version: health.version, warning: health.version === TESTED_OPENCODE_VERSION
-    ? undefined : `OpenCode ${health.version} is running; Loadouts is tested against ${TESTED_OPENCODE_VERSION}.` };
+  const { version } = await client.server.info();
+  return { client, version, warning: version === TESTED_OPENCODE_VERSION
+    ? undefined : `OpenCode ${version} is running; Loadouts is tested against ${TESTED_OPENCODE_VERSION}.` };
 }
 
 export async function requireClient(): Promise<Connection> {

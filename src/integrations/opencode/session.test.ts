@@ -16,11 +16,13 @@ function fixture() {
     entries.set(id, new Map([["unrelated", "keep me"]]));
   }
   const client: SessionClient = {
-    plugin: { awaitActivation: async () => {} },
+    plugin: { list: async () => ({ location: { directory: "/work", project: { id: "project", directory: "/work", canonical: "/work" } },
+      data: [{ id: "loadouts", source: { type: "local", path: "/plugin" }, features: { server: true }, state: { status: "active" } }] }) },
     session: {
       switchAgent: async ({ sessionID, agent }) => { sessions.get(sessionID)!.agent = agent; },
       switchModel: async ({ sessionID, model }) => { sessions.get(sessionID)!.model = model; },
       get: async ({ sessionID }) => structuredClone(sessions.get(sessionID)!),
+      update: async ({ sessionID, permissions }) => { writes++; if (permissions) sessions.get(sessionID)!.permissions = structuredClone([...permissions]); },
       instructions: { entry: {
         list: async ({ sessionID }) => Array.from(entries.get(sessionID)!, ([key, value]): InstructionEntryInfo => ({ key, value: structuredClone(value) })),
         put: async ({ sessionID, key, value }) => {
@@ -31,9 +33,8 @@ function fixture() {
         remove: async ({ sessionID, key }) => { writes++; entries.get(sessionID)!.delete(key); },
       } },
     },
-    permission: { rules: async ({ sessionID, permissions }) => { writes++; sessions.get(sessionID)!.permissions = structuredClone([...permissions]); } },
     skill: { list: async () => ({ location: { directory: "/work", project: { id: "project", directory: "/work", canonical: "/work" } },
-      data: ["alpha", "beta"].map((id) => ({ id, name: id, content: "body", location: `/skills/${id}/SKILL.md` })) }) },
+      data: ["alpha", "beta"].map((id) => ({ id, name: id, content: "body", path: `/skills/${id}/SKILL.md` })) }) },
   };
   let source = "body";
   const directories: string[] = [];

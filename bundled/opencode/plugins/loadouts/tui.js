@@ -16029,16 +16029,16 @@ var defaultThemeTokens = {
 function toOpenTuiTheme(theme) {
   if (!theme) return defaultThemeTokens;
   return {
-    text: theme.text.default,
-    muted: theme.text.subdued,
-    dim: theme.text.subdued,
-    accent: theme.text.action.primary.default,
-    success: theme.text.feedback.success.default,
-    error: theme.text.feedback.error.default,
-    warning: theme.text.feedback.warning.default,
-    border: theme.border.default,
-    background: theme.background.default,
-    selectedBackground: theme.background.surface.offset
+    text: theme.text.base,
+    muted: theme.text.muted,
+    dim: theme.text.faint,
+    accent: theme.text.action.primary.base,
+    success: theme.text.feedback.success.base,
+    error: theme.text.feedback.error.base,
+    warning: theme.text.feedback.warning.base,
+    border: theme.border.base,
+    background: theme.background.base,
+    selectedBackground: theme.background.raised.base
   };
 }
 function colorFor(theme, token = "text") {
@@ -16425,9 +16425,7 @@ var SessionActivator = class {
       const session = await this.client.session.get({
         sessionID
       });
-      await this.client.plugin.awaitActivation({
-        location: session.location
-      });
+      await this.activated(session.location);
       const compiled = await this.compile(session.location.directory, [...new Set(names)], options);
       const catalog = await this.client.skill.list({
         location: session.location
@@ -16510,6 +16508,17 @@ var SessionActivator = class {
       };
     });
   }
+  // A freshly booted location answers with an empty plugin list (and a partial
+  // skill catalog) until activation finishes; V2 has no explicit await for it.
+  async activated(location) {
+    for (let attempt = 0; attempt < 200; attempt++) {
+      if ((await this.client.plugin.list({
+        location
+      })).data.length) return;
+      await new Promise((resolve6) => setTimeout(resolve6, 50));
+    }
+    throw new Error(`OpenCode plugins did not activate at ${location.directory}.`);
+  }
   async replace(sessionID, entries, previous, values, permissions, beforePermissions, selection, beforeSelection) {
     const api = this.client.session.instructions.entry;
     const keys = /* @__PURE__ */ new Set([...previous?.keys ?? [], ...Object.keys(values), MANIFEST_KEY]);
@@ -16553,7 +16562,7 @@ var SessionActivator = class {
         });
         modelChanged = true;
       }
-      await this.client.permission.rules({
+      await this.client.session.update({
         sessionID,
         permissions
       });
@@ -16575,7 +16584,7 @@ var SessionActivator = class {
         }
       }
       try {
-        await this.client.permission.rules({
+        await this.client.session.update({
           sessionID,
           permissions: beforePermissions
         });
@@ -16657,7 +16666,7 @@ var tui_default = Plugin.define({
     const [revision, changed] = createSignal2(0);
     const notify = () => changed((n) => n + 1);
     const stopInstructions = context.data.on("session.instructions.updated", notify);
-    const stopPermissions = context.data.on("session.permissions.updated", notify);
+    const stopPermissions = context.data.on("session.permissions", notify);
     const location = () => context.location ?? context.data.location.default();
     const sessionID = () => {
       const route = context.ui.router.current();
@@ -16810,7 +16819,7 @@ var tui_default = Plugin.define({
         var _el$ = _$createElement2("text"), _el$2 = _$createTextNode2(`EQUIPPED `);
         _$insertNode2(_el$, _el$2);
         _$insert2(_el$, text, null);
-        _$effect2((_$p) => _$setProp2(_el$, "fg", context.theme.text.subdued, _$p));
+        _$effect2((_$p) => _$setProp2(_el$, "fg", context.theme.text.muted, _$p));
         return _el$;
       })();
     }
@@ -16883,7 +16892,7 @@ var tui_default = Plugin.define({
             _$insert2(_el$6, () => selected().has(`${row.scope}:${row.name}`) ? "\u2713" : "\u2014", _el$8);
             _$insert2(_el$6, () => row.name, _el$9);
             _$insert2(_el$6, () => row.scope, _el$0);
-            _$effect2((_$p) => _$setProp2(_el$6, "fg", index() === cursor() ? context.theme.text.action.primary.default : context.theme.text.default, _$p));
+            _$effect2((_$p) => _$setProp2(_el$6, "fg", index() === cursor() ? context.theme.text.action.primary.base : context.theme.text.base, _$p));
             return _el$6;
           })()
         }), null);
@@ -16895,7 +16904,7 @@ var tui_default = Plugin.define({
             return _el$1;
           })() : null;
         })(), null);
-        _$effect2((_$p) => _$setProp2(_el$4, "fg", context.theme.text.action.primary.default, _$p));
+        _$effect2((_$p) => _$setProp2(_el$4, "fg", context.theme.text.action.primary.base, _$p));
         return _el$3;
       })();
     }

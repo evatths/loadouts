@@ -6,6 +6,7 @@ import * as path from "node:path";
 import { OpenCode } from "@opencode/client";
 import { Service } from "@opencode/client/service";
 import { SessionActivator } from "../dist/integrations/opencode/session.js";
+import { TESTED_OPENCODE_VERSION } from "../dist/integrations/opencode/client.js";
 import { registerBuiltins } from "../dist/builtins/index.js";
 import { registry } from "../dist/core/registry.js";
 import { createPluginAPI } from "../dist/core/plugin.js";
@@ -24,7 +25,7 @@ for (const name of ["alpha", "beta"]) {
   await write(`.opencode/skills/${name}/SKILL.md`, `---\nname: ${name}\ndescription: Restart proof\n---\nReply ok.\n`);
 }
 const connect = async () => {
-  const endpoint = await Service.ensure({ file, env, version: "2.0.3", command: ["opencode", "serve", "--service", "--hostname", "127.0.0.1", "--port", "0"] });
+  const endpoint = await Service.ensure({ file, env, version: TESTED_OPENCODE_VERSION, command: ["opencode", "serve", "--service", "--hostname", "127.0.0.1", "--port", "0"] });
   return OpenCode.make({ baseUrl: endpoint.url, headers: Service.headers(endpoint) });
 };
 try {

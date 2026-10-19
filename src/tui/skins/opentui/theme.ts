@@ -12,16 +12,16 @@ export type OpenTuiThemeTokens = Record<StyleToken, OpenTuiColor> & {
 export function toOpenTuiTheme(theme?: Plugin.Context["theme"]): OpenTuiThemeTokens {
   if (!theme) return defaultThemeTokens;
   return {
-    text: theme.text.default,
-    muted: theme.text.subdued,
-    dim: theme.text.subdued,
-    accent: theme.text.action.primary.default,
-    success: theme.text.feedback.success.default,
-    error: theme.text.feedback.error.default,
-    warning: theme.text.feedback.warning.default,
-    border: theme.border.default,
-    background: theme.background.default,
-    selectedBackground: theme.background.surface.offset,
+    text: theme.text.base,
+    muted: theme.text.muted,
+    dim: theme.text.faint,
+    accent: theme.text.action.primary.base,
+    success: theme.text.feedback.success.base,
+    error: theme.text.feedback.error.base,
+    warning: theme.text.feedback.warning.base,
+    border: theme.border.base,
+    background: theme.background.base,
+    selectedBackground: theme.background.raised.base,
   };
 }
 

@@ -1,5 +1,32 @@
 # MEMORY
 
+## OpenCode dependency policy: track latest, no back-compat (2026-10-18)
+
+`@opencode/*` and `@opentui/*` use caret ranges, and every `@opencode/*` package
+moves to the same version together. The lockfile is what keeps builds
+reproducible. We target the newest OpenCode release and use its current APIs
+without shims, fallbacks, or support for older versions. Exact pins or a
+stated support range are deferred until the user base grows. Don't re-add pins
+"for safety." `@opentui/*` stays on the minor version OpenCode itself
+depends on (check `npm view @opencode/plugin@<v> devDependencies`), not npm
+latest: the TUI host supplies OpenTUI at runtime.
+
+Bump recipe: `npm install` → `npm run lint` (finds every API drift) → `npm run
+build` (regenerates the bundled plugin, which inlines `@opencode/*`) → both
+`scripts/opencode-session-*e2e.mjs`. Bump `TESTED_OPENCODE_VERSION` in
+`src/integrations/opencode/client.ts`; the restart e2e reads it.
+
+2.0.3 → 2.0.32 drift, for pattern-matching the next bump: `permission.rules`
+→ `session.update({ permissions })`; `health.get` → `server.info`;
+`plugin.awaitActivation` removed; skill `location` → `path` and `slash`
+dropped; event `session.permissions.updated` → `session.permissions`;
+`session.command({ command })` → `{ name }`; theme tokens `default`/`subdued`
+→ `base`/`muted`/`faint`, `background.surface` → `background.raised`.
+**`awaitActivation` has no replacement and is still needed.** A freshly booted
+location answers `plugin.list` with `[]` and `skill.list` with a partial
+catalog for about 1 s. `SessionActivator.activated()` polls `plugin.list` until
+it's non-empty. Without that poll, unselected skills escape the deny list.
+
 ## Gitignore freshness is part of the render pipeline (2026-09-27)
 
 Gitignore used to be refreshed only by artifact lifecycle commands (add/
@@ -39,7 +66,8 @@ Fixed three pre-V2-runtime naming drifts against OpenCode 2.0.3
 
 ## OpenCode V2 runtime (session-scoped loadout switching)
 
-Implemented 2026-09-15 against OpenCode `2.0.3`. Design/verification record:
+Implemented 2026-09-15 against OpenCode `2.0.3`; re-verified on `2.0.32`
+(2026-10-18). Design/verification record:
 `plans/OPENCODE-V2-RUNTIME.md`, `docs/opencode-v2-runtime.md`,
 `docs/opencode-v2-probes.md`. Usage: `docs/runtime.md`.
 

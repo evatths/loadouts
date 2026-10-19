@@ -167,8 +167,8 @@ async function writePiExtensionDirectory(singleFileOutputPath) {
     path.join(extensionDir, "package.json"),
     `${JSON.stringify({
       type: "module",
-      dependencies: {
-        "@earendil-works/pi-tui": "^0.79.7",
+      peerDependencies: {
+        "@earendil-works/pi-tui": "*",
       },
     }, null, 2)}\n`,
     "utf8"
