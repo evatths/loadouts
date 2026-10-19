@@ -17,7 +17,7 @@ loadouts activate base backend ml  # Combine multiple
 ## Getting Started
 
 ```bash
-npm install -g loadouts     # Requires Node.js 18+
+npm install -g loadouts     # Requires Node.js 18+ (the `tui` dashboard needs 22.19+)
 loadouts docs quickstart           # Step-by-step setup guide
 ```
 

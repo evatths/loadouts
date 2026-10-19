@@ -25,11 +25,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Node 18 is a smoke leg only: pi-tui (the dashboard dependency) requires
+      # Node 22.19+, so lint and the full suite run on 20 and 22.
       - name: Lint
+        if: matrix.node-version != 18
         run: npm run lint
 
       - name: Test
+        if: matrix.node-version != 18
         run: npm test
 
       - name: Build
         run: npm run build
+
+      - name: CLI smoke
+        run: node dist/index.js --help
+
+      - name: TUI guard refuses cleanly on Node 18
+        if: matrix.node-version == 18
+        run: |
+          if node dist/index.js tui 2>tui-err.txt; then
+            echo "tui unexpectedly succeeded on Node 18"; exit 1
+          fi
+          grep -q "22.19" tui-err.txt

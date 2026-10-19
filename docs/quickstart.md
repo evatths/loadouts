@@ -8,7 +8,7 @@ Get loadouts running in under a minute.
 npm install -g loadouts
 ```
 
-Requires Node.js 18+.
+Requires Node.js 18+ (the `tui` dashboard needs 22.19+).
 
 ## Getting Started
 
