@@ -40430,10 +40430,10 @@ function parseEquipCommand(input = "") {
       scope: global ? "global" : "project"
     };
   }
-  if (["dashboard", "quick", "status", "unequip", "list"].includes(action) && !args2.length) return {
+  if (["dashboard", "status", "unequip", "list"].includes(action) && !args2.length) return {
     action
   };
-  throw new Error("Usage: /loadouts [equip <names\u2026> [-g|-p] | unequip | status | list | quick]");
+  throw new Error("Usage: /loadouts [equip <names\u2026> [-g|-p] | unequip | status | list]");
 }
 
 // src/integrations/opencode/advertisement.ts

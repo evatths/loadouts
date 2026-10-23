@@ -19542,10 +19542,10 @@ function parseEquipCommand(input = "") {
       scope: global ? "global" : "project"
     };
   }
-  if (["dashboard", "quick", "status", "unequip", "list"].includes(action) && !args.length) return {
+  if (["dashboard", "status", "unequip", "list"].includes(action) && !args.length) return {
     action
   };
-  throw new Error("Usage: /loadouts [equip <names\u2026> [-g|-p] | unequip | status | list | quick]");
+  throw new Error("Usage: /loadouts [equip <names\u2026> [-g|-p] | unequip | status | list]");
 }
 
 // src/core/plugin.ts
@@ -19608,7 +19608,7 @@ ${block}`
       try {
         const command = parseEquipCommand(args);
         const sessionID = ctx.sessionManager.getSessionId();
-        if (command.action === "dashboard" || command.action === "quick") {
+        if (command.action === "dashboard") {
           await dashboard(ctx, activator);
           return;
         }

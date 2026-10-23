@@ -80,7 +80,7 @@ scope. Press `S` to target a running OpenCode conversation, then `m` to switch
 filesystem/session mode. See [dashboard navigation](runtime.md#opencode-dashboard).
 The embedded OpenCode dashboard
 opens with `/loadouts` or `ctrl+l`; `/loadouts equip <names…> [-g|-p]`,
-`/loadouts unequip`, `/loadouts status`, and `/loadouts quick` run client-side.
+`/loadouts unequip`, and `/loadouts status` run client-side.
 
 ### `loadouts diff [name]`
 Preview what would change if a loadout were applied.

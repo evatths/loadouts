@@ -7371,7 +7371,7 @@ import { createElement as _$createElement2 } from "@opentui/solid";
 import { createComponent as _$createComponent2 } from "@opentui/solid";
 import { memo as _$memo2 } from "@opentui/solid";
 import { Plugin } from "@opencode/plugin/tui";
-import { createEffect, createSignal as createSignal2, onCleanup, For } from "solid-js";
+import { createEffect, createSignal as createSignal2, onCleanup } from "solid-js";
 
 // src/core/config.ts
 var yaml = __toESM(require_dist(), 1);
@@ -16651,10 +16651,10 @@ function parseEquipCommand(input = "") {
       scope: global ? "global" : "project"
     };
   }
-  if (["dashboard", "quick", "status", "unequip", "list"].includes(action) && !args.length) return {
+  if (["dashboard", "status", "unequip", "list"].includes(action) && !args.length) return {
     action
   };
-  throw new Error("Usage: /loadouts [equip <names\u2026> [-g|-p] | unequip | status | list | quick]");
+  throw new Error("Usage: /loadouts [equip <names\u2026> [-g|-p] | unequip | status | list]");
 }
 
 // src/tui/hosts/opencode/tui.tsx
@@ -16725,15 +16725,6 @@ var tui_default = Plugin.define({
                   return;
                 }
                 if (!id) throw new Error("Open a session first.");
-                if (command.action === "quick") {
-                  context.ui.dialog.set({
-                    size: "large"
-                  });
-                  context.ui.dialog.show(() => _$createComponent2(QuickEquip, {
-                    sessionID: id
-                  }));
-                  return;
-                }
                 const result = command.action === "equip" ? await equipment.equip(id, command.names, {
                   scope: command.scope
                 }) : command.action === "unequip" ? await equipment.unequip(id) : void 0;
@@ -16821,91 +16812,6 @@ var tui_default = Plugin.define({
         _$insert2(_el$, text, null);
         _$effect2((_$p) => _$setProp2(_el$, "fg", context.theme.text.muted, _$p));
         return _el$;
-      })();
-    }
-    function QuickEquip(props) {
-      const [rows, setRows] = createSignal2([]);
-      const [selected, setSelected] = createSignal2(/* @__PURE__ */ new Set());
-      const [cursor, setCursor] = createSignal2(0);
-      const [busy, setBusy] = createSignal2(false);
-      void loadDashboardData(location().directory).then((data) => setRows(data.rows.filter((row) => row.status !== "broken"))).catch(toastError);
-      const key = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (busy()) return;
-        if (event.name === "escape") {
-          context.ui.dialog.clear();
-          return;
-        }
-        if (["j", "down"].includes(event.name)) setCursor((n) => Math.min(rows().length - 1, n + 1));
-        if (["k", "up"].includes(event.name)) setCursor((n) => Math.max(0, n - 1));
-        if (event.name === "space") {
-          const row = rows()[cursor()];
-          if (!row) return;
-          const identity = `${row.scope}:${row.name}`;
-          setSelected((current) => {
-            const next = new Set(current);
-            next.has(identity) ? next.delete(identity) : next.add(identity);
-            return next;
-          });
-        }
-        if (event.name === "return" || event.name === "enter") {
-          const chosen = rows().filter((row) => selected().has(`${row.scope}:${row.name}`));
-          if (!chosen.length) return;
-          if (new Set(chosen.map((row) => row.scope)).size > 1) {
-            toastError("Choose loadouts from one source scope.");
-            return;
-          }
-          setBusy(true);
-          void equipment.equip(props.sessionID, chosen.map((row) => row.name), {
-            scope: chosen[0].scope
-          }).then(() => {
-            notify();
-            context.ui.dialog.clear();
-            context.ui.toast.show({
-              message: "Session loadouts equipped",
-              variant: "success"
-            });
-          }).catch(toastError).finally(() => setBusy(false));
-        }
-      };
-      return (() => {
-        var _el$3 = _$createElement2("box"), _el$4 = _$createElement2("text");
-        _$insertNode2(_el$3, _el$4);
-        _$setProp2(_el$3, "flexDirection", "column");
-        _$setProp2(_el$3, "focusable", true);
-        _$setProp2(_el$3, "onKeyDown", key);
-        _$setProp2(_el$3, "focused", true);
-        _$setProp2(_el$3, "padding", 1);
-        _$insertNode2(_el$4, _$createTextNode2(`QUICK EQUIP \xB7 space selects \xB7 enter equips \xB7 esc closes`));
-        _$insert2(_el$3, _$createComponent2(For, {
-          get each() {
-            return rows();
-          },
-          children: (row, index) => (() => {
-            var _el$6 = _$createElement2("text"), _el$7 = _$createTextNode2(` `), _el$8 = _$createTextNode2(` `), _el$9 = _$createTextNode2(` (`), _el$0 = _$createTextNode2(`)`);
-            _$insertNode2(_el$6, _el$7);
-            _$insertNode2(_el$6, _el$8);
-            _$insertNode2(_el$6, _el$9);
-            _$insertNode2(_el$6, _el$0);
-            _$insert2(_el$6, () => index() === cursor() ? "\u25B8" : " ", _el$7);
-            _$insert2(_el$6, () => selected().has(`${row.scope}:${row.name}`) ? "\u2713" : "\u2014", _el$8);
-            _$insert2(_el$6, () => row.name, _el$9);
-            _$insert2(_el$6, () => row.scope, _el$0);
-            _$effect2((_$p) => _$setProp2(_el$6, "fg", index() === cursor() ? context.theme.text.action.primary.base : context.theme.text.base, _$p));
-            return _el$6;
-          })()
-        }), null);
-        _$insert2(_el$3, (() => {
-          var _c$ = _$memo2(() => !!busy());
-          return () => _c$() ? (() => {
-            var _el$1 = _$createElement2("text");
-            _$insertNode2(_el$1, _$createTextNode2(`Equipping\u2026`));
-            return _el$1;
-          })() : null;
-        })(), null);
-        _$effect2((_$p) => _$setProp2(_el$4, "fg", context.theme.text.action.primary.base, _$p));
-        return _el$3;
       })();
     }
     return () => {

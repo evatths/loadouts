@@ -1,7 +1,6 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin } from "@opencode/plugin/tui";
-import { createEffect, createSignal, onCleanup, For } from "solid-js";
-import type { KeyEvent } from "@opentui/core";
+import { createEffect, createSignal, onCleanup } from "solid-js";
 import { registerBuiltins } from "../../../builtins/index.js";
 import { createPluginAPI } from "../../../core/plugin.js";
 import { registry } from "../../../core/registry.js";
@@ -51,11 +50,6 @@ export default Plugin.define({
               return;
             }
             if (!id) throw new Error("Open a session first.");
-            if (command.action === "quick") {
-              context.ui.dialog.set({ size: "large" });
-              context.ui.dialog.show(() => <QuickEquip sessionID={id} />);
-              return;
-            }
             const result = command.action === "equip" ? await equipment.equip(id, command.names, { scope: command.scope })
               : command.action === "unequip" ? await equipment.unequip(id) : undefined;
             notify();
@@ -97,42 +91,6 @@ export default Plugin.define({
       });
       onCleanup(() => { version++; });
       return <text fg={context.theme.text.muted}>EQUIPPED {text()}</text>;
-    }
-
-    function QuickEquip(props: { sessionID: string }) {
-      const [rows, setRows] = createSignal<Array<{ name: string; scope: "project" | "global" }>>([]);
-      const [selected, setSelected] = createSignal<Set<string>>(new Set());
-      const [cursor, setCursor] = createSignal(0);
-      const [busy, setBusy] = createSignal(false);
-      void loadDashboardData(location().directory).then((data) => setRows(data.rows.filter((row) => row.status !== "broken"))).catch(toastError);
-      const key = (event: KeyEvent) => {
-        event.preventDefault(); event.stopPropagation();
-        if (busy()) return;
-        if (event.name === "escape") { context.ui.dialog.clear(); return; }
-        if (["j", "down"].includes(event.name)) setCursor((n) => Math.min(rows().length - 1, n + 1));
-        if (["k", "up"].includes(event.name)) setCursor((n) => Math.max(0, n - 1));
-        if (event.name === "space") {
-          const row = rows()[cursor()]; if (!row) return;
-          const identity = `${row.scope}:${row.name}`;
-          setSelected((current) => { const next = new Set(current); next.has(identity) ? next.delete(identity) : next.add(identity); return next; });
-        }
-        if (event.name === "return" || event.name === "enter") {
-          const chosen = rows().filter((row) => selected().has(`${row.scope}:${row.name}`));
-          if (!chosen.length) return;
-          if (new Set(chosen.map((row) => row.scope)).size > 1) { toastError("Choose loadouts from one source scope."); return; }
-          setBusy(true);
-          void equipment.equip(props.sessionID, chosen.map((row) => row.name), { scope: chosen[0].scope }).then(() => {
-            notify(); context.ui.dialog.clear(); context.ui.toast.show({ message: "Session loadouts equipped", variant: "success" });
-          }).catch(toastError).finally(() => setBusy(false));
-        }
-      };
-      return <box flexDirection="column" focusable onKeyDown={key} focused padding={1}>
-        <text fg={context.theme.text.action.primary.base}>QUICK EQUIP · space selects · enter equips · esc closes</text>
-        <For each={rows()}>{(row, index) => <text fg={index() === cursor() ? context.theme.text.action.primary.base : context.theme.text.base}>
-          {index() === cursor() ? "▸" : " "} {selected().has(`${row.scope}:${row.name}`) ? "✓" : "—"} {row.name} ({row.scope})
-        </text>}</For>
-        {busy() ? <text>Equipping…</text> : null}
-      </box>;
     }
 
     return () => { stopInstructions(); stopPermissions(); page(); app(); footer(); };

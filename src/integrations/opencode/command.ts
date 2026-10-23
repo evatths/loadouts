@@ -1,7 +1,7 @@
 import type { Scope } from "../../core/types.js";
 
 export type EquipCommand = { action: "equip"; names: string[]; scope: Scope }
-  | { action: "dashboard" | "quick" | "status" | "unequip" | "list" };
+  | { action: "dashboard" | "status" | "unequip" | "list" };
 
 /** Shared slash grammar. Loadout names are unquoted identifiers, never shell input. */
 export function parseEquipCommand(input = ""): EquipCommand {
@@ -15,6 +15,6 @@ export function parseEquipCommand(input = ""): EquipCommand {
     if (!names.length || names.some((name) => name.startsWith("-"))) throw new Error("Usage: /loadouts equip <names…> [-g|-p]");
     return { action, names, scope: global ? "global" : "project" };
   }
-  if (["dashboard", "quick", "status", "unequip", "list"].includes(action) && !args.length) return { action: action as "dashboard" | "quick" | "status" | "unequip" | "list" };
-  throw new Error("Usage: /loadouts [equip <names…> [-g|-p] | unequip | status | list | quick]");
+  if (["dashboard", "status", "unequip", "list"].includes(action) && !args.length) return { action: action as "dashboard" | "status" | "unequip" | "list" };
+  throw new Error("Usage: /loadouts [equip <names…> [-g|-p] | unequip | status | list]");
 }

@@ -41,7 +41,6 @@ Inside OpenCode:
 
 ```text
 /loadouts                       dashboard (also ctrl+l)
-/loadouts quick                 multi-select session equip
 /loadouts equip caveman -g      replace this session's set
 /loadouts equip backend -p
 /loadouts unequip

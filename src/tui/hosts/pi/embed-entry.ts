@@ -44,7 +44,7 @@ export default function loadoutsPiExtension(pi: ExtensionAPI): void {
       try {
         const command = parseEquipCommand(args);
         const sessionID = ctx.sessionManager.getSessionId();
-        if (command.action === "dashboard" || command.action === "quick") { await dashboard(ctx, activator); return; }
+        if (command.action === "dashboard") { await dashboard(ctx, activator); return; }
         if (command.action === "equip") await activator.equip(sessionID, command.names, { scope: command.scope });
         if (command.action === "unequip") await activator.unequip(sessionID);
         ctx.ui.notify((await activator.status(sessionID))?.names.join(" + ") || "No session loadouts", "info");
