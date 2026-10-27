@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { applyPlan, applyMultiPlan, planRender, removeManaged, resolveOutputSpec } from "./render.js";
-import { detectDrift, loadState } from "./manifest.js";
+import { detectDrift, entrySources, expandDriftBySource, loadState } from "./manifest.js";
 import { hashContent } from "../lib/fs.js";
 import { resolveLoadout } from "./resolve.js";
 import { getBundledRoot } from "./discovery.js";
@@ -994,5 +994,348 @@ describe("gitignore freshness on render/remove", () => {
     } finally {
       fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("instruction composition", () => {
+  beforeAll(() => {
+    if (registry.allToolNames().length === 0) {
+      registerBuiltins(createPluginAPI(registry));
+    }
+  });
+
+  interface Fixture {
+    tmpDir: string;
+    projectRoot: string;
+    loadoutRoot: string;
+    generated: string;
+    agents: string;
+  }
+
+  const SKILL = `---\nname: debugger\ndescription: Debug issues\n---\n\n# Debugger\n`;
+  const BASE_YAML = `name: base\ntools:\n  - claude-code\n  - opencode\n  - codex\n  - cursor\ninclude:\n  - instructions/AGENTS.base.md\n`;
+  const PY_YAML = `name: py\ntools:\n  - opencode\ninclude:\n  - instructions/AGENTS.py.md\n  - skills/debugger\n`;
+
+  function createFixture(structure: Record<string, string> = {}): Fixture {
+    const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "loadout-compose-")));
+    const projectRoot = path.join(tmpDir, "project");
+    const loadoutRoot = path.join(projectRoot, ".loadouts");
+    const files: Record<string, string> = {
+      "loadouts/base.yaml": BASE_YAML,
+      "loadouts/py.yaml": PY_YAML,
+      "instructions/AGENTS.base.md": "# Base\n",
+      "instructions/AGENTS.py.md": "# Python\n",
+      "skills/debugger/SKILL.md": SKILL,
+      ...structure,
+    };
+    for (const [relativePath, content] of Object.entries(files)) {
+      const fullPath = path.join(loadoutRoot, relativePath);
+      fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+      fs.writeFileSync(fullPath, content, "utf-8");
+    }
+    return {
+      tmpDir,
+      projectRoot,
+      loadoutRoot,
+      generated: path.join(loadoutRoot, "AGENTS.loadouts-generated.md"),
+      agents: path.join(projectRoot, "AGENTS.md"),
+    };
+  }
+
+  async function plansFor(fx: Fixture, names: string[]) {
+    const roots: LoadoutRoot[] = [{ path: fx.loadoutRoot, level: "project", depth: 0 }];
+    const plans = [];
+    for (const name of names) {
+      const loadout = resolveLoadout(name, roots);
+      plans.push({ loadout, plan: await planRender(loadout, fx.projectRoot, "project", fx.loadoutRoot) });
+    }
+    return plans;
+  }
+
+  async function apply(fx: Fixture, names: string[], options?: { force?: boolean }) {
+    return applyMultiPlan(await plansFor(fx, names), fx.loadoutRoot, fx.projectRoot, "symlink", "project", options);
+  }
+
+  const read = (p: string) => fs.readFileSync(p, "utf-8");
+  const cleanup = (fx: Fixture) => fs.rmSync(fx.tmpDir, { recursive: true, force: true });
+
+  it("composes base + py into one generated file that AGENTS.md links to", async () => {
+    const fx = createFixture();
+    try {
+      const result = await apply(fx, ["base", "py"]);
+
+      expect(fs.lstatSync(fx.agents).isSymbolicLink()).toBe(true);
+      expect(fs.realpathSync(fx.agents)).toBe(fs.realpathSync(fx.generated));
+      const content = read(fx.generated);
+      expect(content.indexOf("loadouts:begin base")).toBeGreaterThan(-1);
+      expect(content.indexOf("loadouts:begin base")).toBeLessThan(content.indexOf("loadouts:begin py"));
+      expect(content).toContain("# Base");
+      expect(content).toContain("# Python");
+      expect(fs.existsSync(path.join(fx.projectRoot, "CLAUDE.md"))).toBe(false);
+
+      const entry = loadState(fx.loadoutRoot)!.entries.find((e) => e.targetPath === "AGENTS.md")!;
+      expect(entry.sourcePath).toBe(fx.generated);
+      expect(entry.sources).toHaveLength(2);
+      expect(entry.tools).toEqual(["claude-code", "codex", "cursor", "opencode"]);
+      expect(result.changes.added).toContain(`AGENTS.md\0${path.join(fx.loadoutRoot, "instructions/AGENTS.py.md")}`);
+      expect(result.conflicts).toEqual([]);
+
+      // Activating py on top of base: py added, base unchanged
+      await apply(fx, ["base"]);
+      const second = await apply(fx, ["base", "py"]);
+      const baseKey = `AGENTS.md\0${path.join(fx.loadoutRoot, "instructions/AGENTS.base.md")}`;
+      const pyKey = `AGENTS.md\0${path.join(fx.loadoutRoot, "instructions/AGENTS.py.md")}`;
+      expect(second.changes.added).toContain(pyKey);
+      expect(second.changes.added).not.toContain(baseKey);
+      expect(second.changes.updated).not.toContain(baseKey);
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("still generates the composed file for a single source", async () => {
+    const fx = createFixture();
+    try {
+      await apply(fx, ["base"]);
+      expect(fs.existsSync(fx.generated)).toBe(true);
+      expect(fs.realpathSync(fx.agents)).toBe(fs.realpathSync(fx.generated));
+      expect(read(fx.generated)).toContain("<!-- loadouts:begin base · .loadouts/instructions/AGENTS.base.md -->");
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("holds an edited generated file, still applies other outputs, and force backs it up", async () => {
+    const fx = createFixture();
+    try {
+      await apply(fx, ["base", "py"]);
+      const edited = read(fx.generated).replace("# Python", "# Python (edited)");
+      fs.writeFileSync(fx.generated, edited);
+      const skillTarget = path.join(fx.projectRoot, ".opencode/skills/debugger/SKILL.md");
+      fs.rmSync(skillTarget);
+
+      const result = await apply(fx, ["base", "py"]);
+      expect(read(fx.generated)).toBe(edited);
+      expect(result.conflicts).toHaveLength(1);
+      expect(result.conflicts[0].reason).toBe("edited");
+      expect(result.conflicts[0].edits).toHaveLength(1);
+      expect(result.conflicts[0].edits[0].owner?.loadout).toBe("py");
+      expect(result.conflicts[0].edits[0].before).toBe("# Python");
+      expect(result.conflicts[0].edits[0].after).toBe("# Python (edited)");
+      expect(result.changes.held).toHaveLength(2);
+      expect(fs.existsSync(skillTarget)).toBe(true);
+
+      const forced = await apply(fx, ["base", "py"], { force: true });
+      expect(forced.conflicts).toEqual([]);
+      expect(read(path.join(fx.loadoutRoot, "AGENTS.loadouts-generated.md.bak"))).toContain("# Python (edited)");
+      expect(read(fx.generated)).not.toContain("(edited)");
+      expect(forced.warnings.some((w) => w.includes("AGENTS.loadouts-generated.md.bak"))).toBe(true);
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("holds an AGENTS.md replaced by an edited file but relinks a byte-identical one", async () => {
+    const fx = createFixture();
+    try {
+      await apply(fx, ["base"]);
+      const composed = read(fx.generated);
+
+      fs.rmSync(fx.agents);
+      fs.writeFileSync(fx.agents, "# Hand edit\n");
+      const held = await apply(fx, ["base"]);
+      expect(held.conflicts).toHaveLength(1);
+      expect(held.conflicts[0].reason).toBe("replaced");
+      expect(held.conflicts[0].edits[0].owner).toBeNull();
+      expect(fs.lstatSync(fx.agents).isSymbolicLink()).toBe(false);
+      expect(read(fx.agents)).toBe("# Hand edit\n");
+
+      fs.writeFileSync(fx.agents, composed);
+      const relinked = await apply(fx, ["base"]);
+      expect(relinked.conflicts).toEqual([]);
+      expect(fs.lstatSync(fx.agents).isSymbolicLink()).toBe(true);
+      expect(fs.realpathSync(fx.agents)).toBe(fs.realpathSync(fx.generated));
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("migrates old AGENTS.md symlink and CLAUDE.md wrapper state", async () => {
+    const fx = createFixture();
+    try {
+      const baseSource = path.join(fx.loadoutRoot, "instructions/AGENTS.base.md");
+      const wrapper = "# Claude Code Instructions\n\nSee [AGENTS.md](AGENTS.md) for project instructions.\n";
+      fs.symlinkSync(path.relative(fx.projectRoot, baseSource), fx.agents);
+      fs.writeFileSync(path.join(fx.projectRoot, "CLAUDE.md"), wrapper);
+      fs.writeFileSync(
+        path.join(fx.loadoutRoot, ".state.json"),
+        JSON.stringify({
+          active: ["base"],
+          mode: "symlink",
+          appliedAt: new Date().toISOString(),
+          entries: [
+            {
+              tools: ["codex", "cursor", "opencode", "pi"],
+              kind: "instruction",
+              sourcePath: baseSource,
+              targetPath: "AGENTS.md",
+              mode: "symlink",
+              renderedHash: hashContent("# Base\n"),
+            },
+            {
+              tools: ["claude-code"],
+              kind: "instruction",
+              sourcePath: baseSource,
+              targetPath: "CLAUDE.md",
+              mode: "generate",
+              renderedHash: hashContent(wrapper),
+            },
+          ],
+          shadowed: [],
+        })
+      );
+
+      const result = await apply(fx, ["base"]);
+      expect(result.conflicts).toEqual([]);
+      expect(fs.existsSync(path.join(fx.projectRoot, "CLAUDE.md"))).toBe(false);
+      expect(fs.realpathSync(fx.agents)).toBe(fs.realpathSync(fx.generated));
+      expect(result.changes.removed).toContain(`CLAUDE.md\0${baseSource}`);
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("adopts an untracked AGENTS.md symlink into the loadout root", async () => {
+    const fx = createFixture();
+    try {
+      const baseSource = path.join(fx.loadoutRoot, "instructions/AGENTS.base.md");
+      fs.symlinkSync(path.relative(fx.projectRoot, baseSource), fx.agents);
+
+      const [{ plan }] = await plansFor(fx, ["base"]);
+      expect(plan.shadowed).toEqual([]);
+      await apply(fx, ["base"]);
+      expect(fs.realpathSync(fx.agents)).toBe(fs.realpathSync(fx.generated));
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("shadows a hand-written AGENTS.md and leaves it intact", async () => {
+    const fx = createFixture();
+    try {
+      fs.writeFileSync(fx.agents, "# Mine\n");
+
+      const [{ plan }] = await plansFor(fx, ["base"]);
+      expect(plan.shadowed.some((s) => s.targetPath === "AGENTS.md")).toBe(true);
+      await apply(fx, ["base"]);
+      expect(fs.lstatSync(fx.agents).isSymbolicLink()).toBe(false);
+      expect(read(fx.agents)).toBe("# Mine\n");
+      expect(fs.existsSync(fx.generated)).toBe(false);
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("dropping the last instruction deletes the generated file and AGENTS.md", async () => {
+    const fx = createFixture();
+    try {
+      await apply(fx, ["base", "py"]);
+      fs.writeFileSync(
+        path.join(fx.loadoutRoot, "loadouts/py.yaml"),
+        `name: py\ntools:\n  - opencode\ninclude:\n  - skills/debugger\n`
+      );
+      await apply(fx, ["py"]);
+      expect(fs.existsSync(fx.generated)).toBe(false);
+      expect(fs.existsSync(fx.agents) || fs.lstatSync(fx.agents, { throwIfNoEntry: false })).toBeFalsy();
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("removeManaged backs up an edited generated file and warns", async () => {
+    const fx = createFixture();
+    try {
+      await apply(fx, ["base"]);
+      fs.writeFileSync(fx.generated, read(fx.generated).replace("# Base", "# Base (edited)"));
+
+      const result = await removeManaged(fx.loadoutRoot, fx.projectRoot, "project");
+      expect(result.warnings).toHaveLength(1);
+      expect(read(path.join(fx.loadoutRoot, "AGENTS.loadouts-generated.md.bak"))).toContain("# Base (edited)");
+      expect(fs.existsSync(fx.generated)).toBe(false);
+      expect(fs.lstatSync(fx.agents, { throwIfNoEntry: false })).toBeUndefined();
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("warns when the composed file exceeds codex's byte limit", async () => {
+    const fx = createFixture({ "instructions/AGENTS.base.md": `# Big\n${"x".repeat(33 * 1024)}\n` });
+    try {
+      const result = await apply(fx, ["base"]);
+      expect(
+        result.warnings.some((w) =>
+          /^AGENTS\.md is 33\.\d KiB; codex reads only the first 32 KiB \(project_doc_max_bytes\)/.test(w)
+        )
+      ).toBe(true);
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("warns when a CLAUDE.md suppresses AGENTS.md for Claude Code", async () => {
+    const fx = createFixture();
+    try {
+      fs.mkdirSync(fx.projectRoot, { recursive: true });
+      fs.writeFileSync(path.join(fx.projectRoot, "CLAUDE.md"), "# Old\n");
+      const result = await apply(fx, ["base"]);
+      expect(result.warnings).toContain(
+        "Claude Code reads CLAUDE.md instead of AGENTS.md while CLAUDE.md exists; move its content into an instruction source and delete it."
+      );
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("gitignores the generated file in .loadouts/.gitignore", async () => {
+    const fx = createFixture();
+    try {
+      await apply(fx, ["base"]);
+      const gitignore = read(path.join(fx.loadoutRoot, ".gitignore"));
+      expect(gitignore).toContain("AGENTS.loadouts-generated.md");
+      expect(gitignore).toContain("AGENTS.loadouts-generated.md.bak");
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("expandDriftBySource reports one result per composed source", async () => {
+    const fx = createFixture();
+    try {
+      await apply(fx, ["base", "py"]);
+      const drift = expandDriftBySource(detectDrift(loadState(fx.loadoutRoot)!, fx.projectRoot));
+      const agents = drift.filter((d) => d.entry.targetPath === "AGENTS.md");
+      expect(agents.map((d) => path.basename(d.entry.sourcePath))).toEqual(["AGENTS.base.md", "AGENTS.py.md"]);
+      expect(agents.every((d) => d.status === "ok")).toBe(true);
+      const stateEntry = loadState(fx.loadoutRoot)!.entries.find((e) => e.targetPath === "AGENTS.md")!;
+      expect(entrySources(stateEntry)).toEqual(agents.map((d) => d.entry.sourcePath));
+    } finally {
+      cleanup(fx);
+    }
+  });
+
+  it("resolves global instruction targets per tool", () => {
+    const item: ResolvedItem = {
+      kind: "instruction",
+      sourcePath: "/x/instructions/AGENTS.base.md",
+      relativePath: "instructions/AGENTS.base.md",
+      tools: ["claude-code", "cursor", "codex", "pi"],
+    };
+    const home = os.homedir();
+    expect(resolveOutputSpec("claude-code", item, "global")?.targetPath).toBe(path.join(home, ".claude", "CLAUDE.md"));
+    expect(resolveOutputSpec("cursor", item, "global")).toBeNull();
+    expect(resolveOutputSpec("codex", item, "global")?.targetPath).toBe(path.join(home, ".codex", "AGENTS.md"));
+    expect(resolveOutputSpec("pi", item, "global")?.targetPath).toBe(path.join(home, ".pi", "agent", "AGENTS.md"));
+    expect(resolveOutputSpec("claude-code", item, "project")?.targetPath).toBe("AGENTS.md");
+    expect(resolveOutputSpec("claude-code", item, "project")?.mode).toBe("symlink");
   });
 });

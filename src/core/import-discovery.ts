@@ -8,6 +8,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { fileExists, isDirectory, isSymlink, listFiles, walkDir } from "../lib/fs.js";
 import { registry } from "./registry.js";
+import { GENERATED_INSTRUCTIONS_FILE } from "./instructions.js";
 import type { Scope } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -217,6 +218,7 @@ function buildAgentSourceArtifact(scanRoot: string, sourcePath: string): Discove
 
 function buildInstructionSourceArtifact(scanRoot: string, sourcePath: string): DiscoveredArtifact | null {
   const basename = path.basename(sourcePath);
+  if (basename === GENERATED_INSTRUCTIONS_FILE) return null;
   if (basename !== "AGENTS.md" && basename !== "CLAUDE.md" && !/^AGENTS\.[^.]+\.md$/.test(basename)) {
     return null;
   }

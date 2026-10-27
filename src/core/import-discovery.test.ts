@@ -224,6 +224,25 @@ describe("discoverImportableArtifacts", () => {
     expect(result.artifacts.every((a) => a.tool === "source")).toBe(true);
   });
 
+  it("does not discover the generated instructions file as a source", () => {
+    setupFixture({
+      "package/instructions/AGENTS.loadouts-generated.md": "# Generated\n",
+      "package/instructions/AGENTS.foo.md": "# Foo\n",
+    });
+
+    const sourceRoot = path.join(FIXTURES_DIR, "package");
+    const result = discoverImportableArtifacts(sourceRoot, {
+      kinds: ["instruction"],
+      sourcePath: sourceRoot,
+    });
+
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts[0].kind).toBe("instruction");
+    expect(result.artifacts[0].sourcePath).toBe(
+      path.join(sourceRoot, "instructions", "AGENTS.foo.md")
+    );
+  });
+
   it("discovers a direct skill directory source", () => {
     setupFixture({
       "downloaded/debug/SKILL.md": "---\ndescription: Debug\n---\n# Debug\n",

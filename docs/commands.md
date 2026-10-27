@@ -9,6 +9,7 @@ loadouts activate backend              # Single loadout
 loadouts activate base frontend        # Multiple loadouts
 loadouts activate ml -g                # Global scope
 loadouts activate backend --dry-run    # Preview only
+loadouts activate backend --force      # Overwrite local edits to generated instructions (a backup is kept)
 ```
 
 ### `loadouts deactivate <names...>`
@@ -23,6 +24,7 @@ Re-render active loadouts from latest definitions. Run after editing rules or sk
 loadouts sync              # All scopes
 loadouts sync -l           # Project only
 loadouts sync --dry-run    # Preview
+loadouts sync --force      # Overwrite local edits to generated instructions (a backup is kept)
 ```
 
 ### `loadouts status`
@@ -219,7 +221,7 @@ After creating a skill, add it to your loadout's `include` list and run `loadout
 
 ### Instructions
 
-Create per-loadout instruction files that render to `AGENTS.md` or `CLAUDE.md`.
+Create per-loadout instruction files that are composed into the generated `AGENTS.md`.
 
 ```bash
 loadouts instructions init                # Create for active loadout

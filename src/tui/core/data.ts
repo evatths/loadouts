@@ -7,7 +7,7 @@ import {
   type CatalogOwner,
   type CatalogRootEntry,
 } from "../../core/discovery.js";
-import { loadState, detectDrift, type DriftResult } from "../../core/manifest.js";
+import { loadState, detectDrift, expandDriftBySource, type DriftResult } from "../../core/manifest.js";
 import { planRender } from "../../core/render.js";
 import { resolveLoadout } from "../../core/resolve.js";
 import type { LoadoutRoot, Scope, Tool } from "../../core/types.js";
@@ -194,7 +194,7 @@ async function loadActiveIssue(
   const removed = applied.entries.some((entry) => !targets.has(entry.targetPath));
   if (added || removed) return "configuration drift";
 
-  const worst = detectDrift(applied, state.projectRoot)
+  const worst = expandDriftBySource(detectDrift(applied, state.projectRoot))
     .filter((result) => sourcePaths.has(result.entry.sourcePath))
     .sort((a, b) => DRIFT_PRIORITY[b.status] - DRIFT_PRIORITY[a.status])[0];
   return worst && worst.status !== "ok" ? `output ${worst.status}` : undefined;

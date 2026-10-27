@@ -51,6 +51,7 @@ Use these symbols consistently across all commands:
 | `~`    | yellow | modified, updated          | activate, sync, diff |
 | `-`    | red    | removed, deleted           | activate, sync, diff |
 | `!`    | red    | missing, error             | status               |
+| `!`    | red    | held: local edits block write | activate, sync    |
 | `?`    | yellow | shadowed (blocked)         | status, activate     |
 | `⚡`    | yellow | unlinked (symlink broken)  | status               |
 | `💀`    | red    | broken (unrecoverable)     | status               |

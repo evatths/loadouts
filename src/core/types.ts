@@ -95,6 +95,8 @@ export interface ManifestEntry {
   targetPath: string;
   mode: OutputMode;
   renderedHash: string;
+  /** Composed outputs only: ordered inputs. sourcePath is then the generated file. */
+  sources?: Array<{ path: string; hash: string }>;
 }
 
 // An output skipped because an unmanaged file already occupies the target

@@ -20,7 +20,7 @@
 import * as path from "node:path";
 import { Command } from "commander";
 import chalk from "chalk";
-import { loadState, detectDrift, type DriftResult } from "../../core/manifest.js";
+import { loadState, detectDrift, entrySources, expandDriftBySource, type DriftResult } from "../../core/manifest.js";
 import { loadResolvedLoadout } from "../../core/resolve.js";
 import { planRender } from "../../core/render.js";
 import { findUnsanitizedRules, findUnsanitizedSkills } from "../../core/config.js";
@@ -302,7 +302,7 @@ async function loadStatusGroupForLoadout(
   }
 
   // Filter drift results to only include entries from this loadout
-  const allDriftResults = detectDrift(state, ctx.projectRoot);
+  const allDriftResults = expandDriftBySource(detectDrift(state, ctx.projectRoot));
   const loadoutDriftResults = allDriftResults.filter((r) =>
     loadoutSourcePaths.has(r.entry.sourcePath)
   );
@@ -325,7 +325,7 @@ async function loadStatusGroupForLoadout(
   // Compare plan outputs to manifest entries with matching source paths
   const manifestTargetsForLoadout = new Set(
     state.entries
-      .filter((e) => loadoutSourcePaths.has(e.sourcePath))
+      .filter((e) => entrySources(e).some((s) => loadoutSourcePaths.has(s)))
       .map((e) => e.targetPath)
   );
   const planTargets = new Set(plan.outputs.map((o) => o.spec.targetPath));
@@ -334,7 +334,7 @@ async function loadStatusGroupForLoadout(
     .filter((o) => !manifestTargetsForLoadout.has(o.spec.targetPath))
     .map((o) => o.spec.targetPath);
   const removed = state.entries
-    .filter((e) => loadoutSourcePaths.has(e.sourcePath) && !planTargets.has(e.targetPath))
+    .filter((e) => entrySources(e).some((s) => loadoutSourcePaths.has(s)) && !planTargets.has(e.targetPath))
     .map((e) => e.targetPath);
   const config: ConfigDrift = { added, removed };
 
@@ -366,7 +366,7 @@ async function loadStatusGroupForLoadout(
 /**
  * Load all status groups for a context (one per active loadout).
  */
-async function loadStatusGroupsForContext(
+export async function loadStatusGroupsForContext(
   ctx: CommandContext,
   showReferences: boolean
 ): Promise<LoadoutStatusGroup[]> {
@@ -621,7 +621,7 @@ export async function getStatusJson(
     const state = loadState(ctx.configPath);
     if (!state || state.active.length === 0) continue;
 
-    const allDriftResults = detectDrift(state, ctx.projectRoot);
+    const allDriftResults = expandDriftBySource(detectDrift(state, ctx.projectRoot));
 
     for (const loadoutName of state.active) {
       let loadout: ResolvedLoadout;
@@ -649,7 +649,7 @@ export async function getStatusJson(
         });
       }
 
-      const manifestEntries = state.entries.filter((entry) => sourcePaths.has(entry.sourcePath));
+      const manifestEntries = state.entries.filter((entry) => entrySources(entry).some((s) => sourcePaths.has(s)));
       const manifestTargets = new Set(manifestEntries.map((entry) => entry.targetPath));
 
       for (const output of plan.outputs) {

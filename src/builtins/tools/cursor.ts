@@ -17,9 +17,7 @@ export const cursorTool: ToolSpec = {
       transform: "cursor-rule-frontmatter",
     },
     skill: { path: "{base}/skills/{name}" },
-    instruction: {
-      path: { project: "AGENTS.md", global: "{home}/AGENTS.md" },
-    },
+    instruction: { path: "AGENTS.md", scopes: ["project"] },
     agent: {
       path: "{base}/agents/{stem}.md",
       mode: selectAgentMarkdownMode("cursor"),

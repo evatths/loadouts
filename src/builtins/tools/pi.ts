@@ -13,9 +13,7 @@ export const piTool: ToolSpec = {
   supports: ["skill", "instruction", "prompt", "extension", "extension-dir", "theme"],
   targets: {
     skill: { path: "{base}/skills/{name}" },
-    instruction: {
-      path: { project: "AGENTS.md", global: "{home}/AGENTS.md" },
-    },
+    instruction: { path: { project: "AGENTS.md", global: "{base}/AGENTS.md" } },
     prompt: { path: "{base}/prompts/{stem}.md" },
     extension: { path: "{base}/extensions/{stem}.ts" },
     "extension-dir": { path: "{base}/extensions/{stem}", mode: "copy" },

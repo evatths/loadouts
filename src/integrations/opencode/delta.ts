@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import { realpathSync } from "node:fs";
 import { discoverLoadoutRoots, getContext } from "../../core/discovery.js";
-import { detectDrift, loadState } from "../../core/manifest.js";
+import { detectDrift, entrySources, loadState } from "../../core/manifest.js";
 import { loadResolvedLoadouts } from "../../core/resolve.js";
 import { compileRuntimeBundle, type RuntimeBundle } from "../../core/runtime.js";
 import type { OpenCodeSelection, Scope } from "../../core/types.js";
@@ -43,7 +43,7 @@ export async function compileSession(
         // alone is not proof that an external rule-loader injected its content.
         const native = drift.entry.kind === "skill" || (drift.entry.kind === "instruction" && path.basename(target) === "AGENTS.md");
         if (native && (drift.status === "ok" || sameLiveSource) && drift.entry.tools.includes("opencode")) {
-          rendered.add(canonical(drift.entry.sourcePath));
+          for (const source of entrySources(drift.entry)) rendered.add(canonical(source));
         }
       }
     }

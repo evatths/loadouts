@@ -11,9 +11,7 @@ export const codexTool: ToolSpec = {
   supports: ["skill", "instruction", "agent"],
   targets: {
     skill: { path: "{base}/skills/{name}" },
-    instruction: {
-      path: { project: "AGENTS.md", global: "{home}/AGENTS.md" },
-    },
+    instruction: { path: { project: "AGENTS.md", global: "{home}/.codex/AGENTS.md" } },
     agent: {
       path: {
         project: ".codex/agents/{stem}.toml",
@@ -24,4 +22,5 @@ export const codexTool: ToolSpec = {
       transform: "codex-agent-toml",
     },
   },
+  instructions: { maxBytes: 32768 },
 };

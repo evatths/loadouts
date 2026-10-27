@@ -168,7 +168,7 @@ loadouts add-to backend skills/deploy
 
 ## Instructions
 
-Per-loadout instruction files live at `.loadouts/instructions/AGENTS.<loadout>.md`. When activated, they render to `AGENTS.md` (or `CLAUDE.md` for Claude Code, which wraps and references `AGENTS.md`).
+Per-loadout instruction files live at `.loadouts/instructions/AGENTS.<loadout>.md`. When activated, they are composed with the other active loadouts' instructions into `.loadouts/AGENTS.loadouts-generated.md`, and `AGENTS.md` links to it (Claude Code reads `AGENTS.md` natively).
 
 **Create instructions:**
 ```bash

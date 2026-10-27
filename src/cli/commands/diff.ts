@@ -14,7 +14,7 @@ import { Command } from "commander";
 import { getContext } from "../../core/discovery.js";
 import { loadResolvedLoadout } from "../../core/resolve.js";
 import { planRender } from "../../core/render.js";
-import { loadState } from "../../core/manifest.js";
+import { loadState, entrySources } from "../../core/manifest.js";
 import {
   resolveContexts,
   requireScopeForName,
@@ -58,6 +58,7 @@ const JSON_OP_MAP: Record<ChangeType, DiffJsonOutput["changes"][number]["op"]> =
   unchanged: "overwrite",
   removed: "remove",
   shadowed: "shadowed",
+  held: "shadowed",
 };
 
 async function buildDiffOutputs(ctx: CommandContext, name?: string): Promise<DiffOutputEntry[]> {
@@ -80,16 +81,18 @@ async function buildDiffOutputs(ctx: CommandContext, name?: string): Promise<Dif
   if (state) {
     for (const entry of state.entries) {
       if (!planTargets.has(entry.targetPath)) {
-        outputs.push({
-          spec: {
-            tool: entry.tools[0],
-            kind: entry.kind,
-            sourcePath: entry.sourcePath,
-            targetPath: entry.targetPath,
-            mode: entry.mode,
-          },
-          change: "removed",
-        });
+        for (const source of entrySources(entry)) {
+          outputs.push({
+            spec: {
+              tool: entry.tools[0],
+              kind: entry.kind,
+              sourcePath: source,
+              targetPath: entry.targetPath,
+              mode: entry.mode,
+            },
+            change: "removed",
+          });
+        }
       }
     }
   }

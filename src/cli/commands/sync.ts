@@ -21,6 +21,7 @@ import { log } from "../../lib/output.js";
 
 interface SyncOptions extends ScopeFlags {
   dryRun?: boolean;
+  force?: boolean;
 }
 
 export const syncCommand = new Command("sync")
@@ -29,6 +30,7 @@ export const syncCommand = new Command("sync")
   .option(...SCOPE_FLAGS.global)
   .option(...SCOPE_FLAGS.all)
   .option("--dry-run", "Preview changes without applying")
+  .option("--force", "Overwrite local edits to generated instructions (a backup is kept)")
   .action(async (options: SyncOptions) => {
     const { contexts } = await resolveContexts(options);
 
@@ -60,6 +62,7 @@ export const syncCommand = new Command("sync")
 
       await applyTargetSet(ctx, targets, {
         dryRun: options.dryRun,
+        force: options.force,
         verb: state ? "Synced" : "Applied",
       });
       synced = true;

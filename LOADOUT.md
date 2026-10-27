@@ -275,7 +275,7 @@ List all registered kinds with `loadouts kinds -v`.
 
 | Tool | Rules | Skills | Instructions | Extra Artifacts |
 |------|-------|--------|--------------|-----------------|
-| Claude Code | `.claude/rules/*.md` | `.claude/skills/` | `CLAUDE.md` (generated wrapper) | — |
+| Claude Code | `.claude/rules/*.md` | `.claude/skills/` | `AGENTS.md` | — |
 | Cursor | `.cursor/rules/*.mdc` | `.cursor/skills/` | `AGENTS.md` | — |
 | OpenCode | `.opencode/rules/*.md` | `.opencode/skills/` | `AGENTS.md` | `opencode.json(c)`, `.opencode/plugins/`, `.opencode/commands/*.md` |
 | Codex | — | `.agents/skills/` | `AGENTS.md` | — |
@@ -283,7 +283,7 @@ List all registered kinds with `loadouts kinds -v`.
 
 **Tool-specific notes:**
 
-- **Claude Code** — Generates a `CLAUDE.md` wrapper that references `AGENTS.md`, keeping both in sync.
+- **Claude Code** — Reads project `AGENTS.md` natively (v2.1.277+), as long as no `CLAUDE.md`, `.claude/CLAUDE.md` or `CLAUDE.local.md` exists in the working directory or any directory above it. Global instructions go to `~/.claude/CLAUDE.md`.
 - **Cursor** — Rules use `.mdc` extension. Loadout automatically converts `paths` ↔ `globs` in frontmatter.
 - **OpenCode** — Local plugins render to `.opencode/plugins/`, slash commands render to `.opencode/commands/`, and NPM plugins are configured with the `plugins` array in `opencode.json(c)`.
 - **Codex** — Rules not yet supported; skills and instructions only.
@@ -605,7 +605,7 @@ skills/deploy/
 
 #### Instructions
 
-Each loadout can have its own instruction file at `.loadouts/instructions/AGENTS.<loadout>.md`. The active loadout's instructions are rendered to `AGENTS.md` at project root.
+Each loadout can have its own instruction file at `.loadouts/instructions/AGENTS.<loadout>.md`. All active loadouts' instructions are composed (in activation order) into one generated file, `.loadouts/AGENTS.loadouts-generated.md`, and `AGENTS.md` at project root is a symlink to it. Globally, the generated file is `~/.config/loadouts/AGENTS.loadouts-generated.md`, and each tool's global instruction file (`~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`, `~/.codex/AGENTS.md`, `~/.pi/agent/AGENTS.md`) links to it. Edit the source files, not `AGENTS.md`; if you do edit the composed file, `sync`/`activate` leave it untouched, show a diff, and exit 1 until you re-run with `--force` (your edits are saved to `.loadouts/AGENTS.loadouts-generated.md.bak`).
 
 ```bash
 # Create instruction file for a loadout
@@ -740,7 +740,7 @@ When you run `loadouts sync` or `loadouts activate`, loadout adds a managed sect
 .claude/rules/coding-style.md
 .claude/skills/debug/SKILL.md
 .claude/skills/debug/references/errors.md
-CLAUDE.md
+AGENTS.md
 # </loadout>
 ```
 
@@ -748,12 +748,13 @@ This section is automatically updated when you add or remove artifacts.
 
 **What gets committed:**
 - `.loadouts/` directory (your source configs)
-- `AGENTS.md` at project root (canonical instructions)
 - `.gitignore` (including the managed section)
 
 **What stays local:**
-- All paths listed in the `# <loadout>` section
-- The `.loadouts/.state.json` state file
+- All paths listed in the `# <loadout>` section, including `AGENTS.md` (a symlink to the generated file)
+- The `.loadouts/.state.json` state file and the generated `.loadouts/AGENTS.loadouts-generated.md` (and its `.bak`), which `.loadouts/.gitignore` ignores
+
+On a fresh clone, `AGENTS.md` is created by the fallback script (it links the first `instructions/AGENTS.*.md`) or by the first `loadouts sync`, which repoints it to the generated file.
 
 ### Custom Tool Configs
 
@@ -956,9 +957,6 @@ loadouts clear
 
 # Delete the loadout directory
 rm -rf .loadout
-
-# Optionally remove the generated CLAUDE.md wrapper
-rm CLAUDE.md
 ```
 
 For global config:

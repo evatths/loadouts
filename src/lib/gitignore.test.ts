@@ -282,7 +282,7 @@ describe("gitignore", () => {
     it("includes instruction artifacts in the root gitignore target", () => {
       const result = computeArtifactGitignorePaths("instruction", "AGENTS.base", "project");
       expect(result.get(".")).toContain("AGENTS.md");
-      expect(result.get(".")).toContain("CLAUDE.md");
+      expect(result.get(".")).not.toContain("CLAUDE.md");
     });
 
     it("includes OpenCode plugins under the OpenCode target directory", () => {
@@ -481,7 +481,7 @@ describe("gitignore", () => {
 
       const rootPaths = getManagedPathsFromTarget(tmpDir);
       expect(rootPaths).toContain("AGENTS.md");
-      expect(rootPaths).toContain("CLAUDE.md");
+      expect(rootPaths).not.toContain("CLAUDE.md");
       expect(rootPaths).toContain("opencode.jsonc");
     });
 

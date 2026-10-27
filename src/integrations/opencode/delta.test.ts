@@ -40,4 +40,28 @@ describe("session instruction delta", () => {
     saveState(root, state);
     expect(Object.values((await compileSession(directory, ["base"], { scope: "project" })).entries).join()).toContain(content);
   });
+
+  it("excludes every source of a composed AGENTS.md entry", async () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "loadouts-delta-")); dirs.push(directory);
+    const root = path.join(directory, ".loadouts");
+    fs.mkdirSync(path.join(root, "loadouts"), { recursive: true });
+    fs.mkdirSync(path.join(root, "instructions"), { recursive: true });
+    const first = path.join(root, "instructions/AGENTS.one.md");
+    const second = path.join(root, "instructions/AGENTS.two.md");
+    const generated = path.join(root, "AGENTS.loadouts-generated.md");
+    const target = path.join(directory, "AGENTS.md");
+    fs.writeFileSync(first, "First.\n");
+    fs.writeFileSync(second, "Second.\n");
+    fs.writeFileSync(generated, "First.\n\nSecond.\n");
+    fs.symlinkSync(generated, target);
+    fs.writeFileSync(path.join(root, "loadouts/one.yaml"), "name: one\ntools: [opencode]\ninclude: [instructions/AGENTS.one.md]\n");
+    fs.writeFileSync(path.join(root, "loadouts/two.yaml"), "name: two\ntools: [opencode]\ninclude: [instructions/AGENTS.two.md]\n");
+    const state = { active: ["one", "two"], appliedAt: new Date().toISOString(), mode: "symlink" as const,
+      entries: [{ kind: "instruction", tools: ["opencode"], sourcePath: generated, targetPath: "AGENTS.md", mode: "symlink" as const, renderedHash: hashContent("First.\n\nSecond.\n"),
+        sources: [{ path: first, hash: hashContent("First.\n") }, { path: second, hash: hashContent("Second.\n") }] }], shadowed: [] };
+    saveState(root, state);
+    expect((await compileSession(directory, ["one", "two"], { scope: "project" })).entries).toEqual({});
+    const full = await compileSession(directory, ["one", "two"], { scope: "project", excludeOnDisk: false });
+    expect(Object.values(full.entries).join()).toContain("Second.");
+  });
 });

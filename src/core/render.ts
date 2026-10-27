@@ -12,6 +12,7 @@
 
 import * as path from "node:path";
 import * as os from "node:os";
+import * as nodeFs from "node:fs";
 import {
   createSymlink,
   writeFile,
@@ -33,6 +34,16 @@ import type { OutputMapping } from "./registry.js";
 import { rebuildAllGitignores, updateLoadoutsGitignore } from "../lib/gitignore.js";
 import { expandTemplate, type TemplateVars } from "./template.js";
 import { isUnmanagedCollision, saveState, loadState } from "./manifest.js";
+import {
+  GENERATED_INSTRUCTIONS_BACKUP,
+  GENERATED_INSTRUCTIONS_FILE,
+  composeInstructions,
+  computeInstructionWarnings,
+  detectInstructionConflicts,
+  instructionDisplayPath,
+  isComposedKind,
+  type InstructionConflict,
+} from "./instructions.js";
 import type {
   ResolvedLoadout,
   ResolvedItem,
@@ -256,6 +267,21 @@ function isAdoptableCollision(
 }
 
 /**
+ * Composed (instruction) destinations are adoptable only when the existing
+ * file is a symlink into the state root — i.e. something loadouts produced.
+ * Content comparison doesn't apply: the destination will point at the
+ * generated file, not at any one source.
+ */
+function isAdoptableComposedCollision(fullPath: string, stateRoot: string): boolean {
+  if (!isSymlink(fullPath)) return false;
+  try {
+    return nodeFs.realpathSync(fullPath).startsWith(nodeFs.realpathSync(stateRoot) + path.sep);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Compute what would be written for a resolved loadout without touching disk.
  *
  * Dir-layout items (skills) are expanded into individual file outputs,
@@ -299,7 +325,10 @@ export async function planRender(
           if (isUnmanagedCollision(state, spec.targetPath, projectRoot)) {
             const fullPath = resolveTargetPath(spec.targetPath, projectRoot);
             const rendered = await renderOutput(expandedItem, spec);
-            if (isAdoptableCollision(fullPath, spec, rendered.content)) {
+            const adoptable = isComposedKind(spec.kind)
+              ? isAdoptableComposedCollision(fullPath, statePath ?? loadout.rootPath)
+              : isAdoptableCollision(fullPath, spec, rendered.content);
+            if (adoptable) {
               // Existing file is already what loadouts would render — adopt it
               // as a managed output rather than blocking on a shadow.
               outputs.push({ spec, item: expandedItem, hash: rendered.hash });
@@ -423,77 +452,7 @@ export async function applyPlan(
   mode: OutputMode = "symlink",
   scope: Scope = "project"
 ): Promise<void> {
-  // Remove stale managed outputs not included in the new plan
-  const existingState = loadState(loadout.rootPath);
-  const removedTargets: string[] = [];
-  if (existingState) {
-    const newTargets = new Set(plan.outputs.map((o) => o.spec.targetPath));
-    for (const entry of existingState.entries) {
-      if (!newTargets.has(entry.targetPath)) {
-        const fullPath = resolveTargetPath(entry.targetPath, projectRoot);
-        removePath(fullPath);
-        removedTargets.push(entry.targetPath);
-      }
-    }
-  }
-
-  await removeEmptyParentDirs(removedTargets, projectRoot);
-
-  // Write each planned output
-  for (const { spec, item } of plan.outputs) {
-    const targetPath = resolveTargetPath(spec.targetPath, projectRoot);
-
-    prepareOutputTarget(targetPath);
-
-    if (spec.mode === "symlink") {
-      createSymlink(spec.sourcePath, targetPath);
-    } else {
-      // copy or generate — write rendered content
-      const rendered = await renderOutput(item, spec);
-      writeFile(targetPath, rendered.content);
-    }
-  }
-
-  // Build manifest entries from plan outputs, grouping tools by targetPath
-  const outputsByTarget = new Map<string, { output: typeof plan.outputs[0]; tools: Set<string> }>();
-  for (const output of plan.outputs) {
-    const existing = outputsByTarget.get(output.spec.targetPath);
-    if (existing) {
-      existing.tools.add(output.spec.tool);
-    } else {
-      outputsByTarget.set(output.spec.targetPath, {
-        output,
-        tools: new Set([output.spec.tool]),
-      });
-    }
-  }
-  
-  const entries: ManifestEntry[] = Array.from(outputsByTarget.values()).map(({ output: { spec, hash }, tools }) => ({
-    tools: Array.from(tools).sort(),
-    kind: spec.kind,
-    sourcePath: spec.sourcePath,
-    targetPath: spec.targetPath,
-    mode: spec.mode,
-    renderedHash: hash,
-  }));
-
-  const newState: AppliedState = {
-    active: [loadout.name],
-    mode,
-    appliedAt: new Date().toISOString(),
-    entries,
-    shadowed: plan.shadowed,
-  };
-
-  saveState(loadout.rootPath, newState);
-
-  // Clean up fallback marker now that real state exists
-  const fallbackMarker = path.join(loadout.rootPath, ".fallback-applied");
-  if (fileExists(fallbackMarker)) {
-    removeFile(fallbackMarker);
-  }
-
-  refreshGitignores(loadout.rootPath, projectRoot, scope);
+  await applyMultiPlan([{ loadout, plan }], loadout.rootPath, projectRoot, mode, scope);
 }
 
 export interface ApplyResult {
@@ -503,32 +462,97 @@ export interface ApplyResult {
     updated: string[];  // Artifacts with changed content
     added: string[];    // New artifacts
     removed: string[];  // Removed artifacts
+    held: string[];     // Composed outputs left alone because of local edits
   };
+  /** Local edits to composed instruction files that held them back. */
+  conflicts: InstructionConflict[];
+  warnings: string[];
+}
+
+/**
+ * Change key for an output. Composed outputs share a target, so each source
+ * gets its own key; normal outputs are keyed by target alone.
+ */
+export function changeKey(spec: Pick<OutputSpec, "kind" | "targetPath" | "sourcePath">): string {
+  return isComposedKind(spec.kind) ? `${spec.targetPath}\0${spec.sourcePath}` : spec.targetPath;
+}
+
+interface BackupItem {
+  path: string;
+  displayPath: string;
+  content: string;
+}
+
+function realpathOr(p: string): string {
+  try {
+    return nodeFs.realpathSync(p);
+  } catch {
+    return path.resolve(p);
+  }
+}
+
+/**
+ * Write files about to be discarded to the single backup file and return a
+ * warning describing it. Returns null when there is nothing to back up.
+ */
+function writeInstructionBackup(
+  loadoutRoot: string,
+  projectRoot: string,
+  items: BackupItem[]
+): string | null {
+  const unique = items.filter((item, i) => items.findIndex((o) => o.path === item.path) === i);
+  if (unique.length === 0) return null;
+
+  const backupPath = path.join(loadoutRoot, GENERATED_INSTRUCTIONS_BACKUP);
+  const now = new Date().toISOString();
+  const content =
+    unique.length === 1
+      ? unique[0].content
+      : unique
+          .map((item) => {
+            const body = item.content.endsWith("\n") ? item.content : `${item.content}\n`;
+            return `<!-- loadouts:backup ${item.displayPath} ${now} -->\n${body}`;
+          })
+          .join("");
+  writeFile(backupPath, content);
+
+  return `Saved local edits in ${unique.map((i) => i.displayPath).join(", ")} to ${instructionDisplayPath(backupPath, projectRoot)} before replacing them.`;
+}
+
+function conflictBackups(conflicts: InstructionConflict[]): BackupItem[] {
+  return conflicts.map((c) => ({ path: c.path, displayPath: c.displayPath, content: readFile(c.path) }));
 }
 
 /**
  * Apply multiple loadouts, merging their outputs with deduplication by targetPath.
+ * Instruction outputs are composed into one generated file that every
+ * instruction destination links to.
  */
 export async function applyMultiPlan(
   plans: Array<{ loadout: ResolvedLoadout; plan: RenderPlan }>,
   loadoutRoot: string,
   projectRoot: string,
   mode: OutputMode = "symlink",
-  scope: Scope = "project"
+  scope: Scope = "project",
+  options: { force?: boolean } = {}
 ): Promise<ApplyResult> {
-  // Merge all outputs, deduplicating by targetPath but collecting all tools
+  // Merge all normal outputs, deduplicating by targetPath but collecting all tools.
+  // Composed outputs are handled separately below.
   const outputsByTarget = new Map<string, { output: RenderPlan["outputs"][0]; tools: Set<string> }>();
+  const composedSpecs: OutputSpec[] = [];
   const mergedShadowed: ShadowedEntry[] = [];
   const seenShadowedTargets = new Set<string>();
-  
+
   for (const { plan } of plans) {
     for (const output of plan.outputs) {
+      if (isComposedKind(output.spec.kind)) {
+        composedSpecs.push(output.spec);
+        continue;
+      }
       const existing = outputsByTarget.get(output.spec.targetPath);
       if (existing) {
-        // Same target path, collect the tool
         existing.tools.add(output.spec.tool);
       } else {
-        // First output for this target
         outputsByTarget.set(output.spec.targetPath, {
           output,
           tools: new Set([output.spec.tool]),
@@ -542,41 +566,115 @@ export async function applyMultiPlan(
       }
     }
   }
-  
-  const mergedOutputs = Array.from(outputsByTarget.values());
 
-  // Detect changes
+  const mergedOutputs = Array.from(outputsByTarget.values());
   const existingState = loadState(loadoutRoot);
-  const oldEntries = new Map(existingState?.entries.map(e => [e.targetPath, e]) ?? []);
-  const newHashes = new Map(mergedOutputs.map(o => [o.output.spec.targetPath, o.output.hash]));
-  
+  const oldComposed = existingState?.entries.filter((e) => isComposedKind(e.kind)) ?? [];
+
+  // Compose instructions and look for local edits to the composed files.
+  const composition = composeInstructions(plans, { loadoutRoot, projectRoot, scope });
+  const generatedPath = path.join(loadoutRoot, GENERATED_INSTRUCTIONS_FILE);
+  const detected = detectInstructionConflicts(existingState, composition, projectRoot);
+  const keptDestinations = new Set(
+    (composition?.destinations ?? []).map((d) => resolveTargetPath(d.targetPath, projectRoot))
+  );
+  // Only edits to files that would be overwritten hold; files being removed
+  // are backed up instead.
+  const holding = detected.filter((c) =>
+    c.reason === "edited" ? composition !== null : keptDestinations.has(c.path)
+  );
+  const held = !options.force && holding.length > 0;
+
   const updated: string[] = [];
   const added: string[] = [];
   const removed: string[] = [];
-  
-  // Find updated and added
+  const heldKeys: string[] = [];
+
+  // Normal outputs: keyed by target path
+  const oldEntries = new Map(existingState?.entries.map((e) => [e.targetPath, e]) ?? []);
   for (const { output } of mergedOutputs) {
     const oldEntry = oldEntries.get(output.spec.targetPath);
     if (!oldEntry) {
-      added.push(output.spec.targetPath);
+      added.push(changeKey(output.spec));
     } else if (oldEntry.renderedHash !== output.hash) {
-      updated.push(output.spec.targetPath);
+      updated.push(changeKey(output.spec));
     }
   }
-  
-  // Find removed
-  const newTargets = new Set(mergedOutputs.map((o) => o.output.spec.targetPath));
-  if (existingState) {
-    for (const entry of existingState.entries) {
-      if (!newTargets.has(entry.targetPath)) {
-        removed.push(entry.targetPath);
-        const fullPath = resolveTargetPath(entry.targetPath, projectRoot);
-        removePath(fullPath);
+
+  // Composed outputs: keyed per (target, source)
+  const composedKeys = [...new Set(composedSpecs.map(changeKey))];
+  if (held) {
+    heldKeys.push(...composedKeys);
+  } else {
+    const sourceByIdentity = new Map(
+      (composition?.sources ?? []).map((s) => [realpathOr(s.sourcePath), s])
+    );
+    const oldSourcesByTarget = new Map(
+      oldComposed.map((e) => [
+        e.targetPath,
+        e.sources ?? [{ path: e.sourcePath, hash: e.renderedHash }],
+      ])
+    );
+    const seen = new Set<string>();
+    for (const spec of composedSpecs) {
+      const key = changeKey(spec);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const source = sourceByIdentity.get(realpathOr(spec.sourcePath));
+      const old = oldSourcesByTarget
+        .get(spec.targetPath)
+        ?.find((s) => source && realpathOr(s.path) === realpathOr(source.sourcePath));
+      if (!old) added.push(key);
+      else if (source && old.hash !== source.hash) updated.push(key);
+    }
+    const newKeys = new Set(composedKeys);
+    for (const entry of oldComposed) {
+      const oldSources = entry.sources ?? [{ path: entry.sourcePath, hash: entry.renderedHash }];
+      for (const s of oldSources) {
+        const key = changeKey({ kind: entry.kind, targetPath: entry.targetPath, sourcePath: s.path });
+        if (!newKeys.has(key) && !removed.includes(key)) removed.push(key);
       }
     }
   }
 
-  await removeEmptyParentDirs(removed, projectRoot);
+  // Back up anything with local edits that is about to be discarded.
+  const warnings: string[] = [];
+  if (!held) {
+    const backups = conflictBackups(detected);
+    const trackedGenerated = oldComposed.some((e) => e.sources && e.sourcePath === generatedPath);
+    if (!trackedGenerated && fileExists(generatedPath) && !isDirectory(generatedPath)) {
+      const current = readFile(generatedPath);
+      if (composition === null || current !== composition.content) {
+        backups.push({
+          path: generatedPath,
+          displayPath: instructionDisplayPath(generatedPath, projectRoot),
+          content: current,
+        });
+      }
+    }
+    const backupWarning = writeInstructionBackup(loadoutRoot, projectRoot, backups);
+    if (backupWarning) warnings.push(backupWarning);
+  }
+
+  // Remove stale managed outputs
+  const normalTargets = new Set(mergedOutputs.map((o) => o.output.spec.targetPath));
+  const composedTargets = new Set(
+    held
+      ? oldComposed.map((e) => e.targetPath)
+      : (composition?.destinations ?? []).map((d) => d.targetPath)
+  );
+  const prunedTargets: string[] = [];
+  if (existingState) {
+    for (const entry of existingState.entries) {
+      if (normalTargets.has(entry.targetPath) || composedTargets.has(entry.targetPath)) continue;
+      if (held && isComposedKind(entry.kind)) continue;
+      if (!isComposedKind(entry.kind)) removed.push(entry.targetPath);
+      removePath(resolveTargetPath(entry.targetPath, projectRoot));
+      prunedTargets.push(entry.targetPath);
+    }
+  }
+
+  await removeEmptyParentDirs(prunedTargets, projectRoot);
 
   // Write each merged output
   const byTool = new Map<string, number>();
@@ -596,6 +694,26 @@ export async function applyMultiPlan(
     byTool.set(spec.tool, (byTool.get(spec.tool) || 0) + 1);
   }
 
+  // Write the composed file and link every destination to it
+  if (!held) {
+    if (composition) {
+      writeFile(generatedPath, composition.content);
+      for (const dest of composition.destinations) {
+        const targetPath = resolveTargetPath(dest.targetPath, projectRoot);
+        prepareOutputTarget(targetPath);
+        createSymlink(generatedPath, targetPath);
+      }
+    } else if (fileExists(generatedPath) || isSymlink(generatedPath)) {
+      removePath(generatedPath);
+    }
+  }
+
+  for (const dest of composition?.destinations ?? []) {
+    for (const tool of dest.tools) {
+      byTool.set(tool, (byTool.get(tool) || 0) + 1);
+    }
+  }
+
   // Build manifest entries with all tools that share each output
   const entries: ManifestEntry[] = mergedOutputs.map(({ output: { spec, hash }, tools }) => ({
     tools: Array.from(tools).sort(),
@@ -605,6 +723,23 @@ export async function applyMultiPlan(
     mode: spec.mode,
     renderedHash: hash,
   }));
+
+  if (held) {
+    entries.push(...oldComposed);
+  } else if (composition) {
+    const sources = composition.sources.map((s) => ({ path: s.sourcePath, hash: s.hash }));
+    for (const dest of composition.destinations) {
+      entries.push({
+        tools: dest.tools,
+        kind: "instruction",
+        sourcePath: generatedPath,
+        targetPath: dest.targetPath,
+        mode: "symlink",
+        renderedHash: composition.hash,
+        sources,
+      });
+    }
+  }
 
   const activeNames = plans.map((p) => p.loadout.name);
   const newState: AppliedState = {
@@ -625,10 +760,19 @@ export async function applyMultiPlan(
 
   refreshGitignores(loadoutRoot, projectRoot, scope);
 
+  // Suppression warnings depend on disk, so compute them after pruning.
+  if (composition) {
+    warnings.unshift(
+      ...computeInstructionWarnings(composition.content, composition.destinations, projectRoot, scope)
+    );
+  }
+
   return {
-    totalOutputs: mergedOutputs.length,
+    totalOutputs: mergedOutputs.length + (composition?.destinations.length ?? 0),
     byTool,
-    changes: { updated, added, removed },
+    changes: { updated, added, removed, held: heldKeys },
+    conflicts: held ? detected : [],
+    warnings,
   };
 }
 
@@ -639,17 +783,26 @@ export async function applyMultiPlan(
 /**
  * Remove all managed outputs recorded in the state file.
  * Does NOT clear the state file — callers decide whether to call clearState().
+ * Composed instruction files with local edits are backed up before removal.
  */
 export async function removeManaged(
   loadoutRoot: string,
   projectRoot: string,
   scope: Scope = "project"
-): Promise<{ removed: string[]; missing: string[] }> {
+): Promise<{ removed: string[]; missing: string[]; warnings: string[] }> {
   const state = loadState(loadoutRoot);
   const removed: string[] = [];
   const missing: string[] = [];
+  const warnings: string[] = [];
 
-  if (!state) return { removed, missing };
+  if (!state) return { removed, missing, warnings };
+
+  const backupWarning = writeInstructionBackup(
+    loadoutRoot,
+    projectRoot,
+    conflictBackups(detectInstructionConflicts(state, null, projectRoot))
+  );
+  if (backupWarning) warnings.push(backupWarning);
 
   for (const entry of state.entries) {
     const fullPath = resolveTargetPath(entry.targetPath, projectRoot);
@@ -662,9 +815,14 @@ export async function removeManaged(
     }
   }
 
+  if (state.entries.some((e) => isComposedKind(e.kind))) {
+    const generatedPath = path.join(loadoutRoot, GENERATED_INSTRUCTIONS_FILE);
+    if (fileExists(generatedPath) || isSymlink(generatedPath)) removePath(generatedPath);
+  }
+
   await removeEmptyParentDirs(state.entries.map((entry) => entry.targetPath), projectRoot);
 
   refreshGitignores(loadoutRoot, projectRoot, scope);
 
-  return { removed, missing };
+  return { removed, missing, warnings };
 }

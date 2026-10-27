@@ -206,6 +206,26 @@ export function detectDrift(
   return results;
 }
 
+/** Inputs of an entry: its recorded sources for composed outputs, else its sourcePath. */
+export function entrySources(entry: ManifestEntry): string[] {
+  return entry.sources?.map((s) => s.path) ?? [entry.sourcePath];
+}
+
+/**
+ * Fan composed results out to one result per source, so per-artifact views see
+ * each instruction source rather than the generated file.
+ */
+export function expandDriftBySource(results: DriftResult[]): DriftResult[] {
+  return results.flatMap((result) =>
+    result.entry.sources
+      ? result.entry.sources.map((s) => ({
+          ...result,
+          entry: { ...result.entry, sourcePath: s.path },
+        }))
+      : [result]
+  );
+}
+
 /**
  * Get all target paths that would be affected by applying new entries.
  */

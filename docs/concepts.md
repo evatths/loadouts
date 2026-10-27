@@ -88,11 +88,17 @@ include:
 
 | Tool | Rules | Skills | Agents | Instructions | Extra Artifacts |
 |------|-------|--------|--------|--------------|-----------------|
-| Claude Code | `.claude/rules/*.md` | `.claude/skills/` | `.claude/agents/*.md` | `CLAUDE.md` | — |
+| Claude Code | `.claude/rules/*.md` | `.claude/skills/` | `.claude/agents/*.md` | `AGENTS.md` | — |
 | Cursor | `.cursor/rules/*.mdc` | `.cursor/skills/` | `.cursor/agents/*.md` | `AGENTS.md` | — |
 | OpenCode | `.opencode/rules/*.md` | `.opencode/skills/` | `.opencode/agents/*.md` | `AGENTS.md` | `opencode.json(c)`, `~/.config/opencode/cli.json(c)` (global-only), `.opencode/plugins/`, `.opencode/commands/*.md` |
 | Codex | — | `.agents/skills/` | `.codex/agents/*.toml` | `AGENTS.md` | — |
 | Pi | — | `.pi/skills/` | — | `AGENTS.md` | `.pi/prompts/*.md`, `.pi/extensions/`, `.pi/themes/` |
+
+## Instructions Compose
+
+Instruction files from all active loadouts are concatenated into one generated file per scope (`.loadouts/AGENTS.loadouts-generated.md` for a project, `~/.config/loadouts/AGENTS.loadouts-generated.md` globally). Each section is marked with `<!-- loadouts:begin <loadout> · <path> -->` comments, and `AGENTS.md` (plus the global destinations such as `~/.claude/CLAUDE.md`) is a symlink to that file.
+
+Don't edit `AGENTS.md` or the generated file: edit the source instruction files and run `loadouts sync`. If you do edit it, `sync` and `activate` leave your edits alone, show a diff per section, apply everything else, and exit 1. `--force` saves your edited content to `.loadouts/AGENTS.loadouts-generated.md.bak` and regenerates. See [compatibility.md](compatibility.md) for the per-tool paths.
 
 ## Sources (Cross-Project Config)
 

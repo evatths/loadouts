@@ -40,17 +40,6 @@ for instr in .loadouts/instructions/AGENTS.*.md; do
   echo "  ✓ AGENTS.md"
   break
 done
-if [ ! -e "CLAUDE.md" ]; then
-  cat > CLAUDE.md << 'CLAUDE_EOF'
-# Claude Code Instructions
-
-> This file is auto-generated. Install loadouts for full configuration.
-> npm install -g loadouts && loadouts sync
-
-See [AGENTS.md](AGENTS.md) for project instructions.
-CLAUDE_EOF
-  echo "  ✓ CLAUDE.md"
-fi
 
 # Rules - symlink to all tool directories
 for rule in .loadouts/rules/*.md; do

@@ -24,6 +24,7 @@ import type { Scope } from "../../core/types.js";
 
 interface ActivateOptions extends ScopeFlags {
   dryRun?: boolean;
+  force?: boolean;
 }
 
 export const activateCommand = new Command("activate")
@@ -34,6 +35,7 @@ export const activateCommand = new Command("activate")
   .option(...SCOPE_FLAGS.global)
   .option(...SCOPE_FLAGS.all)
   .option("--dry-run", "Preview changes without applying")
+  .option("--force", "Overwrite local edits to generated instructions (a backup is kept)")
   .action(async (names: string[], options: ActivateOptions) => {
     const cwd = process.cwd();
 
@@ -51,6 +53,7 @@ export const activateCommand = new Command("activate")
 
         await applyTargetSet(ctx, targets, {
           dryRun: options.dryRun,
+          force: options.force,
           verb: "Activated",
           showKindNamespaceNotes: true,
         });
@@ -90,6 +93,7 @@ export const activateCommand = new Command("activate")
 
     await applyTargetSet(ctx, targets, {
       dryRun: options.dryRun,
+      force: options.force,
       verb: "Activated",
       showKindNamespaceNotes: true,
     });

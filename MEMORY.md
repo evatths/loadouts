@@ -1,5 +1,37 @@
 # MEMORY
 
+## Instructions compose into one generated file (2026-10-23)
+
+All active loadouts' instruction sources are concatenated into one generated
+file per scope, and every instruction destination is a symlink to it: project
+`.loadouts/AGENTS.loadouts-generated.md` → `AGENTS.md`; global
+`~/.config/loadouts/AGENTS.loadouts-generated.md` → `~/.claude/CLAUDE.md`,
+`~/.config/opencode/AGENTS.md`, `~/.codex/AGENTS.md`, `~/.pi/agent/AGENTS.md`.
+The file lives in the loadout root next to `.state.json` (`ctx.configPath`).
+
+- **`ManifestEntry.sources` fans in**: a composed destination entry lists every
+  source, with `sourcePath` = the generated file. **Attribute entries to
+  artifacts with `entrySources`/`expandDriftBySource` (`src/core/manifest.ts`),
+  never `entry.sourcePath`.**
+- The generated file is not itself a manifest entry; its lifecycle follows the
+  composed destination entries (zero sources → no file, stale ones pruned).
+- **Held-edit semantics:** if the composed file (or `AGENTS.md` as a regular
+  file with different content) was edited, `sync`/`activate` leave it alone,
+  show a per-section diff, apply everything else, and exit 1; their rows show `!` (status: `modified`).
+  `--force` saves the edit to `.loadouts/AGENTS.loadouts-generated.md.bak` (one
+  `.bak`, overwritten each time) and regenerates. Last-instruction deactivate,
+  `clear`, and `remove` back up, delete, and warn.
+- **Claude global target is `~/.claude/CLAUDE.md`** (Claude has no user-level
+  `AGENTS.md`). The old `~/CLAUDE.md` was harmful: Claude treats an ancestor
+  `CLAUDE.md` as the project instructions and stops reading `AGENTS.md` in every
+  project under `~`. Migration: `loadouts sync -g` once deletes it and the old
+  `~/AGENTS.md`. Project Claude relies on native `AGENTS.md` (≥ 2.1.277); no
+  `CLAUDE.md` wrapper is generated any more.
+- Content is the union for the scope; per-include `tools:` only picks which
+  destinations get a symlink. Codex reads only the first 32 KiB, so the composer
+  warns above that.
+- Not built: write-back of edited sections to sources.
+
 ## OpenCode dependency policy: track latest, no back-compat (2026-10-18)
 
 `@opencode/*` and `@opentui/*` use caret ranges, and every `@opencode/*` package

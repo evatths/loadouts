@@ -15,8 +15,8 @@ Loadout auto-manages `.gitignore` to exclude only rendered outputs:
 # </loadouts>
 ```
 
-**Committed:** `.loadouts/` (source), `AGENTS.md` (canonical), `.gitignore`
-**Local only:** Rendered outputs, state file
+**Committed:** `.loadouts/` (sources, including `instructions/AGENTS.*.md`), `.gitignore`
+**Local only:** Rendered outputs (including `AGENTS.md`), the generated `.loadouts/AGENTS.loadouts-generated.md`, state file
 
 ### Custom Tool Configs
 

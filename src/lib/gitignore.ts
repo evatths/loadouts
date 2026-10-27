@@ -35,6 +35,10 @@ import {
 import { registry } from "../core/registry.js";
 import { getBundledRoot } from "../core/discovery.js";
 import { expandTemplate, type TemplateVars } from "../core/template.js";
+import {
+  GENERATED_INSTRUCTIONS_BACKUP,
+  GENERATED_INSTRUCTIONS_FILE,
+} from "../core/instructions.js";
 import type { Scope } from "../core/types.js";
 
 const START_MARKER = "# <loadouts>";
@@ -46,7 +50,12 @@ const LEGACY_START_MARKER = "# <loadout>";
 const LEGACY_END_MARKER = "# </loadout>";
 
 // Paths always ignored within .loadouts/
-const LOADOUTS_STATE_PATHS = [".fallback-applied", ".state.json"];
+const LOADOUTS_STATE_PATHS = [
+  ".fallback-applied",
+  ".state.json",
+  GENERATED_INSTRUCTIONS_FILE,
+  GENERATED_INSTRUCTIONS_BACKUP,
+];
 
 // ---------------------------------------------------------------------------
 // Core write function

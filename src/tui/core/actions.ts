@@ -33,14 +33,22 @@ export async function executeEffect(effect: Effect, ctx: ActionContext): Promise
     if (effect.t === "plan") return done(effect.t, true, "Diff ready", await planLines(fs, effect.targetSet));
 
     if (effect.t === "clear" || effect.targetSet.length === 0) {
-      const { removed } = await removeManaged(fs.configPath, fs.projectRoot, fs.scope);
+      const { removed, warnings } = await removeManaged(fs.configPath, fs.projectRoot, fs.scope);
       clearState(fs.configPath);
-      return done(effect.t, true, `${removed.length} output(s) removed`);
+      return done(effect.t, true, [`${removed.length} output(s) removed`, ...warnings].join("; "));
     }
 
     const plans = await resolvePlans(fs, effect.targetSet);
     const mode = parseRootConfig(fs.configPath).mode;
     const result = await applyMultiPlan(plans, fs.configPath, fs.projectRoot, mode, fs.scope);
+    if (result.conflicts.length) {
+      return done(
+        effect.t,
+        false,
+        "AGENTS.md has local edits; edit the named source or run `loadouts sync --force`",
+        result.conflicts.flatMap((c) => c.edits.map((e) => e.owner ? `! edited section: ${e.owner.loadout} (${e.owner.displayPath})` : "! edits outside loadouts sections")),
+      );
+    }
     return done(effect.t, true, `${result.totalOutputs} output(s) applied`);
   } catch (err) {
     return done(effect.t, false, err instanceof Error ? err.message : String(err));

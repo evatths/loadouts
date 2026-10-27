@@ -33,7 +33,7 @@ export type TransformFn = (raw: string, item?: ResolvedItem) => string;
 export type OutputModeFn = (item: ResolvedItem) => OutputMode;
 
 /**
- * Generator: produces file content from scratch (e.g. CLAUDE.md wrapper).
+ * Generator: produces file content from scratch (e.g. a tool config stub).
  * Receives the resolved source item for access to sourcePath / relativePath.
  */
 export type GenerateFn = (item: ResolvedItem) => string;
@@ -101,6 +101,8 @@ export interface ToolSpec {
    * Takes precedence over `kind.defaultTargets[toolName]`.
    */
   targets?: Record<string, OutputMapping>;
+  /** Instruction-consumption facts used for warnings. */
+  instructions?: { maxBytes?: number; suppressedBy?: string[] };
   /** Optional prerequisite validator called by `loadout check`. */
   validate?: (scope: Scope) => Promise<ValidationResult>;
 }

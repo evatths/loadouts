@@ -171,7 +171,7 @@ export function calculateColumnWidths(
 // Change indicators — unified symbols for all commands
 // ---------------------------------------------------------------------------
 
-export type ChangeType = "added" | "updated" | "removed" | "unchanged" | "shadowed";
+export type ChangeType = "added" | "updated" | "removed" | "unchanged" | "shadowed" | "held";
 
 export const CHANGE_SYMBOLS: Record<ChangeType, { symbol: string; color: (s: string) => string }> = {
   added: { symbol: "+", color: chalk.green },
@@ -179,6 +179,7 @@ export const CHANGE_SYMBOLS: Record<ChangeType, { symbol: string; color: (s: str
   removed: { symbol: "-", color: chalk.red },
   unchanged: { symbol: "✓", color: chalk.green },
   shadowed: { symbol: "?", color: chalk.yellow },
+  held: { symbol: "!", color: chalk.red },
 };
 
 // Mode abbreviations for dry-run display
@@ -295,6 +296,7 @@ function worstChange(a: ChangeType, b: ChangeType): ChangeType {
     updated: 2,
     shadowed: 3,
     removed: 4,
+    held: 5,
   };
   return priority[b] > priority[a] ? b : a;
 }

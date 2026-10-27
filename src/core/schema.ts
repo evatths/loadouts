@@ -55,6 +55,7 @@ export const ManifestEntrySchema = z.object({
   targetPath: z.string(),
   mode: OutputModeSchema,
   renderedHash: z.string(),
+  sources: z.array(z.object({ path: z.string(), hash: z.string() })).optional(),
 });
 
 // Legacy schema for single-tool entries (pre-multi-tool format)

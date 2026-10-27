@@ -114,17 +114,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path23) {
-      const ctrl = callVisitor(key, node, visitor, path23);
+    function visit_(key, node, visitor, path24) {
+      const ctrl = callVisitor(key, node, visitor, path24);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
-        replaceNode(key, path23, ctrl);
-        return visit_(key, ctrl, visitor, path23);
+        replaceNode(key, path24, ctrl);
+        return visit_(key, ctrl, visitor, path24);
       }
       if (typeof ctrl !== "symbol") {
         if (identity2.isCollection(node)) {
-          path23 = Object.freeze(path23.concat(node));
+          path24 = Object.freeze(path24.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = visit_(i, node.items[i], visitor, path23);
+            const ci = visit_(i, node.items[i], visitor, path24);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -135,13 +135,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity2.isPair(node)) {
-          path23 = Object.freeze(path23.concat(node));
-          const ck = visit_("key", node.key, visitor, path23);
+          path24 = Object.freeze(path24.concat(node));
+          const ck = visit_("key", node.key, visitor, path24);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path23);
+          const cv = visit_("value", node.value, visitor, path24);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -162,17 +162,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path23) {
-      const ctrl = await callVisitor(key, node, visitor, path23);
+    async function visitAsync_(key, node, visitor, path24) {
+      const ctrl = await callVisitor(key, node, visitor, path24);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
-        replaceNode(key, path23, ctrl);
-        return visitAsync_(key, ctrl, visitor, path23);
+        replaceNode(key, path24, ctrl);
+        return visitAsync_(key, ctrl, visitor, path24);
       }
       if (typeof ctrl !== "symbol") {
         if (identity2.isCollection(node)) {
-          path23 = Object.freeze(path23.concat(node));
+          path24 = Object.freeze(path24.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = await visitAsync_(i, node.items[i], visitor, path23);
+            const ci = await visitAsync_(i, node.items[i], visitor, path24);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -183,13 +183,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity2.isPair(node)) {
-          path23 = Object.freeze(path23.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path23);
+          path24 = Object.freeze(path24.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path24);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path23);
+          const cv = await visitAsync_("value", node.value, visitor, path24);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -216,23 +216,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path23) {
+    function callVisitor(key, node, visitor, path24) {
       if (typeof visitor === "function")
-        return visitor(key, node, path23);
+        return visitor(key, node, path24);
       if (identity2.isMap(node))
-        return visitor.Map?.(key, node, path23);
+        return visitor.Map?.(key, node, path24);
       if (identity2.isSeq(node))
-        return visitor.Seq?.(key, node, path23);
+        return visitor.Seq?.(key, node, path24);
       if (identity2.isPair(node))
-        return visitor.Pair?.(key, node, path23);
+        return visitor.Pair?.(key, node, path24);
       if (identity2.isScalar(node))
-        return visitor.Scalar?.(key, node, path23);
+        return visitor.Scalar?.(key, node, path24);
       if (identity2.isAlias(node))
-        return visitor.Alias?.(key, node, path23);
+        return visitor.Alias?.(key, node, path24);
       return void 0;
     }
-    function replaceNode(key, path23, node) {
-      const parent = path23[path23.length - 1];
+    function replaceNode(key, path24, node) {
+      const parent = path24[path24.length - 1];
       if (identity2.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity2.isPair(parent)) {
@@ -842,10 +842,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity2 = require_identity();
     var Node2 = require_Node();
-    function collectionFromPath(schema, path23, value3) {
+    function collectionFromPath(schema, path24, value3) {
       let v = value3;
-      for (let i = path23.length - 1; i >= 0; --i) {
-        const k = path23[i];
+      for (let i = path24.length - 1; i >= 0; --i) {
+        const k = path24[i];
         if (typeof k === "number" && Number.isInteger(k) && k >= 0) {
           const a = [];
           a[k] = v;
@@ -864,7 +864,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path23) => path23 == null || typeof path23 === "object" && !!path23[Symbol.iterator]().next().done;
+    var isEmptyPath = (path24) => path24 == null || typeof path24 === "object" && !!path24[Symbol.iterator]().next().done;
     var Collection = class extends Node2.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -894,11 +894,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path23, value3) {
-        if (isEmptyPath(path23))
+      addIn(path24, value3) {
+        if (isEmptyPath(path24))
           this.add(value3);
         else {
-          const [key, ...rest] = path23;
+          const [key, ...rest] = path24;
           const node = this.get(key, true);
           if (identity2.isCollection(node))
             node.addIn(rest, value3);
@@ -912,8 +912,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path23) {
-        const [key, ...rest] = path23;
+      deleteIn(path24) {
+        const [key, ...rest] = path24;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -927,8 +927,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path23, keepScalar) {
-        const [key, ...rest] = path23;
+      getIn(path24, keepScalar) {
+        const [key, ...rest] = path24;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity2.isScalar(node) ? node.value : node;
@@ -946,8 +946,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path23) {
-        const [key, ...rest] = path23;
+      hasIn(path24) {
+        const [key, ...rest] = path24;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -957,8 +957,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path23, value3) {
-        const [key, ...rest] = path23;
+      setIn(path24, value3) {
+        const [key, ...rest] = path24;
         if (rest.length === 0) {
           this.set(key, value3);
         } else {
@@ -3473,9 +3473,9 @@ var require_Document = __commonJS({
           this.contents.add(value3);
       }
       /** Adds a value to the document. */
-      addIn(path23, value3) {
+      addIn(path24, value3) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path23, value3);
+          this.contents.addIn(path24, value3);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -3550,14 +3550,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path23) {
-        if (Collection.isEmptyPath(path23)) {
+      deleteIn(path24) {
+        if (Collection.isEmptyPath(path24)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path23) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path24) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -3572,10 +3572,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path23, keepScalar) {
-        if (Collection.isEmptyPath(path23))
+      getIn(path24, keepScalar) {
+        if (Collection.isEmptyPath(path24))
           return !keepScalar && identity2.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity2.isCollection(this.contents) ? this.contents.getIn(path23, keepScalar) : void 0;
+        return identity2.isCollection(this.contents) ? this.contents.getIn(path24, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -3586,10 +3586,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path23) {
-        if (Collection.isEmptyPath(path23))
+      hasIn(path24) {
+        if (Collection.isEmptyPath(path24))
           return this.contents !== void 0;
-        return identity2.isCollection(this.contents) ? this.contents.hasIn(path23) : false;
+        return identity2.isCollection(this.contents) ? this.contents.hasIn(path24) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -3606,13 +3606,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path23, value3) {
-        if (Collection.isEmptyPath(path23)) {
+      setIn(path24, value3) {
+        if (Collection.isEmptyPath(path24)) {
           this.contents = value3;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path23), value3);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path24), value3);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path23, value3);
+          this.contents.setIn(path24, value3);
         }
       }
       /**
@@ -3998,10 +3998,10 @@ var require_resolve_block_map = __commonJS({
       let offset = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start, key, sep: sep3, value: value3 } = collItem;
+        const { start, key, sep: sep4, value: value3 } = collItem;
         const keyProps = resolveProps.resolveProps(start, {
           indicator: "explicit-key-ind",
-          next: key ?? sep3?.[0],
+          next: key ?? sep4?.[0],
           offset,
           onError: onError3,
           parentIndent: bm.indent,
@@ -4015,7 +4015,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key && key.indent !== bm.indent)
               onError3(offset, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep3) {
+          if (!keyProps.anchor && !keyProps.tag && !sep4) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map12.comment)
@@ -4039,7 +4039,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map12.items, keyNode))
           onError3(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep3 ?? [], {
+        const valueProps = resolveProps.resolveProps(sep4 ?? [], {
           indicator: "map-value-ind",
           next: value3,
           offset: keyNode.range[2],
@@ -4055,7 +4055,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError3(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError3) : composeEmptyNode(ctx, offset, sep3, null, valueProps, onError3);
+          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError3) : composeEmptyNode(ctx, offset, sep4, null, valueProps, onError3);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value3, onError3);
           offset = valueNode.range[2];
@@ -4146,7 +4146,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep3 = "";
+        let sep4 = "";
         for (const token of end) {
           const { source, type } = token;
           switch (type) {
@@ -4160,13 +4160,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep3 + cb;
-              sep3 = "";
+                comment += sep4 + cb;
+              sep4 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep3 += source;
+                sep4 += source;
               hasSpace = true;
               break;
             default:
@@ -4209,18 +4209,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start, key, sep: sep3, value: value3 } = collItem;
+        const { start, key, sep: sep4, value: value3 } = collItem;
         const props = resolveProps.resolveProps(start, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key ?? sep3?.[0],
+          next: key ?? sep4?.[0],
           offset,
           onError: onError3,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep3 && !value3) {
+          if (!props.anchor && !props.tag && !sep4 && !value3) {
             if (i === 0 && props.comma)
               onError3(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -4274,8 +4274,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap && !sep3 && !props.found) {
-          const valueNode = value3 ? composeNode(ctx, value3, props, onError3) : composeEmptyNode(ctx, props.end, sep3, null, props, onError3);
+        if (!isMap && !sep4 && !props.found) {
+          const valueNode = value3 ? composeNode(ctx, value3, props, onError3) : composeEmptyNode(ctx, props.end, sep4, null, props, onError3);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
           if (isBlock(value3))
@@ -4287,7 +4287,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key))
             onError3(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep3 ?? [], {
+          const valueProps = resolveProps.resolveProps(sep4 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value3,
@@ -4298,8 +4298,8 @@ var require_resolve_flow_collection = __commonJS({
           });
           if (valueProps.found) {
             if (!isMap && !props.found && ctx.options.strict) {
-              if (sep3)
-                for (const st of sep3) {
+              if (sep4)
+                for (const st of sep4) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -4316,7 +4316,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError3(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError3) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep3, null, valueProps, onError3) : null;
+          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError3) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep4, null, valueProps, onError3) : null;
           if (valueNode) {
             if (isBlock(value3))
               onError3(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -4496,7 +4496,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value3 = "";
-      let sep3 = "";
+      let sep4 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value3 += lines[i][0].slice(trimIndent) + "\n";
@@ -4513,24 +4513,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type === Scalar.Scalar.BLOCK_LITERAL) {
-          value3 += sep3 + indent.slice(trimIndent) + content;
-          sep3 = "\n";
+          value3 += sep4 + indent.slice(trimIndent) + content;
+          sep4 = "\n";
         } else if (indent.length > trimIndent || content[0] === "	") {
-          if (sep3 === " ")
-            sep3 = "\n";
-          else if (!prevMoreIndented && sep3 === "\n")
-            sep3 = "\n\n";
-          value3 += sep3 + indent.slice(trimIndent) + content;
-          sep3 = "\n";
+          if (sep4 === " ")
+            sep4 = "\n";
+          else if (!prevMoreIndented && sep4 === "\n")
+            sep4 = "\n\n";
+          value3 += sep4 + indent.slice(trimIndent) + content;
+          sep4 = "\n";
           prevMoreIndented = true;
         } else if (content === "") {
-          if (sep3 === "\n")
+          if (sep4 === "\n")
             value3 += "\n";
           else
-            sep3 = "\n";
+            sep4 = "\n";
         } else {
-          value3 += sep3 + content;
-          sep3 = " ";
+          value3 += sep4 + content;
+          sep4 = " ";
           prevMoreIndented = false;
         }
       }
@@ -4712,25 +4712,25 @@ var require_resolve_flow_scalar = __commonJS({
       if (!match8)
         return source;
       let res = match8[1];
-      let sep3 = " ";
+      let sep4 = " ";
       let pos = first.lastIndex;
       line.lastIndex = pos;
       while (match8 = line.exec(source)) {
         if (match8[1] === "") {
-          if (sep3 === "\n")
-            res += sep3;
+          if (sep4 === "\n")
+            res += sep4;
           else
-            sep3 = "\n";
+            sep4 = "\n";
         } else {
-          res += sep3 + match8[1];
-          sep3 = " ";
+          res += sep4 + match8[1];
+          sep4 = " ";
         }
         pos = line.lastIndex;
       }
       const last = /[ \t]*(.*)/sy;
       last.lastIndex = pos;
       match8 = last.exec(source);
-      return res + sep3 + (match8?.[1] ?? "");
+      return res + sep4 + (match8?.[1] ?? "");
     }
     function doubleQuotedValue(source, onError3) {
       let res = "";
@@ -5540,14 +5540,14 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start, key, sep: sep3, value: value3 }) {
+    function stringifyItem({ start, key, sep: sep4, value: value3 }) {
       let res = "";
       for (const st of start)
         res += st.source;
       if (key)
         res += stringifyToken(key);
-      if (sep3)
-        for (const st of sep3)
+      if (sep4)
+        for (const st of sep4)
           res += st.source;
       if (value3)
         res += stringifyToken(value3);
@@ -5572,9 +5572,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path23) => {
+    visit.itemAtPath = (cst, path24) => {
       let item = cst;
-      for (const [field, index2] of path23) {
+      for (const [field, index2] of path24) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index2];
@@ -5583,23 +5583,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path23) => {
-      const parent = visit.itemAtPath(cst, path23.slice(0, -1));
-      const field = path23[path23.length - 1][0];
+    visit.parentCollection = (cst, path24) => {
+      const parent = visit.itemAtPath(cst, path24.slice(0, -1));
+      const field = path24[path24.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path23, item, visitor) {
-      let ctrl = visitor(item, path23);
+    function _visit(path24, item, visitor) {
+      let ctrl = visitor(item, path24);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i = 0; i < token.items.length; ++i) {
-            const ci = _visit(Object.freeze(path23.concat([[field, i]])), token.items[i], visitor);
+            const ci = _visit(Object.freeze(path24.concat([[field, i]])), token.items[i], visitor);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -5610,10 +5610,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path23);
+            ctrl = ctrl(item, path24);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path23) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path24) : ctrl;
     }
     exports.visit = visit;
   }
@@ -6714,18 +6714,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start = getFirstKeyStartProps(prev);
-          let sep3;
+          let sep4;
           if (scalar.end) {
-            sep3 = scalar.end;
-            sep3.push(this.sourceToken);
+            sep4 = scalar.end;
+            sep4.push(this.sourceToken);
             delete scalar.end;
           } else
-            sep3 = [this.sourceToken];
+            sep4 = [this.sourceToken];
           const map12 = {
             type: "block-map",
             offset: scalar.offset,
             indent: scalar.indent,
-            items: [{ start, key: scalar, sep: sep3 }]
+            items: [{ start, key: scalar, sep: sep4 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map12;
@@ -6878,15 +6878,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start2 = getFirstKeyStartProps(it.start);
                   const key = it.key;
-                  const sep3 = it.sep;
-                  sep3.push(this.sourceToken);
+                  const sep4 = it.sep;
+                  sep4.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start2, key, sep: sep3 }]
+                    items: [{ start: start2, key, sep: sep4 }]
                   });
                 } else if (start.length > 0) {
                   it.sep = it.sep.concat(start, this.sourceToken);
@@ -6915,14 +6915,14 @@ var require_parser = __commonJS({
             case "scalar":
             case "single-quoted-scalar":
             case "double-quoted-scalar": {
-              const fs3 = this.flowScalar(this.type);
+              const fs4 = this.flowScalar(this.type);
               if (atNextItem || it.value) {
-                map12.items.push({ start, key: fs3, sep: [] });
+                map12.items.push({ start, key: fs4, sep: [] });
                 this.onKeyLine = true;
               } else if (it.sep) {
-                this.stack.push(fs3);
+                this.stack.push(fs4);
               } else {
-                Object.assign(it, { key: fs3, sep: [] });
+                Object.assign(it, { key: fs4, sep: [] });
                 this.onKeyLine = true;
               }
               return;
@@ -7050,13 +7050,13 @@ var require_parser = __commonJS({
             case "scalar":
             case "single-quoted-scalar":
             case "double-quoted-scalar": {
-              const fs3 = this.flowScalar(this.type);
+              const fs4 = this.flowScalar(this.type);
               if (!it || it.value)
-                fc.items.push({ start: [], key: fs3, sep: [] });
+                fc.items.push({ start: [], key: fs4, sep: [] });
               else if (it.sep)
-                this.stack.push(fs3);
+                this.stack.push(fs4);
               else
-                Object.assign(it, { key: fs3, sep: [] });
+                Object.assign(it, { key: fs4, sep: [] });
               return;
             }
             case "flow-map-end":
@@ -7080,13 +7080,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep3 = fc.end.splice(1, fc.end.length);
-            sep3.push(this.sourceToken);
+            const sep4 = fc.end.splice(1, fc.end.length);
+            sep4.push(this.sourceToken);
             const map12 = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start, key: fc, sep: sep3 }]
+              items: [{ start, key: fc, sep: sep4 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map12;
@@ -9223,7 +9223,7 @@ var init_promise = __esm({
 });
 
 // src/tui/hosts/opencode/index.ts
-import * as path22 from "node:path";
+import * as path23 from "node:path";
 
 // node_modules/@opencode/plugin/dist/promise/plugin.js
 var plugin_exports = {};
@@ -9867,8 +9867,8 @@ var CIRCULAR = "[Circular]";
 function formatPropertyKey(name) {
   return typeof name === "string" ? JSON.stringify(name) : String(name);
 }
-function formatPath(path23) {
-  return path23.map((key) => `[${formatPropertyKey(key)}]`).join("");
+function formatPath(path24) {
+  return path24.map((key) => `[${formatPropertyKey(key)}]`).join("");
 }
 function formatDate(date) {
   try {
@@ -13668,7 +13668,7 @@ var makeCachedUnsafe = (self, ttlMillis) => {
   let expiresAt = 0;
   let exit3;
   let current;
-  const join20 = (fiber3, run3) => {
+  const join21 = (fiber3, run3) => {
     run3.awaiters++;
     onExitUnsafe(fiber3, () => {
       if (--run3.awaiters > 0 || current !== run3) return;
@@ -13678,7 +13678,7 @@ var makeCachedUnsafe = (self, ttlMillis) => {
     return fiberJoin(run3.fiber);
   };
   return [withFiber((fiber3) => {
-    if (current !== void 0) return join20(fiber3, current);
+    if (current !== void 0) return join21(fiber3, current);
     if (exit3 !== void 0 && (expiresAt === Infinity || fiber3.getRef(ClockRef).currentTimeMillisUnsafe() < expiresAt)) {
       return exit3;
     }
@@ -13697,7 +13697,7 @@ var makeCachedUnsafe = (self, ttlMillis) => {
       expiresAt = duration === Infinity ? Infinity : clock.currentTimeMillisUnsafe() + duration;
       exit3 = exit_;
     }), true, true);
-    return run3.fiber._exit ?? join20(fiber3, run3);
+    return run3.fiber._exit ?? join21(fiber3, run3);
   }), sync(() => {
     exit3 = void 0;
   })];
@@ -14159,8 +14159,8 @@ var runPromiseExitWith = (context3) => {
   const runFork3 = runForkWith(context3);
   return (effect2, options2) => {
     const fiber3 = runFork3(effect2, options2);
-    return new Promise((resolve9) => {
-      fiber3.addObserver((exit3) => resolve9(exit3));
+    return new Promise((resolve11) => {
+      fiber3.addObserver((exit3) => resolve11(exit3));
     });
   };
 };
@@ -19256,9 +19256,9 @@ var Pointer = class extends IssueNodeImpl {
    * The issue that occurred.
    */
   issue;
-  constructor(path23, issue) {
+  constructor(path24, issue) {
     super();
-    this.path = path23;
+    this.path = path24;
     this.issue = issue;
   }
 };
@@ -19443,43 +19443,43 @@ function getExpectedMessage(expected, issue) {
   const input = formatInput(issue);
   return input === void 0 ? `Expected ${expected}` : `Expected ${expected}, got ${input}`;
 }
-function toDefaultIssues(issue, path23, leafHook, checkHook) {
+function toDefaultIssues(issue, path24, leafHook, checkHook) {
   switch (issue._tag) {
     case "Filter": {
       const message = checkHook(issue);
       if (message !== void 0) {
         return [{
-          path: path23,
+          path: path24,
           message
         }];
       }
       if (issue.issue._tag !== "InvalidValue") {
-        return toDefaultIssues(issue.issue, path23, leafHook, checkHook);
+        return toDefaultIssues(issue.issue, path24, leafHook, checkHook);
       }
       const expected = findExpected(issue.issue);
       return [{
-        path: path23,
+        path: path24,
         message: expected === void 0 ? getExpectedMessage(formatCheck(issue.filter), issue) : getExpectedMessage(expected, issue.issue)
       }];
     }
     case "Encoding":
-      return toDefaultIssues(issue.issue, path23, leafHook, checkHook);
+      return toDefaultIssues(issue.issue, path24, leafHook, checkHook);
     case "Pointer":
-      return toDefaultIssues(issue.issue, [...path23, ...issue.path], leafHook, checkHook);
+      return toDefaultIssues(issue.issue, [...path24, ...issue.path], leafHook, checkHook);
     case "Composite":
-      return issue.issues.flatMap((issue2) => toDefaultIssues(issue2, path23, leafHook, checkHook));
+      return issue.issues.flatMap((issue2) => toDefaultIssues(issue2, path24, leafHook, checkHook));
     case "AnyOf": {
       if (issue.issues.length === 0) {
         return [{
-          path: path23,
+          path: path24,
           message: findMessage(issue) ?? getExpectedMessage(getExpected(issue.ast), issue)
         }];
       }
-      return issue.issues.flatMap((issue2) => toDefaultIssues(issue2, path23, leafHook, checkHook));
+      return issue.issues.flatMap((issue2) => toDefaultIssues(issue2, path24, leafHook, checkHook));
     }
     default:
       return [{
-        path: path23,
+        path: path24,
         message: leafHook(issue)
       }];
   }
@@ -19498,7 +19498,7 @@ function makeFormatterDefault() {
   return (issue) => formatIssue(issue, "");
 }
 var defaultFormatter = /* @__PURE__ */ makeFormatterDefault();
-function formatIssue(issue, path23) {
+function formatIssue(issue, path24) {
   let message;
   switch (issue._tag) {
     case "Filter": {
@@ -19507,7 +19507,7 @@ function formatIssue(issue, path23) {
         message = annotated;
       } else {
         if (issue.issue._tag !== "InvalidValue") {
-          return formatIssue(issue.issue, path23);
+          return formatIssue(issue.issue, path24);
         }
         const expected = findExpected(issue.issue);
         message = expected === void 0 ? getExpectedMessage(formatCheck(issue.filter), issue) : getExpectedMessage(expected, issue.issue);
@@ -19515,13 +19515,13 @@ function formatIssue(issue, path23) {
       break;
     }
     case "Encoding":
-      return formatIssue(issue.issue, path23);
+      return formatIssue(issue.issue, path24);
     case "Pointer":
-      return formatIssue(issue.issue, path23 + formatPath(issue.path));
+      return formatIssue(issue.issue, path24 + formatPath(issue.path));
     case "Composite":
     case "AnyOf": {
       if (issue._tag === "Composite" || issue.issues.length > 0) {
-        return issue.issues.map((issue2) => formatIssue(issue2, path23)).join("\n");
+        return issue.issues.map((issue2) => formatIssue(issue2, path24)).join("\n");
       }
       message = findMessage(issue) ?? getExpectedMessage(getExpected(issue.ast), issue);
       break;
@@ -19530,8 +19530,8 @@ function formatIssue(issue, path23) {
       message = defaultLeafHook(issue);
       break;
   }
-  return path23 ? `${message}
-  at ${path23}` : message;
+  return path24 ? `${message}
+  at ${path24}` : message;
 }
 function findMessage(issue) {
   if (issue._tag === "Pointer") return;
@@ -20620,13 +20620,13 @@ var Enum = class extends ASTNodeImpl {
     return this.enums.map(([_, value3]) => JSON.stringify(value3)).join(" | ");
   }
 };
-function formatTemplateLiteralPath(path23) {
-  return typeof path23 === "number" ? `parts[${path23}]` : path23;
+function formatTemplateLiteralPath(path24) {
+  return typeof path24 === "number" ? `parts[${path24}]` : path24;
 }
-function isTemplateLiteralPart(ast, path23, validated) {
+function isTemplateLiteralPart(ast, path24, validated) {
   if (validated.has(ast)) return true;
   if (ast.encoding) {
-    throw new Error(`TemplateLiteral parts cannot have an encoding at ${formatTemplateLiteralPath(path23)}`);
+    throw new Error(`TemplateLiteral parts cannot have an encoding at ${formatTemplateLiteralPath(path24)}`);
   }
   let valid;
   switch (ast._tag) {
@@ -20639,12 +20639,12 @@ function isTemplateLiteralPart(ast, path23, validated) {
       valid = !ast.checks;
       break;
     case "TemplateLiteral": {
-      const currentPath = formatTemplateLiteralPath(path23);
+      const currentPath = formatTemplateLiteralPath(path24);
       valid = !ast.checks && ast.parts.every((part, index2) => isTemplateLiteralPart(part, `${currentPath}.parts[${index2}]`, validated));
       break;
     }
     case "Union": {
-      const currentPath = formatTemplateLiteralPath(path23);
+      const currentPath = formatTemplateLiteralPath(path24);
       valid = !ast.checks && ast.types.every((part, index2) => isTemplateLiteralPart(part, `${currentPath}.types[${index2}]`, validated));
       break;
     }
@@ -22702,10 +22702,10 @@ var InterpretedEntry = class {
 var CompilerEntry = class extends InterpretedEntry {
   compiled;
   resolve;
-  constructor(ast, compiled, resolve9) {
+  constructor(ast, compiled, resolve11) {
     super(ast);
     this.compiled = compiled;
-    this.resolve = resolve9;
+    this.resolve = resolve11;
   }
   save(key, value3) {
     Object.defineProperty(this, key, {
@@ -22754,8 +22754,8 @@ function withDecode(fastDecode, decodeEffect3) {
     return (detailed ??= decodeEffect3())(input, options2);
   };
 }
-function lazyParser(resolve9, ast, operation) {
-  const entry = resolve9(ast);
+function lazyParser(resolve11, ast, operation) {
+  const entry = resolve11(ast);
   if (entry.compiled === void 0 || Object.hasOwn(entry, operation)) {
     return entry[operation];
   }
@@ -23123,8 +23123,8 @@ function parseUriFragment(fragment) {
   const pointer = decodeUriFragment(fragment);
   return pointer === void 0 ? void 0 : pointer.length === 0 ? [] : pointer.slice(1).split("/").map(unescapeToken);
 }
-function formatUriFragment(path23) {
-  return path23.reduce((fragment, token) => `${fragment}/${formatUriFragmentToken(token)}`, "#");
+function formatUriFragment(path24) {
+  return path24.reduce((fragment, token) => `${fragment}/${formatUriFragmentToken(token)}`, "#");
 }
 
 // node_modules/effect/dist/JsonSchema.js
@@ -23700,10 +23700,10 @@ var RegExp2 = globalThis.RegExp;
 var escape = (string3) => string3.replace(/[/\\^$*+?.()|[\]{}]/g, "\\$&");
 
 // node_modules/effect/dist/internal/errors.js
-function errorWithPath(message, path23) {
-  if (path23.length > 0) {
+function errorWithPath(message, path24) {
+  if (path24.length > 0) {
     message += `
-  at ${formatPath(path23)}`;
+  at ${formatPath(path24)}`;
   }
   return new Error(message);
 }
@@ -23904,9 +23904,9 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
     if (Array.isArray(schema.oneOf)) pendingOneOf.get(schema.oneOf)?.[1].push(schema);
     return schema;
   }
-  function compileDefinition(key, path23) {
+  function compileDefinition(key, path24) {
     if (!Object.hasOwn(references, key)) {
-      throw errorWithPath(`Invalid reference ${key}`, [...path23, "$ref"]);
+      throw errorWithPath(`Invalid reference ${key}`, [...path24, "$ref"]);
     }
     const cached3 = compiledDefinitions.get(key);
     if (cached3 !== void 0) return cached3;
@@ -23936,11 +23936,11 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
     const annotations = representation.checks.length === 0 ? representation.annotations : representation.checks[representation.checks.length - 1].annotations;
     return typeof annotations?.identifier !== "string" && typeof annotations?.[IDENTIFIER_FALLBACK_KEY] === "string" ? annotations[IDENTIFIER_FALLBACK_KEY] : void 0;
   }
-  function compileCheck(check2, type, path23, dependencies) {
+  function compileCheck(check2, type, path24, dependencies) {
     const annotations = check2.annotations;
     const callback3 = annotations?.toJsonSchema;
     if (callback3 !== void 0) {
-      const schemas3 = check2.representation?.schemas?.map((schema3, index2) => recur2(schema3, [...path23, "representation", "schemas", index2], dependencies)) ?? [];
+      const schemas3 = check2.representation?.schemas?.map((schema3, index2) => recur2(schema3, [...path24, "representation", "schemas", index2], dependencies)) ?? [];
       const result3 = callback3({
         type,
         schemas: schemas3
@@ -23963,7 +23963,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
       return void 0;
     }
     const schemas2 = check2.checks.flatMap((child, index2) => {
-      const result3 = compileCheck(child, type, [...path23, "checks", index2], dependencies);
+      const result3 = compileCheck(child, type, [...path24, "checks", index2], dependencies);
       return result3 === void 0 ? [] : [result3[0]];
     });
     if (schemas2.length === 0) return void 0;
@@ -23976,9 +23976,9 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
       ...ordinary
     }];
   }
-  function recur2(representation, path23, dependencies) {
+  function recur2(representation, path24, dependencies) {
     if (representation._tag === "Reference") {
-      dependencies.push(compileDefinition(representation.$ref, path23)[1]);
+      dependencies.push(compileDefinition(representation.$ref, path24)[1]);
       return {
         $ref: formatDefinitionReference(representation.$ref)
       };
@@ -23990,7 +23990,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
     }
     const local = [];
     dependencies.push(local);
-    let output = on(representation, path23, local);
+    let output = on(representation, path24, local);
     const ordinary = collectJsonSchemaAnnotations(representation.annotations, options2);
     if (ordinary !== void 0) {
       output = {
@@ -24000,13 +24000,13 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
     }
     for (let index2 = 0; index2 < representation.checks.length; index2++) {
       const type = typeof output.type === "string" && isJsonSchemaType(output.type) ? output.type : void 0;
-      const check2 = compileCheck(representation.checks[index2], type, [...path23, "checks", index2], local);
+      const check2 = compileCheck(representation.checks[index2], type, [...path24, "checks", index2], local);
       if (check2 !== void 0) output = appendJsonSchema(output, ...check2);
     }
     compiledRepresentations.set(representation, [output, local]);
     return registerPendingOneOf(output);
   }
-  function on(representation, path23, dependencies) {
+  function on(representation, path24, dependencies) {
     switch (representation._tag) {
       case "Any":
       case "Unknown":
@@ -24050,7 +24050,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         dependencies.push(false);
         return {};
       case "Suspend":
-        return recur2(representation.thunk, [...path23, "thunk"], dependencies);
+        return recur2(representation.thunk, [...path24, "thunk"], dependencies);
       case "Never":
         return {
           not: {}
@@ -24085,7 +24085,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
       case "Enum": {
         const types = representation.enums.map(([title, literal], index2) => {
           if (typeof literal === "number" && !globalThis.Number.isFinite(literal)) {
-            throw errorWithPath(`Invalid numeric enum value ${globalThis.String(literal)}`, [...path23, "enums", index2, 1]);
+            throw errorWithPath(`Invalid numeric enum value ${globalThis.String(literal)}`, [...path24, "enums", index2, 1]);
           }
           return {
             type: typeof literal,
@@ -24106,7 +24106,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         };
       case "Arrays": {
         if (representation.rest.length > 1) {
-          throw errorWithPath("Invalid schema representation document", [...path23, "rest"]);
+          throw errorWithPath("Invalid schema representation document", [...path24, "rest"]);
         }
         const out = {
           type: "array"
@@ -24114,7 +24114,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         let minItems = representation.elements.length;
         const prefixItems = representation.elements.map((element, index2) => {
           if (element.isOptional) minItems--;
-          const schema = recur2(element.type, [...path23, "elements", index2, "type"], dependencies);
+          const schema = recur2(element.type, [...path24, "elements", index2, "type"], dependencies);
           const annotations = collectJsonSchemaAnnotations(element.annotations, options2);
           return annotations === void 0 ? schema : registerPendingOneOf(appendJsonSchema(schema, annotations));
         });
@@ -24127,7 +24127,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         }
         if (representation.rest.length === 1) {
           delete out.maxItems;
-          const rest = recur2(representation.rest[0], [...path23, "rest", 0], dependencies);
+          const rest = recur2(representation.rest[0], [...path24, "rest", 0], dependencies);
           if (Object.keys(rest).length > 0) out.items = rest;
           else delete out.items;
         }
@@ -24149,10 +24149,10 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         for (let index2 = 0; index2 < representation.propertySignatures.length; index2++) {
           const property = representation.propertySignatures[index2];
           if (typeof property.name !== "string") {
-            throw errorWithPath("Invalid schema representation document", [...path23, "propertySignatures", index2, "name"]);
+            throw errorWithPath("Invalid schema representation document", [...path24, "propertySignatures", index2, "name"]);
           }
           const name = property.name;
-          const schema = recur2(property.type, [...path23, "propertySignatures", index2, "type"], dependencies);
+          const schema = recur2(property.type, [...path24, "propertySignatures", index2, "type"], dependencies);
           const annotations = collectJsonSchemaAnnotations(property.annotations, options2);
           assignProperty(properties, name, annotations === void 0 ? schema : registerPendingOneOf(appendJsonSchema(schema, annotations)));
           if (!property.isOptional) required3.push(name);
@@ -24165,12 +24165,12 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         let hasUnrepresentableIndexPattern = false;
         for (let index2 = 0; index2 < representation.indexSignatures.length; index2++) {
           const signature = representation.indexSignatures[index2];
-          let type = recur2(signature.type, [...path23, "indexSignatures", index2, "type"], dependencies);
+          let type = recur2(signature.type, [...path24, "indexSignatures", index2, "type"], dependencies);
           if (equals(type, {
             not: {}
           })) type = false;
           indexValueSchemas.push(type);
-          const patterns = getParameterPatterns(signature.parameter, [...path23, "indexSignatures", index2, "parameter"], /* @__PURE__ */ new Set());
+          const patterns = getParameterPatterns(signature.parameter, [...path24, "indexSignatures", index2, "parameter"], /* @__PURE__ */ new Set());
           if (patterns === void 0) {
             hasUnrepresentableIndexPattern = true;
             dependencies.push(false);
@@ -24197,7 +24197,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
             });
           }
           for (let index2 = 0; index2 < representation.indexSignatures.length; index2++) {
-            propertyNames.push(recur2(representation.indexSignatures[index2].parameter, [...path23, "indexSignatures", index2, "parameter"], dependencies));
+            propertyNames.push(recur2(representation.indexSignatures[index2].parameter, [...path24, "indexSignatures", index2, "parameter"], dependencies));
           }
           out.propertyNames = propertyNames.length === 1 ? propertyNames[0] : {
             anyOf: propertyNames
@@ -24228,7 +24228,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
       }
       case "Union": {
         const branches = [];
-        const types = representation.types.map((type, index2) => recur2(type, [...path23, "types", index2], branches));
+        const types = representation.types.map((type, index2) => recur2(type, [...path24, "types", index2], branches));
         dependencies.push(branches);
         if (types.length === 0) return {
           not: {}
@@ -24245,13 +24245,13 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
       }
     }
   }
-  function getParameterPatterns(parameter, path23, seenReferences) {
+  function getParameterPatterns(parameter, path24, seenReferences) {
     switch (parameter._tag) {
       case "Reference": {
         if (!Object.hasOwn(references, parameter.$ref)) {
-          throw errorWithPath(`Invalid reference ${parameter.$ref}`, [...path23, "$ref"]);
+          throw errorWithPath(`Invalid reference ${parameter.$ref}`, [...path24, "$ref"]);
         }
-        compileDefinition(parameter.$ref, path23);
+        compileDefinition(parameter.$ref, path24);
         if (seenReferences.has(parameter.$ref)) return void 0;
         const next = new Set(seenReferences).add(parameter.$ref);
         return getParameterPatterns(references[parameter.$ref], ["references", parameter.$ref], next);
@@ -24262,7 +24262,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
           return void 0;
         }
         const dependencies = [];
-        const schema = recur2(parameter, path23, dependencies);
+        const schema = recur2(parameter, path24, dependencies);
         if (!isExact(dependencies)) return void 0;
         return schema.type === "string" && typeof schema.pattern === "string" && hasOnlyKeywords(schema, "|type|pattern|title|description|default|examples|readOnly|writeOnly|") ? [schema.pattern] : void 0;
       }
@@ -24274,7 +24274,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         }
         const patterns = [];
         for (let index2 = 0; index2 < parameter.types.length; index2++) {
-          const memberPatterns = getParameterPatterns(parameter.types[index2], [...path23, "types", index2], seenReferences);
+          const memberPatterns = getParameterPatterns(parameter.types[index2], [...path24, "types", index2], seenReferences);
           if (memberPatterns === void 0) return void 0;
           if (memberPatterns.length === 0) return [];
           patterns.push(...memberPatterns);
@@ -24282,7 +24282,7 @@ function compileJsonSchema(representations, rootPaths, references, options2) {
         return patterns;
       }
       default:
-        throw errorWithPath("Invalid schema representation document", path23);
+        throw errorWithPath("Invalid schema representation document", path24);
     }
   }
 }
@@ -24681,9 +24681,9 @@ function toStandardSchemaV1(self, options2) {
     if (exit3) {
       return makeStandardResult(exit3);
     }
-    return new Promise((resolve9) => {
+    return new Promise((resolve11) => {
       fiber3.addObserver((exit4) => {
-        resolve9(makeStandardResult(exit4));
+        resolve11(makeStandardResult(exit4));
       });
     });
   };
@@ -24757,25 +24757,25 @@ function get3(oldValue, newValue) {
   getLoop(oldValue, newValue, "", patches);
   return patches;
 }
-function getLoop(oldValue, newValue, path23, patches) {
+function getLoop(oldValue, newValue, path24, patches) {
   if (Object.is(oldValue, newValue)) return;
   if (Array.isArray(oldValue) && Array.isArray(newValue)) {
     const len1 = oldValue.length;
     const len2 = newValue.length;
     const shared = Math.min(len1, len2);
     for (let i = 0; i < shared; i++) {
-      getLoop(oldValue[i], newValue[i], `${path23}/${i}`, patches);
+      getLoop(oldValue[i], newValue[i], `${path24}/${i}`, patches);
     }
     for (let i = len1 - 1; i >= len2; i--) {
       patches.push({
         op: "remove",
-        path: `${path23}/${i}`
+        path: `${path24}/${i}`
       });
     }
     for (let i = len1; i < len2; i++) {
       patches.push({
         op: "add",
-        path: `${path23}/${i}`,
+        path: `${path24}/${i}`,
         value: newValue[i]
       });
     }
@@ -24786,7 +24786,7 @@ function getLoop(oldValue, newValue, path23, patches) {
     const keys22 = Object.keys(newValue);
     const allKeys = Array.from(/* @__PURE__ */ new Set([...keys1, ...keys22])).sort();
     for (const key of allKeys) {
-      const keyPath = `${path23}/${escapeToken(key)}`;
+      const keyPath = `${path24}/${escapeToken(key)}`;
       const hasKey1 = Object.hasOwn(oldValue, key);
       const hasKey2 = Object.hasOwn(newValue, key);
       if (hasKey1 && hasKey2) {
@@ -24808,7 +24808,7 @@ function getLoop(oldValue, newValue, path23, patches) {
   }
   patches.push({
     op: "replace",
-    path: path23,
+    path: path24,
     value: newValue
   });
 }
@@ -25579,12 +25579,12 @@ var PathNode = class {
   path;
   get;
   set;
-  constructor(path23) {
-    this.path = path23;
+  constructor(path24) {
+    this.path = path24;
     this.get = (s) => {
       let out = s;
-      for (let i = 0; i < path23.length; i++) {
-        out = out[path23[i]];
+      for (let i = 0; i < path24.length; i++) {
+        out = out[path24[i]];
       }
       return out;
     };
@@ -25592,12 +25592,12 @@ var PathNode = class {
       const out = cloneShallow(s);
       let current = out;
       let i = 0;
-      for (; i < path23.length - 1; i++) {
-        const key = path23[i];
+      for (; i < path24.length - 1; i++) {
+        const key = path24[i];
         assignProperty(current, key, cloneShallow(current[key]));
         current = current[key];
       }
-      assignProperty(current, path23[i], a);
+      assignProperty(current, path24[i], a);
       return out;
     };
   }
@@ -26341,9 +26341,9 @@ var UnixPathProto = {
     return this.toJSON();
   }
 };
-var unixPathAddress = (path23) => {
+var unixPathAddress = (path24) => {
   const self = Object.create(UnixPathProto);
-  self.path = path23;
+  self.path = path24;
   return Object.freeze(self);
 };
 
@@ -33332,8 +33332,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path23, errorMaps, issueData } = params;
-  const fullPath = [...path23, ...issueData.path || []];
+  const { data, path: path24, errorMaps, issueData } = params;
+  const fullPath = [...path24, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -33449,11 +33449,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value3, path23, key) {
+  constructor(parent, value3, path24, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value3;
-    this._path = path23;
+    this._path = path24;
     this._key = key;
   }
   get path() {
@@ -36935,7 +36935,11 @@ var ManifestEntrySchema = external_exports.object({
   sourcePath: external_exports.string(),
   targetPath: external_exports.string(),
   mode: OutputModeSchema,
-  renderedHash: external_exports.string()
+  renderedHash: external_exports.string(),
+  sources: external_exports.array(external_exports.object({
+    path: external_exports.string(),
+    hash: external_exports.string()
+  })).optional()
 });
 var LegacyManifestEntrySchema = external_exports.object({
   tool: ToolSchema,
@@ -37421,12 +37425,6 @@ function renderCodexAgent(raw, item) {
 }
 
 // src/builtins/tools/claude-code.ts
-var CLAUDE_WRAPPER = `# Claude Code Instructions
-
-> This file is auto-generated by Loadouts. Edit .loadouts/AGENTS.md instead.
-
-See [AGENTS.md](AGENTS.md) for project instructions.
-`;
 var claudeCodeTool = {
   name: "claude-code",
   basePath: {
@@ -37443,17 +37441,18 @@ var claudeCodeTool = {
     },
     instruction: {
       path: {
-        project: "CLAUDE.md",
-        global: "{home}/CLAUDE.md"
-      },
-      mode: "generate",
-      generate: () => CLAUDE_WRAPPER
+        project: "AGENTS.md",
+        global: "{base}/CLAUDE.md"
+      }
     },
     agent: {
       path: "{base}/agents/{stem}.md",
       mode: selectAgentMarkdownMode("claude-code"),
       transform: "claude-agent-frontmatter"
     }
+  },
+  instructions: {
+    suppressedBy: ["CLAUDE.md", "CLAUDE.local.md", ".claude/CLAUDE.md"]
   }
 };
 
@@ -37477,10 +37476,8 @@ var cursorTool = {
       path: "{base}/skills/{name}"
     },
     instruction: {
-      path: {
-        project: "AGENTS.md",
-        global: "{home}/AGENTS.md"
-      }
+      path: "AGENTS.md",
+      scopes: ["project"]
     },
     agent: {
       path: "{base}/agents/{stem}.md",
@@ -37563,7 +37560,7 @@ var codexTool = {
     instruction: {
       path: {
         project: "AGENTS.md",
-        global: "{home}/AGENTS.md"
+        global: "{home}/.codex/AGENTS.md"
       }
     },
     agent: {
@@ -37575,6 +37572,9 @@ var codexTool = {
       mode: "copy",
       transform: "codex-agent-toml"
     }
+  },
+  instructions: {
+    maxBytes: 32768
   }
 };
 
@@ -37597,7 +37597,7 @@ var piTool = {
     instruction: {
       path: {
         project: "AGENTS.md",
-        global: "{home}/AGENTS.md"
+        global: "{base}/AGENTS.md"
       }
     },
     prompt: {
@@ -38027,8 +38027,8 @@ async function collectCatalogRoots(cwd = process.cwd()) {
 }
 
 // src/tui/core/data.ts
-import * as path17 from "node:path";
-import * as os10 from "node:os";
+import * as path18 from "node:path";
+import * as os11 from "node:os";
 
 // src/core/manifest.ts
 import * as path10 from "node:path";
@@ -38152,14 +38152,27 @@ function detectDrift(state, projectRoot) {
   }
   return results2;
 }
+function entrySources(entry) {
+  return entry.sources?.map((s) => s.path) ?? [entry.sourcePath];
+}
+function expandDriftBySource(results2) {
+  return results2.flatMap((result3) => result3.entry.sources ? result3.entry.sources.map((s) => ({
+    ...result3,
+    entry: {
+      ...result3.entry,
+      sourcePath: s.path
+    }
+  })) : [result3]);
+}
 
 // src/core/render.ts
-import * as path13 from "node:path";
-import * as os8 from "node:os";
+import * as path14 from "node:path";
+import * as os9 from "node:os";
+import * as nodeFs from "node:fs";
 
 // src/lib/gitignore.ts
-import * as path12 from "node:path";
-import * as os7 from "node:os";
+import * as path13 from "node:path";
+import * as os8 from "node:os";
 
 // src/core/template.ts
 import * as path11 from "node:path";
@@ -38172,20 +38185,30 @@ function expandTemplate(template, scope3, vars) {
   return path11.normalize(expanded);
 }
 
+// src/core/instructions.ts
+import * as fs3 from "node:fs";
+import * as os7 from "node:os";
+import * as path12 from "node:path";
+var GENERATED_INSTRUCTIONS_FILE = "AGENTS.loadouts-generated.md";
+var GENERATED_INSTRUCTIONS_BACKUP = `${GENERATED_INSTRUCTIONS_FILE}.bak`;
+function isComposedKind(kind) {
+  return kind === "instruction";
+}
+
 // src/core/render.ts
 function resolveOutputSpec(toolName, item, scope3) {
   const mapping = registry.resolveMapping(toolName, item.kind);
   if (!mapping) return null;
   if (mapping.scopes && !mapping.scopes.includes(scope3)) return null;
   const tool = registry.getTool(toolName);
-  const sourceExt = path13.extname(item.sourcePath);
+  const sourceExt = path14.extname(item.sourcePath);
   const ext = mapping.ext ?? sourceExt;
   const vars = {
     base: tool.basePath[scope3],
-    home: os8.homedir(),
-    stem: path13.basename(item.sourcePath, sourceExt),
+    home: os9.homedir(),
+    stem: path14.basename(item.sourcePath, sourceExt),
     ext,
-    name: path13.basename(item.sourcePath),
+    name: path14.basename(item.sourcePath),
     relative: item.relativePath,
     kind: item.kind
   };
@@ -38246,8 +38269,8 @@ function expandDirItem(item, kind) {
   const files = walkDir(item.sourcePath);
   return files.map((relativeFile) => ({
     kind: item.kind,
-    sourcePath: path13.join(item.sourcePath, relativeFile),
-    relativePath: path13.join(item.relativePath, relativeFile),
+    sourcePath: path14.join(item.sourcePath, relativeFile),
+    relativePath: path14.join(item.relativePath, relativeFile),
     tools: item.tools
   }));
 }
@@ -38256,21 +38279,21 @@ function resolveExpandedOutputSpec(toolName, baseItem, expandedItem, scope3) {
   if (!mapping) return null;
   if (mapping.scopes && !mapping.scopes.includes(scope3)) return null;
   const tool = registry.getTool(toolName);
-  const sourceExt = path13.extname(expandedItem.sourcePath);
+  const sourceExt = path14.extname(expandedItem.sourcePath);
   const ext = mapping.ext ?? sourceExt;
-  const relativeWithinDir = path13.relative(baseItem.sourcePath, expandedItem.sourcePath);
+  const relativeWithinDir = path14.relative(baseItem.sourcePath, expandedItem.sourcePath);
   const vars = {
     base: tool.basePath[scope3],
-    home: os8.homedir(),
-    stem: path13.basename(baseItem.sourcePath),
+    home: os9.homedir(),
+    stem: path14.basename(baseItem.sourcePath),
     // Use the directory name as stem
     ext,
-    name: path13.basename(baseItem.sourcePath),
+    name: path14.basename(baseItem.sourcePath),
     relative: baseItem.relativePath,
     kind: baseItem.kind
   };
   const baseTargetPath = expandTemplate(mapping.path, scope3, vars);
-  const targetPath = path13.join(baseTargetPath, relativeWithinDir);
+  const targetPath = path14.join(baseTargetPath, relativeWithinDir);
   const mode = resolveMappingMode(mapping, expandedItem);
   return {
     tool: toolName,
@@ -38287,6 +38310,14 @@ function isAdoptableCollision(fullPath, spec, renderedContent) {
   if (isDirectory(fullPath)) return false;
   try {
     return readFile(fullPath) === renderedContent;
+  } catch {
+    return false;
+  }
+}
+function isAdoptableComposedCollision(fullPath, stateRoot) {
+  if (!isSymlink(fullPath)) return false;
+  try {
+    return nodeFs.realpathSync(fullPath).startsWith(nodeFs.realpathSync(stateRoot) + path14.sep);
   } catch {
     return false;
   }
@@ -38311,7 +38342,8 @@ async function planRender(loadout, projectRoot, scope3, statePath) {
           if (isUnmanagedCollision(state, spec.targetPath, projectRoot)) {
             const fullPath = resolveTargetPath(spec.targetPath, projectRoot);
             const rendered2 = await renderOutput(expandedItem, spec);
-            if (isAdoptableCollision(fullPath, spec, rendered2.content)) {
+            const adoptable = isComposedKind(spec.kind) ? isAdoptableComposedCollision(fullPath, statePath ?? loadout.rootPath) : isAdoptableCollision(fullPath, spec, rendered2.content);
+            if (adoptable) {
               outputs.push({
                 spec,
                 item: expandedItem,
@@ -38346,15 +38378,15 @@ async function planRender(loadout, projectRoot, scope3, statePath) {
   };
 }
 function resolveTargetPath(targetPath, projectRoot) {
-  return path13.isAbsolute(targetPath) ? targetPath : path13.join(projectRoot, targetPath);
+  return path14.isAbsolute(targetPath) ? targetPath : path14.join(projectRoot, targetPath);
 }
 
 // src/core/resolve.ts
-import * as path15 from "node:path";
+import * as path16 from "node:path";
 
 // src/core/kindLoader.ts
 var yaml3 = __toESM(require_dist(), 1);
-import * as path14 from "node:path";
+import * as path15 from "node:path";
 var yamlKindSources = /* @__PURE__ */ new Map();
 var YamlOutputMappingSchema = external_exports.object({
   path: external_exports.union([external_exports.string(), external_exports.object({
@@ -38419,11 +38451,11 @@ function buildDetect(spec) {
 }
 function loadYamlKindsFromRoots(roots, options2 = {}) {
   for (const root of roots) {
-    const kindsDir = path14.join(root.path, "kinds");
+    const kindsDir = path15.join(root.path, "kinds");
     if (!isDirectory(kindsDir)) continue;
     const files = listFiles(kindsDir).filter((f) => f.endsWith(".yaml") || f.endsWith(".yml"));
     for (const file of files) {
-      const filePath = path14.join(kindsDir, file);
+      const filePath = path15.join(kindsDir, file);
       if (!fileExists(filePath)) continue;
       try {
         const kind = parseYamlKind(filePath);
@@ -38487,7 +38519,7 @@ function resolveLoadout(name, roots, rootConfig, options2 = {}) {
 function resolveInclude(include, rootPath, defaultTools) {
   const relativePath = typeof include === "string" ? include : include.path;
   const tools = typeof include === "object" && include.tools ? include.tools : defaultTools;
-  const sourcePath = path15.join(rootPath, relativePath);
+  const sourcePath = path16.join(rootPath, relativePath);
   if (!fileExists(sourcePath) && !isDirectory(sourcePath)) {
     throw new Error(`Include not found: ${relativePath} (in ${rootPath})`);
   }
@@ -38503,7 +38535,7 @@ function resolveInclude(include, rootPath, defaultTools) {
   };
 }
 function getInstructionItem(loadoutRoot, tools) {
-  const sourcePath = path15.join(loadoutRoot, "AGENTS.md");
+  const sourcePath = path16.join(loadoutRoot, "AGENTS.md");
   if (!fileExists(sourcePath)) {
     return null;
   }
@@ -38758,7 +38790,7 @@ var ansi_styles_default = ansiStyles;
 
 // node_modules/chalk/source/vendor/supports-color/index.js
 import process2 from "node:process";
-import os9 from "node:os";
+import os10 from "node:os";
 import tty from "node:tty";
 function hasFlag(flag, argv = globalThis.Deno ? globalThis.Deno.args : process2.argv) {
   const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
@@ -38823,7 +38855,7 @@ function _supportsColor(haveStream, { streamIsTTY, sniffFlags = true } = {}) {
     return min6;
   }
   if (process2.platform === "win32") {
-    const osRelease = os9.release().split(".");
+    const osRelease = os10.release().split(".");
     if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
       return Number(osRelease[2]) >= 14931 ? 3 : 2;
     }
@@ -39066,7 +39098,7 @@ var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
 var source_default = chalk;
 
 // src/lib/artifact-paths.ts
-import * as path16 from "node:path";
+import * as path17 from "node:path";
 
 // src/lib/artifact-table.ts
 var KIND_SORT_ORDER = {
@@ -39132,6 +39164,10 @@ var CHANGE_SYMBOLS = {
   shadowed: {
     symbol: "?",
     color: source_default.yellow
+  },
+  held: {
+    symbol: "!",
+    color: source_default.red
   }
 };
 
@@ -39238,7 +39274,7 @@ function ownerStateMap(entries3) {
     map12.set(owner, {
       active: new Set(loadState(primary.root.path)?.active ?? []),
       configPath: primary.root.path,
-      projectRoot: owner === "project" ? path17.dirname(primary.root.path) : os10.homedir(),
+      projectRoot: owner === "project" ? path18.dirname(primary.root.path) : os11.homedir(),
       scope: owner
     });
   }
@@ -39256,7 +39292,7 @@ async function loadActiveIssue(state, name, roots) {
   const added = plan.outputs.some((output) => !applied.entries.some((entry) => entry.targetPath === output.spec.targetPath));
   const removed2 = applied.entries.some((entry) => !targets.has(entry.targetPath));
   if (added || removed2) return "configuration drift";
-  const worst = detectDrift(applied, state.projectRoot).filter((result3) => sourcePaths.has(result3.entry.sourcePath)).sort((a, b) => DRIFT_PRIORITY[b.status] - DRIFT_PRIORITY[a.status])[0];
+  const worst = expandDriftBySource(detectDrift(applied, state.projectRoot)).filter((result3) => sourcePaths.has(result3.entry.sourcePath)).sort((a, b) => DRIFT_PRIORITY[b.status] - DRIFT_PRIORITY[a.status])[0];
   return worst && worst.status !== "ok" ? `output ${worst.status}` : void 0;
 }
 function countSlots(slots) {
@@ -39268,8 +39304,8 @@ function countSlots(slots) {
   };
 }
 function loadoutDefinitionPath(root, name) {
-  const yamlPath = path17.join(root, "loadouts", `${name}.yaml`);
-  return fileExists(yamlPath) ? yamlPath : path17.join(root, "loadouts", `${name}.yml`);
+  const yamlPath = path18.join(root, "loadouts", `${name}.yaml`);
+  return fileExists(yamlPath) ? yamlPath : path18.join(root, "loadouts", `${name}.yml`);
 }
 function scopeFromRoot(root) {
   return root.level === "global" ? "global" : "project";
@@ -39285,14 +39321,14 @@ function sortRows(rows) {
 }
 
 // src/integrations/opencode/delta.ts
-import * as path20 from "node:path";
-import { realpathSync as realpathSync2 } from "node:fs";
+import * as path21 from "node:path";
+import { realpathSync as realpathSync4 } from "node:fs";
 
 // src/core/runtime.ts
-import * as path19 from "node:path";
+import * as path20 from "node:path";
 
 // src/core/tokens.ts
-import * as path18 from "node:path";
+import * as path19 from "node:path";
 var CHARS_PER_TOKEN = 4;
 function estimateTokens(content) {
   return Math.ceil(content.length / CHARS_PER_TOKEN);
@@ -39363,8 +39399,8 @@ function compileRuntimeBundle(tool, resolved, options2 = {}) {
   for (const loadout of loadouts) {
     for (const item of loadout.items) {
       if (!item.tools.includes(tool)) continue;
-      const identity2 = `${item.kind}:${path19.resolve(item.sourcePath)}`;
-      if (options2.exclude?.has(path19.resolve(item.sourcePath)) || seen.has(identity2)) continue;
+      const identity2 = `${item.kind}:${path20.resolve(item.sourcePath)}`;
+      if (options2.exclude?.has(path20.resolve(item.sourcePath)) || seen.has(identity2)) continue;
       seen.add(identity2);
       if (item.kind === "instruction" || item.kind === "rule") {
         const textComponent = compileTextComponent(loadout.name, item);
@@ -39506,7 +39542,7 @@ function compileSkillComponent(loadoutName, item) {
 }
 function resolveSkillEntryPath(sourcePath) {
   if (isDirectory(sourcePath)) {
-    return path19.join(sourcePath, "SKILL.md");
+    return path20.join(sourcePath, "SKILL.md");
   }
   return sourcePath;
 }
@@ -39543,7 +39579,7 @@ function buildInjectionBuckets(components) {
 }
 function createSkillRef(component) {
   const skillEntryPath = resolveSkillEntryPath(component.sourcePath);
-  let name = path19.basename(component.relativePath);
+  let name = path20.basename(component.relativePath);
   let description;
   if (fileExists(skillEntryPath)) {
     try {
@@ -39596,18 +39632,18 @@ async function compileSession(directory, names, options2) {
     for (const root of await discoverLoadoutRoots(directory)) {
       const state = loadState(root.path);
       if (!state) continue;
-      for (const drift of detectDrift(state, path20.dirname(root.path))) {
-        const target = path20.resolve(path20.dirname(root.path), drift.entry.targetPath);
+      for (const drift of detectDrift(state, path21.dirname(root.path))) {
+        const target = path21.resolve(path21.dirname(root.path), drift.entry.targetPath);
         const sameLiveSource = isSymlink(target) && canonical(target) === canonical(drift.entry.sourcePath);
-        const native = drift.entry.kind === "skill" || drift.entry.kind === "instruction" && path20.basename(target) === "AGENTS.md";
+        const native = drift.entry.kind === "skill" || drift.entry.kind === "instruction" && path21.basename(target) === "AGENTS.md";
         if (native && (drift.status === "ok" || sameLiveSource) && drift.entry.tools.includes("opencode")) {
-          rendered.add(canonical(drift.entry.sourcePath));
+          for (const source of entrySources(drift.entry)) rendered.add(canonical(source));
         }
       }
     }
     for (const component of full.components) {
-      const entrypoint = component.kind === "skill" && isDirectory(component.sourcePath) ? path20.join(component.sourcePath, "SKILL.md") : component.sourcePath;
-      if (rendered.has(canonical(component.sourcePath)) || rendered.has(canonical(entrypoint))) exclude.add(path20.resolve(component.sourcePath));
+      const entrypoint = component.kind === "skill" && isDirectory(component.sourcePath) ? path21.join(component.sourcePath, "SKILL.md") : component.sourcePath;
+      if (rendered.has(canonical(component.sourcePath)) || rendered.has(canonical(entrypoint))) exclude.add(path21.resolve(component.sourcePath));
     }
   }
   const bundle = compileRuntimeBundle("opencode", loadouts, {
@@ -39622,7 +39658,7 @@ async function compileSession(directory, names, options2) {
 ${item.content}`);
     const refs = bundle.injection.skills.filter((skill) => skill.loadout === loadout.name);
     if (refs.length) text.push("## Additional skill entrypoints\n" + refs.map((skill) => `- ${skill.name}${skill.description ? `: ${skill.description}` : ""}
-  Read: ${isDirectory(skill.sourcePath) ? path20.join(skill.sourcePath, "SKILL.md") : skill.sourcePath}`).join("\n"));
+  Read: ${isDirectory(skill.sourcePath) ? path21.join(skill.sourcePath, "SKILL.md") : skill.sourcePath}`).join("\n"));
     if (text.length) entries3[entryKey(loadout.name)] = text.join("\n\n");
   }
   return {
@@ -39635,16 +39671,16 @@ ${item.content}`);
 }
 function canonical(file) {
   try {
-    return realpathSync2(file);
+    return realpathSync4(file);
   } catch {
-    return path20.resolve(file);
+    return path21.resolve(file);
   }
 }
 
 // src/integrations/opencode/client.ts
 init_promise();
-import * as path21 from "node:path";
-import { realpathSync as realpathSync3 } from "node:fs";
+import * as path22 from "node:path";
+import { realpathSync as realpathSync5 } from "node:fs";
 
 // node_modules/@opencode/client/dist/chunks/shared-events-ve4aws36.js
 import { spawn } from "node:child_process";
@@ -39877,8 +39913,8 @@ function isHandoff(value3) {
 }
 
 // node_modules/@opencode/client/dist/chunks/shared-events-2ny4vxct.js
-import { homedir as homedir10 } from "node:os";
-import { join as join18 } from "node:path";
+import { homedir as homedir11 } from "node:os";
+import { join as join19 } from "node:path";
 function decide2(service3, options2) {
   if (!matchesVersion2(service3.version, options2))
     return { _tag: "replace", pty: service3.state === "ready" ? "handoff" : "clear" };
@@ -39894,7 +39930,7 @@ function fail7(message) {
   return { _tag: "fail", error: new Error(message) };
 }
 function fallback2() {
-  return join18(process.env["XDG_STATE_HOME"] ?? join18(homedir10(), ".local", "state"), "opencode", "service.json");
+  return join19(process.env["XDG_STATE_HOME"] ?? join19(homedir11(), ".local", "state"), "opencode", "service.json");
 }
 function same2(left, right) {
   return left.id === right.id && left.version === right.version && left.url === right.url && left.pid === right.pid;
@@ -40112,7 +40148,7 @@ async function terminate(info, options2, timing) {
   await rm2(options2.file ?? fallback2(), { force: true });
 }
 function delay3(milliseconds) {
-  return new Promise((resolve9) => setTimeout(resolve9, milliseconds));
+  return new Promise((resolve11) => setTimeout(resolve11, milliseconds));
 }
 var Service2 = { discover, ensure, stop, headers: headers2 };
 
@@ -40294,7 +40330,7 @@ var SessionActivator = class {
       if ((await this.client.plugin.list({
         location
       })).data.length) return;
-      await new Promise((resolve9) => setTimeout(resolve9, 50));
+      await new Promise((resolve11) => setTimeout(resolve11, 50));
     }
     throw new Error(`OpenCode plugins did not activate at ${location.directory}.`);
   }
@@ -40513,7 +40549,7 @@ var opencode_default = plugin_exports.define({
       if (!compiled) continue;
       for (const ref of compiled.bundle.injection.skills) {
         if (virtual.has(ref.name)) continue;
-        const file = isDirectory(ref.sourcePath) ? path22.join(ref.sourcePath, "SKILL.md") : ref.sourcePath;
+        const file = isDirectory(ref.sourcePath) ? path23.join(ref.sourcePath, "SKILL.md") : ref.sourcePath;
         const parsed = parseMarkdownFrontmatter(readFile(file));
         virtual.set(ref.name, {
           name: ref.name,

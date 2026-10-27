@@ -6,13 +6,34 @@ Current built-in rendering targets for canonical artifacts.
 
 | Tool | Rule | Skill | Agent | Instruction | Extra Artifacts |
 |------|------|-------|-------|-------------|-----------------|
-| Claude Code | `.claude/rules/<name>.md` | `.claude/skills/<name>/` | `.claude/agents/<name>.md` | `CLAUDE.md` (generated wrapper to `AGENTS.md`) | - |
+| Claude Code | `.claude/rules/<name>.md` | `.claude/skills/<name>/` | `.claude/agents/<name>.md` | `AGENTS.md` | - |
 | Cursor | `.cursor/rules/<name>.mdc` | `.cursor/skills/<name>/` | `.cursor/agents/<name>.md` | `AGENTS.md` | - |
 | OpenCode | `.opencode/rules/<name>.md` | `.opencode/skills/<name>/` | `.opencode/agents/<name>.md` | `AGENTS.md` | `.opencode/commands/<name>.md`, `.opencode/plugins/<name>.{ts,tsx,js}`, `~/.config/opencode/cli.json(c)` (global-only), `opencode.json(c)` |
 | Codex | - (no rule target) | `.agents/skills/<name>/` | `.codex/agents/<name>.toml` | `AGENTS.md` | - |
 | Pi | - (no native rule target) | `.pi/skills/<name>/` | - | `AGENTS.md` | - |
 
-Global scope uses each tool's configured global base path. Instruction files may render to home-level `AGENTS.md` or `CLAUDE.md` paths depending on the tool.
+## Instruction Paths (Global Scope)
+
+| Tool | Instruction |
+|------|-------------|
+| Claude Code | `~/.claude/CLAUDE.md` (Claude has no user-level `AGENTS.md`) |
+| Cursor | none (User Rules are set in the Cursor UI, not in a file) |
+| OpenCode | `~/.config/opencode/AGENTS.md` |
+| Codex | `~/.codex/AGENTS.md` (`CODEX_HOME` is not honoured) |
+| Pi | `~/.pi/agent/AGENTS.md` |
+
+Other artifact kinds use each tool's configured global base path.
+
+### Composed instructions
+
+The instruction files of all active loadouts are concatenated into one generated file per scope, and every instruction destination above is a symlink to it:
+
+- Project: `.loadouts/AGENTS.loadouts-generated.md`, linked from `AGENTS.md`.
+- Global: `~/.config/loadouts/AGENTS.loadouts-generated.md`, linked from the global destinations above.
+
+Sources appear in loadout activation order, then include order within each loadout. A source file shared by several loadouts is included once. A per-include `tools:` list on an instruction only chooses which destinations get a symlink; the file contents are the same for every tool in that scope.
+
+Claude Code (v2.1.277 or newer) reads project `AGENTS.md` natively, but only when no `CLAUDE.md`, `.claude/CLAUDE.md` or `CLAUDE.local.md` exists in the working directory or any directory above it. Older Claude Code versions are not supported for project instructions. Codex reads only the first 32 KiB of the file (`project_doc_max_bytes`); loadouts warns when the composed file is larger and Codex is a destination.
 
 ## Canonical Frontmatter
 
