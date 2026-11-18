@@ -55,6 +55,7 @@ import {
   formatTokens,
 } from "../../core/tokens.js";
 import { loadDashboardData } from "../../tui/core/data.js";
+import { inspectPrivate, globalInspectionCwd } from "./private.js";
 
 // Kinds whose content goes into the agent's context window.
 // Extensions (runtime code) and themes (UI config) don't count.
@@ -493,6 +494,7 @@ export const infoCommand = new Command("info")
   .option(...SCOPE_FLAGS.all)
   .option("--json", "Output machine-readable JSON")
   .action(async (name: string | undefined, options: InfoOptions) => {
+    if (await inspectPrivate("info", name, options)) return;
     const cwd = process.cwd();
 
     if (options.json) {
@@ -501,7 +503,7 @@ export const infoCommand = new Command("info")
         process.exit(1);
       }
       try {
-        const payload = await getInfoJson(name, options, cwd);
+        const payload = await getInfoJson(name, options, await globalInspectionCwd(options, cwd));
         console.log(JSON.stringify(payload, null, 2));
       } catch (err) {
         log.error(err instanceof Error ? err.message : String(err));

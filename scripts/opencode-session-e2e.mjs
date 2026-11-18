@@ -88,17 +88,18 @@ try {
   assert.equal((await client.session.context({ sessionID: a.id })).length, messages);
   console.log("✓ Headless equip is silent; typed RPC status and off-disk catalog available");
   await write(".loadouts/loadouts.yaml", "version: '1'\ntools: [opencode]\nopencode:\n  defaultSession: [alpha]\n");
-  const existing = new Set(sessions.map(session => session.id));
+  let automatic;
   const defaultEquipped = (async () => {
     for await (const event of client.event.subscribe({ signal: AbortSignal.timeout(15000) })) {
-      if (event.type === "session.permissions" && event.location?.directory === directory && !existing.has(event.data.sessionID)) return event.data.sessionID;
+      if (event.type === "session.permissions" && event.data.sessionID === (await automatic).id) return event.data.sessionID;
     }
     throw new Error("No auto-equip event received");
   })();
-  const automatic = await client.session.create({ location: { directory }, title: "Loadouts auto-equip proof" });
-  sessions.push(automatic);
-  assert.equal(await defaultEquipped, automatic.id);
-  assert.deepEqual((await reconnected.status(automatic.id)).names, ["alpha"]);
+  automatic = client.session.create({ location: { directory }, title: "Loadouts auto-equip proof" });
+  const created = await automatic;
+  sessions.push(created);
+  assert.equal(await defaultEquipped, created.id);
+  assert.deepEqual((await reconnected.status(created.id)).names, ["alpha"]);
   console.log("✓ New root session auto-equips the project default");
 } finally {
   for (const session of sessions) {

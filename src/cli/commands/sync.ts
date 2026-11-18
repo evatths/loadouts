@@ -18,6 +18,7 @@ import { computeSyncSet } from "./policy.js";
 import { applyTargetSet } from "./render-engine.js";
 import { rebuildAllGitignores } from "../../lib/gitignore.js";
 import { log } from "../../lib/output.js";
+import { privateSelection } from "./private.js";
 
 interface SyncOptions extends ScopeFlags {
   dryRun?: boolean;
@@ -32,6 +33,7 @@ export const syncCommand = new Command("sync")
   .option("--dry-run", "Preview changes without applying")
   .option("--force", "Overwrite local edits to generated instructions (a backup is kept)")
   .action(async (options: SyncOptions) => {
+    if (await privateSelection("sync", [], options)) return;
     const { contexts } = await resolveContexts(options);
 
     let synced = false;

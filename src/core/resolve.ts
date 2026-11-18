@@ -25,6 +25,8 @@ import { BUILTIN_TOOL_NAMES } from "../builtins/index.js";
 
 interface ResolveLoadoutOptions {
   showKindNamespaceNotes?: boolean;
+  resolveRepo?: (ref: string, tools: Tool[]) => ResolvedItem;
+  onlyTool?: Tool;
 }
 
 /**
@@ -52,7 +54,12 @@ export function resolveLoadout(
 
   const items: ResolvedItem[] = [];
   for (const include of definition.include || []) {
-    items.push(resolveInclude(include, rootPath, effectiveTools));
+    const tools = typeof include === "object" && include.tools ? include.tools : effectiveTools;
+    if (options.onlyTool && !tools.includes(options.onlyTool)) continue;
+    const ref = typeof include === "string" ? include : include.path;
+    items.push(ref.startsWith("repo:") && options.resolveRepo
+      ? options.resolveRepo(ref, tools)
+      : resolveInclude(include, rootPath, effectiveTools));
   }
 
   return {

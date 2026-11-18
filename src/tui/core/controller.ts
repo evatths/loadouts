@@ -45,7 +45,9 @@ export class DashboardController {
       const session = this.options.session;
       const status = session ? await session.activator.status(session.id) : undefined;
       if (this.disposed || version !== this.refreshVersion || this.model.busy) return;
-      const { rows } = withSessionEquipment(data, status);
+      const effective = status?.privateMode === "follow" && data.privateSelection ? { ...status, names: data.privateSelection }
+        : status ?? (session && data.privateSelection ? { names: data.privateSelection, scope: "project" as const } : undefined);
+      const { rows } = withSessionEquipment(data, effective);
       this.model = normalizeCursor({ ...this.model, rows, sections: buildSections(rows), sessionScope: status?.scope ?? this.model.sessionScope }, cursorRow(this.model)?.id);
     } catch (error) {
       this.model = { ...this.model, lastResult: { variant: "error", text: error instanceof Error ? error.message : String(error) } };
@@ -63,8 +65,8 @@ export class DashboardController {
     const effect = result.effect;
     let done: Intent;
     try {
-      if (effect.t === "editFile") await this.options.edit(effect.path);
       done = await executeEffect(effect, { cwd: this.options.cwd, session: this.options.session });
+      if (effect.t === "editFile" && done.t === "effectDone" && done.ok) await this.options.edit(effect.path);
     } catch (error) {
       done = { t: "effectDone", effect: effect.t, ok: false, message: error instanceof Error ? error.message : String(error) };
     }

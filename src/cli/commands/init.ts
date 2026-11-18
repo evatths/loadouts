@@ -24,6 +24,7 @@ import type { RootConfig, Scope } from "../../core/types.js";
 import { discoverImportableArtifacts } from "../../core/import-discovery.js";
 import { runInstall } from "./install.js";
 import * as readline from "node:readline";
+import { initPrivateProject } from "../../core/private-project.js";
 
 async function initLoadout(
   scope: Scope,
@@ -310,7 +311,15 @@ export const initCommand = new Command("init")
   .option("-l, --local", "Initialize in current directory (default)")
   .option("-g, --global", "Initialize at ~/.config/loadouts")
   .option("--force", "Overwrite existing loadout")
-  .action(async (options: { local?: boolean; global?: boolean; force?: boolean }) => {
+  .option("--private", "Store personal definitions outside the checkout")
+  .option("--name <name>", "Private store name (for reusing a store)")
+  .action(async (options: { local?: boolean; global?: boolean; force?: boolean; private?: boolean; name?: string }) => {
+    if (options.private) {
+      const project = await initPrivateProject(process.cwd(), options.name);
+      log.success(`Initialized private loadouts: ${project.configPath}`);
+      return;
+    }
+    if (options.name) throw new Error("--name requires --private.");
     // Require explicit scope or default to local
     const scope: Scope = options.global ? "global" : "project";
     await initLoadout(scope, options);

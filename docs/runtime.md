@@ -4,6 +4,50 @@ Equip loadouts globally, for a project, or for **one OpenCode session**.
 Session switching uses OpenCode V2's durable instruction entries and permission
 rules, so another session at the same directory is unaffected.
 
+## Private loadouts in a shared repo
+
+With `opencode-runtime` active globally, run this from a repo or subproject:
+
+```sh
+loadouts init --private
+loadouts create caveman --no-edit
+loadouts instructions init caveman
+loadouts instructions edit caveman
+loadouts info pipelines  # find the repo: path for a team artifact
+loadouts add-to caveman instructions/AGENTS.caveman.md repo:pipelines/.opencode/skills/team
+loadouts activate caveman
+loadouts deactivate pipelines
+loadouts clear
+```
+
+OpenCode starts with its native team guidance. The first activation adds your
+loadout to those defaults; the first deactivation removes only the named team
+layer. Each applicable directory has a layer, such as `ml-ops`, `pipelines`, or
+`data-lens`. An explicitly included `repo:` artifact stays selected when its
+layer is off. `clear` forgets the selection and restores native defaults; it
+does not delete your definitions. An explicitly empty selection turns all team
+layers off instead.
+
+Definitions live outside the checkout under `~/.config/loadouts/repos/`. To
+reuse a store in another clone, enroll it explicitly with `loadouts init --private --name <name>`.
+
+Selections belong to the current project directory and worktree. Subprojects can
+use parent definitions without inheriting the parent's selection; plain deeper
+directories follow their nearest project. `list` shows qualified IDs such as
+`team:pipelines` when a basename is ambiguous or shadowed. A session explicitly
+equipped through `/loadouts equip` keeps its own selection; `/loadouts unequip`
+returns it to following the project. `status` describes the saved checkout
+selection, not proof that a session received it.
+
+Private mode supports attributable tracked ancestor instructions and skills in
+OpenCode's native layouts, plus personal instructions, skills and always-on
+rules. Explicit `.cursor/rules/*.mdc` selections must use `alwaysApply: true`.
+It leaves team files, Git visibility and global equipment unchanged. Filtering
+affects new requests and skill calls, not prior messages, normal file reads, or
+guidance discovered later below the session directory. Agents, commands, plugins,
+harness configuration and untracked files are not team-layer artifacts. Private
+mode does not deliver files to other harnesses or use sparse checkout.
+
 ## CLI
 
 ```sh
@@ -84,7 +128,7 @@ The footer shows contextual shortcuts and updates from persisted session state
 and native events.
 
 The server plugin also filters skill advertisements (session permission denies
-alone do not hide them on 2.0.3), provides off-disk skills through a catalog
+alone do not hide them on 2.3.2), provides off-disk skills through a catalog
 transform, and supports headless equips.
 
 Optional loadout selections:

@@ -3,6 +3,7 @@ import { requireClient, selectSession, sessionsAt } from "../../integrations/ope
 import { SessionActivator } from "../../integrations/opencode/session.js";
 import { requireScopeForName } from "../../core/scope.js";
 import { heading, keyValue, log } from "../../lib/output.js";
+import { findPrivateProject } from "../../core/private-project.js";
 
 interface Options { session?: string; global?: boolean; project?: boolean; json?: boolean }
 
@@ -44,7 +45,7 @@ for (const action of ["status", "equip", "unequip", "list"] as const) {
       }
       const result = action === "unequip" ? await activator.unequip(session.id)
         : await activator.equip(session.id, names, {
-          scope: options.global ? "global" : options.project ? "project" : await requireScopeForName(names[0], {}, session.location.directory),
+          scope: options.global ? "global" : options.project || await findPrivateProject(session.location.directory) ? "project" : await requireScopeForName(names[0], {}, session.location.directory),
         });
       if (options.json) console.log(JSON.stringify({ sessionID: session.id, ...result }, null, 2));
       else {

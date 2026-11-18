@@ -7,14 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-18
+
 ### Added
 
+- Add private repo loadouts: `loadouts init --private` enrolls a Git repo so your personal loadouts live outside the checkout and are visible only to you, while each team directory with a `.loadouts` folder becomes a layer you can turn off for the current project in OpenCode with `deactivate <layer>`
+- Add `repo:` references so a personal loadout can include a skill, instruction, or rule from the enrolled repo without copying it
 - Compose instructions from every active loadout into one generated `AGENTS.loadouts-generated.md` and symlink each destination to it, replacing the old behavior where the first loadout's instruction silently won the target and the rest were dropped
 - Hold hand edits to composed instructions: `sync` and `activate` leave an edited file untouched, print a per-section diff naming the owning source, apply everything else, and exit non-zero; `--force` discards the edits after saving a `.bak` backup
 - Warn when composed instructions exceed Codex's 32 KiB read limit, and when a project `CLAUDE.md` would suppress Claude's `AGENTS.md` reading
 
 ### Changed
 
+- OpenCode support targets OpenCode 2.3.2
 - Claude Code reads project `AGENTS.md` natively (v2.1.277+) instead of a generated `CLAUDE.md` wrapper
 - Claude Code global instructions render to `~/.claude/CLAUDE.md` instead of `~/CLAUDE.md`, which Claude treated as a parent-level `CLAUDE.md` that disabled `AGENTS.md` reading in every project under `~`
 - Codex and Pi global instructions render to `~/.codex/AGENTS.md` and `~/.pi/agent/AGENTS.md` instead of `~/AGENTS.md`

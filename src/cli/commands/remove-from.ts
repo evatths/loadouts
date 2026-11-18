@@ -25,7 +25,7 @@ export async function runRemoveFrom(
   }
 
   const target = await resolveLoadoutMutationTarget(loadout, options, cwd);
-  const includePaths = artifacts.map((artifact) => normalizeIncludePath(artifact, target.ctx.configPath));
+  const includePaths = artifacts.map((artifact) => target.privateProject && artifact.startsWith("repo:") ? artifact : normalizeIncludePath(artifact, target.ctx.configPath));
   const result = removeIncludes(target.definition, includePaths);
 
   if (result.changed.length > 0) {

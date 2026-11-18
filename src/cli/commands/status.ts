@@ -48,6 +48,7 @@ import {
 import type { CommandContext, AppliedState, Tool, LoadoutRoot, ResolvedLoadout } from "../../core/types.js";
 import type { RenderPlan } from "../../core/types.js";
 import { loadDashboardData } from "../../tui/core/data.js";
+import { inspectPrivate, globalInspectionCwd } from "./private.js";
 
 type DriftStatus = DriftResult["status"];
 
@@ -704,11 +705,12 @@ export const statusCommand = new Command("status")
   .option("-r, --references", "Show individual skill reference files")
   .option("--json", "Output machine-readable JSON")
   .action(async (options: StatusOptions) => {
+    if (await inspectPrivate("status", undefined, options)) return;
     const cwd = process.cwd();
     const { contexts } = await resolveContexts(options, cwd);
 
     if (options.json) {
-      const payload = await getStatusJson(contexts, cwd);
+      const payload = await getStatusJson(contexts, await globalInspectionCwd(options, cwd));
       console.log(JSON.stringify(payload, null, 2));
       return;
     }

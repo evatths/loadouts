@@ -21,6 +21,7 @@ import { computeActivateSet } from "./policy.js";
 import { applyTargetSet } from "./render-engine.js";
 import { log } from "../../lib/output.js";
 import type { Scope } from "../../core/types.js";
+import { privateSelection } from "./private.js";
 
 interface ActivateOptions extends ScopeFlags {
   dryRun?: boolean;
@@ -37,6 +38,7 @@ export const activateCommand = new Command("activate")
   .option("--dry-run", "Preview changes without applying")
   .option("--force", "Overwrite local edits to generated instructions (a backup is kept)")
   .action(async (names: string[], options: ActivateOptions) => {
+    if (await privateSelection("activate", names, options)) return;
     const cwd = process.cwd();
 
     // If --all, activate in both scopes

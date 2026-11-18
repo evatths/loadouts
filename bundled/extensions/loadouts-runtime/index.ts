@@ -111,17 +111,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path22) {
-      const ctrl = callVisitor(key, node, visitor, path22);
+    function visit_(key, node, visitor, path23) {
+      const ctrl = callVisitor(key, node, visitor, path23);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
-        replaceNode(key, path22, ctrl);
-        return visit_(key, ctrl, visitor, path22);
+        replaceNode(key, path23, ctrl);
+        return visit_(key, ctrl, visitor, path23);
       }
       if (typeof ctrl !== "symbol") {
         if (identity2.isCollection(node)) {
-          path22 = Object.freeze(path22.concat(node));
+          path23 = Object.freeze(path23.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = visit_(i, node.items[i], visitor, path22);
+            const ci = visit_(i, node.items[i], visitor, path23);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -132,13 +132,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity2.isPair(node)) {
-          path22 = Object.freeze(path22.concat(node));
-          const ck = visit_("key", node.key, visitor, path22);
+          path23 = Object.freeze(path23.concat(node));
+          const ck = visit_("key", node.key, visitor, path23);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path22);
+          const cv = visit_("value", node.value, visitor, path23);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -159,17 +159,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path22) {
-      const ctrl = await callVisitor(key, node, visitor, path22);
+    async function visitAsync_(key, node, visitor, path23) {
+      const ctrl = await callVisitor(key, node, visitor, path23);
       if (identity2.isNode(ctrl) || identity2.isPair(ctrl)) {
-        replaceNode(key, path22, ctrl);
-        return visitAsync_(key, ctrl, visitor, path22);
+        replaceNode(key, path23, ctrl);
+        return visitAsync_(key, ctrl, visitor, path23);
       }
       if (typeof ctrl !== "symbol") {
         if (identity2.isCollection(node)) {
-          path22 = Object.freeze(path22.concat(node));
+          path23 = Object.freeze(path23.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = await visitAsync_(i, node.items[i], visitor, path22);
+            const ci = await visitAsync_(i, node.items[i], visitor, path23);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -180,13 +180,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity2.isPair(node)) {
-          path22 = Object.freeze(path22.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path22);
+          path23 = Object.freeze(path23.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path23);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path22);
+          const cv = await visitAsync_("value", node.value, visitor, path23);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -213,23 +213,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path22) {
+    function callVisitor(key, node, visitor, path23) {
       if (typeof visitor === "function")
-        return visitor(key, node, path22);
+        return visitor(key, node, path23);
       if (identity2.isMap(node))
-        return visitor.Map?.(key, node, path22);
+        return visitor.Map?.(key, node, path23);
       if (identity2.isSeq(node))
-        return visitor.Seq?.(key, node, path22);
+        return visitor.Seq?.(key, node, path23);
       if (identity2.isPair(node))
-        return visitor.Pair?.(key, node, path22);
+        return visitor.Pair?.(key, node, path23);
       if (identity2.isScalar(node))
-        return visitor.Scalar?.(key, node, path22);
+        return visitor.Scalar?.(key, node, path23);
       if (identity2.isAlias(node))
-        return visitor.Alias?.(key, node, path22);
+        return visitor.Alias?.(key, node, path23);
       return void 0;
     }
-    function replaceNode(key, path22, node) {
-      const parent = path22[path22.length - 1];
+    function replaceNode(key, path23, node) {
+      const parent = path23[path23.length - 1];
       if (identity2.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity2.isPair(parent)) {
@@ -839,10 +839,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity2 = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path22, value) {
+    function collectionFromPath(schema, path23, value) {
       let v = value;
-      for (let i = path22.length - 1; i >= 0; --i) {
-        const k = path22[i];
+      for (let i = path23.length - 1; i >= 0; --i) {
+        const k = path23[i];
         if (typeof k === "number" && Number.isInteger(k) && k >= 0) {
           const a = [];
           a[k] = v;
@@ -861,7 +861,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path22) => path22 == null || typeof path22 === "object" && !!path22[Symbol.iterator]().next().done;
+    var isEmptyPath = (path23) => path23 == null || typeof path23 === "object" && !!path23[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -891,11 +891,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path22, value) {
-        if (isEmptyPath(path22))
+      addIn(path23, value) {
+        if (isEmptyPath(path23))
           this.add(value);
         else {
-          const [key, ...rest] = path22;
+          const [key, ...rest] = path23;
           const node = this.get(key, true);
           if (identity2.isCollection(node))
             node.addIn(rest, value);
@@ -909,8 +909,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path22) {
-        const [key, ...rest] = path22;
+      deleteIn(path23) {
+        const [key, ...rest] = path23;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -924,8 +924,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path22, keepScalar) {
-        const [key, ...rest] = path22;
+      getIn(path23, keepScalar) {
+        const [key, ...rest] = path23;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity2.isScalar(node) ? node.value : node;
@@ -943,8 +943,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path22) {
-        const [key, ...rest] = path22;
+      hasIn(path23) {
+        const [key, ...rest] = path23;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -954,8 +954,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path22, value) {
-        const [key, ...rest] = path22;
+      setIn(path23, value) {
+        const [key, ...rest] = path23;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -3470,9 +3470,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path22, value) {
+      addIn(path23, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path22, value);
+          this.contents.addIn(path23, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -3547,14 +3547,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path22) {
-        if (Collection.isEmptyPath(path22)) {
+      deleteIn(path23) {
+        if (Collection.isEmptyPath(path23)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path22) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path23) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -3569,10 +3569,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path22, keepScalar) {
-        if (Collection.isEmptyPath(path22))
+      getIn(path23, keepScalar) {
+        if (Collection.isEmptyPath(path23))
           return !keepScalar && identity2.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity2.isCollection(this.contents) ? this.contents.getIn(path22, keepScalar) : void 0;
+        return identity2.isCollection(this.contents) ? this.contents.getIn(path23, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -3583,10 +3583,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path22) {
-        if (Collection.isEmptyPath(path22))
+      hasIn(path23) {
+        if (Collection.isEmptyPath(path23))
           return this.contents !== void 0;
-        return identity2.isCollection(this.contents) ? this.contents.hasIn(path22) : false;
+        return identity2.isCollection(this.contents) ? this.contents.hasIn(path23) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -3603,13 +3603,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path22, value) {
-        if (Collection.isEmptyPath(path22)) {
+      setIn(path23, value) {
+        if (Collection.isEmptyPath(path23)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path22), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path23), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path22, value);
+          this.contents.setIn(path23, value);
         }
       }
       /**
@@ -3995,10 +3995,10 @@ var require_resolve_block_map = __commonJS({
       let offset = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start, key, sep: sep4, value } = collItem;
+        const { start, key, sep: sep5, value } = collItem;
         const keyProps = resolveProps.resolveProps(start, {
           indicator: "explicit-key-ind",
-          next: key ?? sep4?.[0],
+          next: key ?? sep5?.[0],
           offset,
           onError,
           parentIndent: bm.indent,
@@ -4012,7 +4012,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key && key.indent !== bm.indent)
               onError(offset, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep4) {
+          if (!keyProps.anchor && !keyProps.tag && !sep5) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map.comment)
@@ -4036,7 +4036,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map.items, keyNode))
           onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep4 ?? [], {
+        const valueProps = resolveProps.resolveProps(sep5 ?? [], {
           indicator: "map-value-ind",
           next: value,
           offset: keyNode.range[2],
@@ -4052,7 +4052,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep4, null, valueProps, onError);
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep5, null, valueProps, onError);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value, onError);
           offset = valueNode.range[2];
@@ -4143,7 +4143,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep4 = "";
+        let sep5 = "";
         for (const token of end) {
           const { source, type } = token;
           switch (type) {
@@ -4157,13 +4157,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep4 + cb;
-              sep4 = "";
+                comment += sep5 + cb;
+              sep5 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep4 += source;
+                sep5 += source;
               hasSpace = true;
               break;
             default:
@@ -4206,18 +4206,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start, key, sep: sep4, value } = collItem;
+        const { start, key, sep: sep5, value } = collItem;
         const props = resolveProps.resolveProps(start, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key ?? sep4?.[0],
+          next: key ?? sep5?.[0],
           offset,
           onError,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep4 && !value) {
+          if (!props.anchor && !props.tag && !sep5 && !value) {
             if (i === 0 && props.comma)
               onError(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -4271,8 +4271,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap && !sep4 && !props.found) {
-          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep4, null, props, onError);
+        if (!isMap && !sep5 && !props.found) {
+          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep5, null, props, onError);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
           if (isBlock(value))
@@ -4284,7 +4284,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key))
             onError(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep4 ?? [], {
+          const valueProps = resolveProps.resolveProps(sep5 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value,
@@ -4295,8 +4295,8 @@ var require_resolve_flow_collection = __commonJS({
           });
           if (valueProps.found) {
             if (!isMap && !props.found && ctx.options.strict) {
-              if (sep4)
-                for (const st of sep4) {
+              if (sep5)
+                for (const st of sep5) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -4313,7 +4313,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep4, null, valueProps, onError) : null;
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep5, null, valueProps, onError) : null;
           if (valueNode) {
             if (isBlock(value))
               onError(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -4493,7 +4493,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value = "";
-      let sep4 = "";
+      let sep5 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value += lines[i][0].slice(trimIndent) + "\n";
@@ -4510,24 +4510,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type === Scalar.Scalar.BLOCK_LITERAL) {
-          value += sep4 + indent.slice(trimIndent) + content;
-          sep4 = "\n";
+          value += sep5 + indent.slice(trimIndent) + content;
+          sep5 = "\n";
         } else if (indent.length > trimIndent || content[0] === "	") {
-          if (sep4 === " ")
-            sep4 = "\n";
-          else if (!prevMoreIndented && sep4 === "\n")
-            sep4 = "\n\n";
-          value += sep4 + indent.slice(trimIndent) + content;
-          sep4 = "\n";
+          if (sep5 === " ")
+            sep5 = "\n";
+          else if (!prevMoreIndented && sep5 === "\n")
+            sep5 = "\n\n";
+          value += sep5 + indent.slice(trimIndent) + content;
+          sep5 = "\n";
           prevMoreIndented = true;
         } else if (content === "") {
-          if (sep4 === "\n")
+          if (sep5 === "\n")
             value += "\n";
           else
-            sep4 = "\n";
+            sep5 = "\n";
         } else {
-          value += sep4 + content;
-          sep4 = " ";
+          value += sep5 + content;
+          sep5 = " ";
           prevMoreIndented = false;
         }
       }
@@ -4709,25 +4709,25 @@ var require_resolve_flow_scalar = __commonJS({
       if (!match)
         return source;
       let res = match[1];
-      let sep4 = " ";
+      let sep5 = " ";
       let pos = first.lastIndex;
       line.lastIndex = pos;
       while (match = line.exec(source)) {
         if (match[1] === "") {
-          if (sep4 === "\n")
-            res += sep4;
+          if (sep5 === "\n")
+            res += sep5;
           else
-            sep4 = "\n";
+            sep5 = "\n";
         } else {
-          res += sep4 + match[1];
-          sep4 = " ";
+          res += sep5 + match[1];
+          sep5 = " ";
         }
         pos = line.lastIndex;
       }
       const last = /[ \t]*(.*)/sy;
       last.lastIndex = pos;
       match = last.exec(source);
-      return res + sep4 + (match?.[1] ?? "");
+      return res + sep5 + (match?.[1] ?? "");
     }
     function doubleQuotedValue(source, onError) {
       let res = "";
@@ -5537,14 +5537,14 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start, key, sep: sep4, value }) {
+    function stringifyItem({ start, key, sep: sep5, value }) {
       let res = "";
       for (const st of start)
         res += st.source;
       if (key)
         res += stringifyToken(key);
-      if (sep4)
-        for (const st of sep4)
+      if (sep5)
+        for (const st of sep5)
           res += st.source;
       if (value)
         res += stringifyToken(value);
@@ -5569,9 +5569,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path22) => {
+    visit.itemAtPath = (cst, path23) => {
       let item = cst;
-      for (const [field, index] of path22) {
+      for (const [field, index] of path23) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -5580,23 +5580,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path22) => {
-      const parent = visit.itemAtPath(cst, path22.slice(0, -1));
-      const field = path22[path22.length - 1][0];
+    visit.parentCollection = (cst, path23) => {
+      const parent = visit.itemAtPath(cst, path23.slice(0, -1));
+      const field = path23[path23.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path22, item, visitor) {
-      let ctrl = visitor(item, path22);
+    function _visit(path23, item, visitor) {
+      let ctrl = visitor(item, path23);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i = 0; i < token.items.length; ++i) {
-            const ci = _visit(Object.freeze(path22.concat([[field, i]])), token.items[i], visitor);
+            const ci = _visit(Object.freeze(path23.concat([[field, i]])), token.items[i], visitor);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -5607,10 +5607,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path22);
+            ctrl = ctrl(item, path23);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path22) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path23) : ctrl;
     }
     exports.visit = visit;
   }
@@ -6711,18 +6711,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start = getFirstKeyStartProps(prev);
-          let sep4;
+          let sep5;
           if (scalar.end) {
-            sep4 = scalar.end;
-            sep4.push(this.sourceToken);
+            sep5 = scalar.end;
+            sep5.push(this.sourceToken);
             delete scalar.end;
           } else
-            sep4 = [this.sourceToken];
+            sep5 = [this.sourceToken];
           const map = {
             type: "block-map",
             offset: scalar.offset,
             indent: scalar.indent,
-            items: [{ start, key: scalar, sep: sep4 }]
+            items: [{ start, key: scalar, sep: sep5 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map;
@@ -6875,15 +6875,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start2 = getFirstKeyStartProps(it.start);
                   const key = it.key;
-                  const sep4 = it.sep;
-                  sep4.push(this.sourceToken);
+                  const sep5 = it.sep;
+                  sep5.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start2, key, sep: sep4 }]
+                    items: [{ start: start2, key, sep: sep5 }]
                   });
                 } else if (start.length > 0) {
                   it.sep = it.sep.concat(start, this.sourceToken);
@@ -6912,14 +6912,14 @@ var require_parser = __commonJS({
             case "scalar":
             case "single-quoted-scalar":
             case "double-quoted-scalar": {
-              const fs4 = this.flowScalar(this.type);
+              const fs5 = this.flowScalar(this.type);
               if (atNextItem || it.value) {
-                map.items.push({ start, key: fs4, sep: [] });
+                map.items.push({ start, key: fs5, sep: [] });
                 this.onKeyLine = true;
               } else if (it.sep) {
-                this.stack.push(fs4);
+                this.stack.push(fs5);
               } else {
-                Object.assign(it, { key: fs4, sep: [] });
+                Object.assign(it, { key: fs5, sep: [] });
                 this.onKeyLine = true;
               }
               return;
@@ -7047,13 +7047,13 @@ var require_parser = __commonJS({
             case "scalar":
             case "single-quoted-scalar":
             case "double-quoted-scalar": {
-              const fs4 = this.flowScalar(this.type);
+              const fs5 = this.flowScalar(this.type);
               if (!it || it.value)
-                fc.items.push({ start: [], key: fs4, sep: [] });
+                fc.items.push({ start: [], key: fs5, sep: [] });
               else if (it.sep)
-                this.stack.push(fs4);
+                this.stack.push(fs5);
               else
-                Object.assign(it, { key: fs4, sep: [] });
+                Object.assign(it, { key: fs5, sep: [] });
               return;
             }
             case "flow-map-end":
@@ -7077,13 +7077,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep4 = fc.end.splice(1, fc.end.length);
-            sep4.push(this.sourceToken);
+            const sep5 = fc.end.splice(1, fc.end.length);
+            sep5.push(this.sourceToken);
             const map = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start, key: fc, sep: sep4 }]
+              items: [{ start, key: fc, sep: sep5 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map;
@@ -8294,8 +8294,8 @@ var require_command = __commonJS({
   "node_modules/commander/lib/command.js"(exports) {
     var EventEmitter = __require("node:events").EventEmitter;
     var childProcess = __require("node:child_process");
-    var path22 = __require("node:path");
-    var fs4 = __require("node:fs");
+    var path23 = __require("node:path");
+    var fs5 = __require("node:fs");
     var process3 = __require("node:process");
     var { Argument: Argument2, humanReadableArgName } = require_argument();
     var { CommanderError: CommanderError2 } = require_error();
@@ -9227,11 +9227,11 @@ Expecting one of '${allowedValues.join("', '")}'`);
         let launchWithNode = false;
         const sourceExt = [".js", ".ts", ".tsx", ".mjs", ".cjs"];
         function findFile(baseDir, baseName) {
-          const localBin = path22.resolve(baseDir, baseName);
-          if (fs4.existsSync(localBin)) return localBin;
-          if (sourceExt.includes(path22.extname(baseName))) return void 0;
+          const localBin = path23.resolve(baseDir, baseName);
+          if (fs5.existsSync(localBin)) return localBin;
+          if (sourceExt.includes(path23.extname(baseName))) return void 0;
           const foundExt = sourceExt.find(
-            (ext) => fs4.existsSync(`${localBin}${ext}`)
+            (ext) => fs5.existsSync(`${localBin}${ext}`)
           );
           if (foundExt) return `${localBin}${foundExt}`;
           return void 0;
@@ -9243,21 +9243,21 @@ Expecting one of '${allowedValues.join("', '")}'`);
         if (this._scriptPath) {
           let resolvedScriptPath;
           try {
-            resolvedScriptPath = fs4.realpathSync(this._scriptPath);
+            resolvedScriptPath = fs5.realpathSync(this._scriptPath);
           } catch (err) {
             resolvedScriptPath = this._scriptPath;
           }
-          executableDir = path22.resolve(
-            path22.dirname(resolvedScriptPath),
+          executableDir = path23.resolve(
+            path23.dirname(resolvedScriptPath),
             executableDir
           );
         }
         if (executableDir) {
           let localFile = findFile(executableDir, executableFile);
           if (!localFile && !subcommand._executableFile && this._scriptPath) {
-            const legacyName = path22.basename(
+            const legacyName = path23.basename(
               this._scriptPath,
-              path22.extname(this._scriptPath)
+              path23.extname(this._scriptPath)
             );
             if (legacyName !== this._name) {
               localFile = findFile(
@@ -9268,7 +9268,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
           }
           executableFile = localFile || executableFile;
         }
-        launchWithNode = sourceExt.includes(path22.extname(executableFile));
+        launchWithNode = sourceExt.includes(path23.extname(executableFile));
         let proc;
         if (process3.platform !== "win32") {
           if (launchWithNode) {
@@ -10108,7 +10108,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
        * @return {Command}
        */
       nameFromFilename(filename) {
-        this._name = path22.basename(filename, path22.extname(filename));
+        this._name = path23.basename(filename, path23.extname(filename));
         return this;
       }
       /**
@@ -10122,9 +10122,9 @@ Expecting one of '${allowedValues.join("', '")}'`);
        * @param {string} [path]
        * @return {(string|null|Command)}
        */
-      executableDir(path23) {
-        if (path23 === void 0) return this._executableDir;
-        this._executableDir = path23;
+      executableDir(path24) {
+        if (path24 === void 0) return this._executableDir;
+        this._executableDir = path24;
         return this;
       }
       /**
@@ -10832,8 +10832,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path22, errorMaps, issueData } = params;
-  const fullPath = [...path22, ...issueData.path || []];
+  const { data, path: path23, errorMaps, issueData } = params;
+  const fullPath = [...path23, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -10949,11 +10949,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path22, key) {
+  constructor(parent, value, path23, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path22;
+    this._path = path23;
     this._key = key;
   }
   get path() {
@@ -14924,6 +14924,16 @@ function parseMarkdownFrontmatter(content) {
     body
   };
 }
+function stableStringify(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((v) => stableStringify(v)).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value).sort(([a], [b]) => a.localeCompare(b));
+    return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${stableStringify(v)}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
 function parseRootConfig(loadoutRoot) {
   const configPath = path3.join(loadoutRoot, ROOT_CONFIG_FILE);
   if (!fileExists(configPath)) {
@@ -14961,6 +14971,17 @@ function findLoadoutDefinition(name, roots) {
   }
   return null;
 }
+function parseFrontmatter(content) {
+  const {
+    frontmatter: parsed,
+    body
+  } = parseMarkdownFrontmatter(content);
+  const frontmatter = FrontmatterSchema.parse(parsed);
+  return {
+    frontmatter,
+    body
+  };
+}
 function serializeMarkdownFrontmatter(frontmatter, body) {
   if (Object.keys(frontmatter).length === 0) {
     return body;
@@ -14970,6 +14991,57 @@ function serializeMarkdownFrontmatter(frontmatter, body) {
 ${frontmatterStr}
 ---
 ${body}`;
+}
+function sanitizeRuleFrontmatter(frontmatter, ruleName) {
+  return sanitizeRuleFrontmatterWithSummary(frontmatter, ruleName).frontmatter;
+}
+function sanitizeRuleFrontmatterWithSummary(frontmatter, ruleName) {
+  const result = {
+    ...frontmatter
+  };
+  const changes = [];
+  const explicitAlwaysApply = result.alwaysApply;
+  const hadGlobsAlias = "globs" in result;
+  const pathsBeforeAliasHandling = result.paths;
+  const globsBeforeAliasHandling = result.globs;
+  if (Array.isArray(pathsBeforeAliasHandling) && Array.isArray(globsBeforeAliasHandling) && stableStringify(pathsBeforeAliasHandling) !== stableStringify(globsBeforeAliasHandling)) {
+    changes.push("~ conflicting alias ignored: globs (kept paths)");
+  }
+  if (result.globs && !result.paths) {
+    result.paths = result.globs;
+    changes.push("~ globs -> paths");
+  }
+  if (hadGlobsAlias) {
+    delete result.globs;
+    if (!changes.includes("~ globs -> paths")) {
+      changes.push("~ removed alias: globs");
+    }
+  }
+  if ("alwaysApply" in result) {
+    delete result.alwaysApply;
+    changes.push("~ alwaysApply -> activation");
+  }
+  let canonicalActivation;
+  if (typeof explicitAlwaysApply === "boolean") {
+    canonicalActivation = explicitAlwaysApply || result.paths === void 0 ? "always" : "scoped";
+  } else if (result.activation === "always" || result.activation === "scoped") {
+    canonicalActivation = result.activation;
+  } else {
+    canonicalActivation = result.paths === void 0 ? "always" : "scoped";
+  }
+  if (result.activation !== canonicalActivation) {
+    result.activation = canonicalActivation;
+    changes.push(`~ activation -> ${canonicalActivation}`);
+  }
+  if (!result.description && ruleName) {
+    const humanName = ruleName.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    result.description = `${humanName} guidelines`;
+    changes.push("~ added description");
+  }
+  return {
+    frontmatter: CanonicalRuleFrontmatterSchema.parse(result),
+    changes
+  };
 }
 
 // src/core/discovery.ts
@@ -15797,11 +15869,11 @@ function collectParentDirs(targetPaths, projectRoot) {
 async function removeEmptyParentDirs(targetPaths, projectRoot) {
   if (targetPaths.length === 0) return;
   const dirs = collectParentDirs(targetPaths, projectRoot);
-  const fs4 = await import("node:fs");
+  const fs5 = await import("node:fs");
   for (const dir of dirs) {
     try {
       if (isSymlink(dir)) continue;
-      if (fs4.readdirSync(dir).length === 0) removeDir(dir);
+      if (fs5.readdirSync(dir).length === 0) removeDir(dir);
     } catch {
     }
   }
@@ -16826,7 +16898,10 @@ function resolveLoadout(name, roots, rootConfig, options = {}) {
   const effectiveTools = definition.tools || rootConfig?.tools || [...BUILTIN_TOOL_NAMES];
   const items = [];
   for (const include of definition.include || []) {
-    items.push(resolveInclude(include, rootPath, effectiveTools));
+    const tools = typeof include === "object" && include.tools ? include.tools : effectiveTools;
+    if (options.onlyTool && !tools.includes(options.onlyTool)) continue;
+    const ref = typeof include === "string" ? include : include.path;
+    items.push(ref.startsWith("repo:") && options.resolveRepo ? options.resolveRepo(ref, tools) : resolveInclude(include, rootPath, effectiveTools));
   }
   return {
     name,
@@ -17044,7 +17119,7 @@ function compileRuntimeBundle(tool, resolved, options = {}) {
     description: loadout.description,
     rootPath: loadout.rootPath
   }));
-  const fingerprint = hashContent(stableStringify({
+  const fingerprint = hashContent(stableStringify2({
     schemaVersion: RUNTIME_SCHEMA_VERSION,
     tool,
     loadouts: runtimeLoadouts,
@@ -17258,14 +17333,14 @@ function createSkillRef(component) {
     sourcePath: component.sourcePath
   };
 }
-function stableStringify(value) {
+function stableStringify2(value) {
   if (Array.isArray(value)) {
-    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+    return `[${value.map((item) => stableStringify2(item)).join(",")}]`;
   }
   if (value && typeof value === "object") {
     const object = value;
     const keys = Object.keys(object).sort((a, b) => a.localeCompare(b));
-    return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(object[key])}`).join(",")}}`;
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify2(object[key])}`).join(",")}}`;
   }
   return JSON.stringify(value);
 }
@@ -17285,19 +17360,7 @@ async function compileSession(directory, names, options) {
   const full = compileRuntimeBundle("opencode", loadouts);
   const exclude = /* @__PURE__ */ new Set();
   if (options.excludeOnDisk !== false) {
-    const rendered = /* @__PURE__ */ new Set();
-    for (const root of await discoverLoadoutRoots(directory)) {
-      const state = loadState(root.path);
-      if (!state) continue;
-      for (const drift of detectDrift(state, path19.dirname(root.path))) {
-        const target = path19.resolve(path19.dirname(root.path), drift.entry.targetPath);
-        const sameLiveSource = isSymlink(target) && canonical(target) === canonical(drift.entry.sourcePath);
-        const native = drift.entry.kind === "skill" || drift.entry.kind === "instruction" && path19.basename(target) === "AGENTS.md";
-        if (native && (drift.status === "ok" || sameLiveSource) && drift.entry.tools.includes("opencode")) {
-          for (const source of entrySources(drift.entry)) rendered.add(canonical(source));
-        }
-      }
-    }
+    const rendered = await renderedSources(directory);
     for (const component of full.components) {
       const entrypoint = component.kind === "skill" && isDirectory(component.sourcePath) ? path19.join(component.sourcePath, "SKILL.md") : component.sourcePath;
       if (rendered.has(canonical(component.sourcePath)) || rendered.has(canonical(entrypoint))) exclude.add(path19.resolve(component.sourcePath));
@@ -17326,6 +17389,22 @@ ${item.content}`);
     selection
   };
 }
+async function renderedSources(directory) {
+  const rendered = /* @__PURE__ */ new Set();
+  for (const root of await discoverLoadoutRoots(directory)) {
+    const state = loadState(root.path);
+    if (!state) continue;
+    for (const drift of detectDrift(state, path19.dirname(root.path))) {
+      const target = path19.resolve(path19.dirname(root.path), drift.entry.targetPath);
+      const sameLiveSource = isSymlink(target) && canonical(target) === canonical(drift.entry.sourcePath);
+      const native = drift.entry.kind === "skill" || drift.entry.kind === "instruction" && path19.basename(target) === "AGENTS.md";
+      if (native && (drift.status === "ok" || sameLiveSource) && drift.entry.tools.includes("opencode")) {
+        for (const source of entrySources(drift.entry)) rendered.add(canonical(source));
+      }
+    }
+  }
+  return rendered;
+}
 function canonical(file) {
   try {
     return realpathSync4(file);
@@ -17334,37 +17413,361 @@ function canonical(file) {
   }
 }
 
+// src/core/private-project.ts
+import * as fs4 from "node:fs";
+import * as path20 from "node:path";
+import * as os10 from "node:os";
+import { execFile } from "node:child_process";
+import { promisify as promisify2 } from "node:util";
+import { randomUUID } from "node:crypto";
+var exec2 = promisify2(execFile);
+var details = /* @__PURE__ */ new WeakMap();
+var storeBase = () => path20.join(os10.homedir(), ".config", "loadouts", "repos");
+var inside = (root, file) => file === root || !path20.relative(root, file).startsWith(".." + path20.sep) && path20.relative(root, file) !== ".." && !path20.isAbsolute(path20.relative(root, file));
+var keyOf = (root, dir) => path20.relative(root, dir).split(path20.sep).join("/") || ".";
+var safeName = (name) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name) && name !== "." && name !== "..";
+async function git(cwd, ...args) {
+  return (await exec2("git", args, {
+    cwd,
+    maxBuffer: 32 * 1024 * 1024
+  })).stdout;
+}
+async function gitPaths(cwd) {
+  try {
+    const lines = (await git(cwd, "rev-parse", "--path-format=absolute", "--show-toplevel", "--absolute-git-dir", "--git-common-dir")).trim().split("\n");
+    if (lines.length !== 3) throw new Error("Unexpected git rev-parse output");
+    return {
+      root: fs4.realpathSync(lines[0]),
+      dir: lines[1],
+      common: lines[2]
+    };
+  } catch (error) {
+    if (error.code === 128) return null;
+    throw error;
+  }
+}
+function realMissing(file) {
+  try {
+    return fs4.realpathSync(file);
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    try {
+      fs4.lstatSync(file);
+      throw new Error(`Dangling symlink: ${file}`);
+    } catch (e) {
+      if (e.code !== "ENOENT") throw e;
+    }
+    const parent = path20.dirname(file);
+    if (parent === file) throw error;
+    return path20.join(realMissing(parent), path20.basename(file));
+  }
+}
+function storeTarget(link, allowDangling) {
+  if (!fs4.lstatSync(link).isSymbolicLink()) throw new Error(`Private repo link is not a symlink: ${link}`);
+  const store = path20.resolve(path20.dirname(link), fs4.readlinkSync(link));
+  const base = storeBase();
+  if (path20.dirname(store) !== base || !safeName(path20.basename(store))) throw new Error(`Unsafe private repo target: ${store}`);
+  if (!fs4.existsSync(store)) {
+    if (!allowDangling) throw new Error(`Private repo store is missing: ${store}. Clear the selection or restore the store.`);
+  } else if (!fs4.statSync(store).isDirectory() || fs4.realpathSync(store) !== path20.join(realMissing(base), path20.basename(store))) {
+    throw new Error(`Private repo store must be a directory under ${base}: ${store}`);
+  }
+  return store;
+}
+function hasLink(link) {
+  try {
+    fs4.lstatSync(link);
+    return true;
+  } catch (e) {
+    if (e.code === "ENOENT") return false;
+    throw e;
+  }
+}
+async function findPrivateProject(cwd, opts = {}) {
+  const paths = await gitPaths(cwd);
+  if (!paths) return null;
+  const link = path20.join(paths.common, "loadouts");
+  if (!hasLink(link)) return null;
+  const store = storeTarget(link, !!opts.allowDangling);
+  const start = fs4.realpathSync(cwd);
+  if (!inside(paths.root, start)) throw new Error(`Outside Git root: ${cwd}`);
+  const levels = [];
+  for (let dir = start; ; dir = path20.dirname(dir)) {
+    levels.push(dir);
+    if (dir === paths.root) break;
+  }
+  const specs = [];
+  for (const dir of levels) {
+    const prefix = keyOf(paths.root, dir) === "." ? "" : keyOf(paths.root, dir) + "/";
+    const globPrefix = prefix.replace(/[\\*?\[]/g, "\\$&");
+    specs.push(`:(literal)${prefix}AGENTS.md`, `:(literal)${prefix}CLAUDE.md`, `:(glob)${globPrefix}.loadouts/**`, `:(glob)${globPrefix}.cursor/rules/*.mdc`);
+    for (const host of [".opencode", ".claude", ".agents"]) specs.push(`:(glob)${globPrefix}${host}/skills/*/SKILL.md`);
+  }
+  const index = /* @__PURE__ */ new Map();
+  const output = await git(paths.root, "ls-files", "--stage", "-z", "--", ...specs);
+  for (const entry of output.split("\0").filter(Boolean)) {
+    const match = entry.match(/^\d+ [0-9a-f]+ ([0-3])\t([\s\S]+)$/);
+    if (!match) throw new Error("Unexpected git index entry");
+    const stages = index.get(match[2]) ?? [];
+    stages.push(Number(match[1]));
+    index.set(match[2], stages);
+  }
+  const roots = [];
+  const layers = [];
+  let projectRoot;
+  const saved = opts.allowDangling && !fs4.existsSync(store) ? selectionsAt(path20.join(stateDirectory(paths.dir), "selection.json")) : void 0;
+  for (const [depth, dir] of levels.entries()) {
+    const key = keyOf(paths.root, dir);
+    const prefix = key === "." ? "" : key + "/";
+    const own = path20.join(store, key, ".loadouts");
+    const tracked = [...index.keys()].some((item) => item.startsWith(prefix + ".loadouts/"));
+    const items = [];
+    for (const file of index.keys()) {
+      if (!file.startsWith(prefix)) continue;
+      const local = file.slice(prefix.length);
+      let kind;
+      let repoPath = file;
+      if (local === "AGENTS.md" || local === "CLAUDE.md") kind = "instruction";
+      else if (/^\.(?:opencode|claude|agents)\/skills\/[^/]+\/SKILL\.md$/.test(local)) {
+        kind = "skill";
+        repoPath = file.slice(0, -"/SKILL.md".length);
+      }
+      if (kind) items.push({
+        kind,
+        repoPath,
+        sourcePath: path20.join(paths.root, repoPath)
+      });
+    }
+    if (fs4.existsSync(own)) roots.push({
+      path: own,
+      level: "project",
+      depth
+    });
+    if (tracked) roots.push({
+      path: path20.join(dir, ".loadouts"),
+      level: "project",
+      depth
+    });
+    if (!projectRoot && (saved ? Object.hasOwn(saved, key) : fs4.existsSync(own) || tracked || items.length)) projectRoot = dir;
+    if (items.length) layers.push({
+      id: `team:${key}`,
+      name: path20.basename(dir),
+      items
+    });
+  }
+  projectRoot ??= paths.root;
+  const projectKey = keyOf(paths.root, projectRoot);
+  const configPath = path20.join(store, projectKey, ".loadouts");
+  const seen = new Set(roots.map((root) => root.path));
+  const append = (root) => {
+    for (const source of collectRootsWithSources(root, false, false).roots) {
+      if (!seen.has(source.path)) {
+        roots.push(source);
+        seen.add(source.path);
+      }
+    }
+  };
+  for (const root of [...roots]) append(root);
+  const global = getGlobalRoot();
+  if (global) append(global);
+  const bundled = getBundledRoot();
+  if (bundled && !seen.has(bundled.path)) roots.push(bundled);
+  const project = {
+    gitRoot: paths.root,
+    gitDir: paths.dir,
+    projectRoot,
+    projectKey,
+    configPath,
+    roots,
+    layers
+  };
+  details.set(project, {
+    store,
+    link,
+    index,
+    levels: new Set(levels.map((dir) => keyOf(paths.root, dir)))
+  });
+  return project;
+}
+function stateDirectory(gitDir, create = false) {
+  const dir = path20.join(fs4.realpathSync(gitDir), "loadouts-state");
+  if (create) {
+    try {
+      fs4.mkdirSync(dir);
+    } catch (e) {
+      if (e.code !== "EEXIST") throw e;
+    }
+  }
+  try {
+    if (!fs4.lstatSync(dir).isDirectory() || fs4.realpathSync(dir) !== dir) throw new Error(`Unsafe private selection directory: ${dir}`);
+  } catch (e) {
+    if (e.code !== "ENOENT" || create) throw e;
+  }
+  return dir;
+}
+function selectionFile(project) {
+  return path20.join(stateDirectory(project.gitDir), "selection.json");
+}
+function selectionsAt(file) {
+  let raw;
+  try {
+    raw = fs4.readFileSync(file, "utf8");
+  } catch (e) {
+    if (e.code === "ENOENT") return {};
+    throw e;
+  }
+  const value = JSON.parse(raw);
+  if (!value || typeof value !== "object" || Array.isArray(value) || Object.values(value).some((v) => !Array.isArray(v) || v.some((n) => typeof n !== "string"))) throw new Error(`Invalid private selection: ${file}`);
+  return value;
+}
+function readPrivateSelection(project) {
+  const all = selectionsAt(selectionFile(project));
+  return Object.hasOwn(all, project.projectKey) ? all[project.projectKey] : void 0;
+}
+function trackedEntry(project, file) {
+  const stages = details.get(project)?.index.get(keyOf(project.gitRoot, file));
+  return !!stages && stages.length === 1 && stages[0] === 0;
+}
+function visibleDefinition(project, root, name) {
+  if (!safeName(name)) return false;
+  if (!inside(project.gitRoot, root.path)) return true;
+  const base = path20.join(root.path, "loadouts", name);
+  const file = fs4.existsSync(base + ".yaml") ? base + ".yaml" : base + ".yml";
+  return trackedEntry(project, file) && inside(project.gitRoot, fs4.realpathSync(file));
+}
+function privateNames(project) {
+  return [...new Set(project.roots.flatMap((root) => listLoadouts(root.path).filter((name) => visibleDefinition(project, root, name))))];
+}
+function teamLayerId(project, name) {
+  const matches = project.layers.filter((layer) => name.startsWith("team:") ? layer.id === name : layer.name === name);
+  if (matches.length && !name.startsWith("team:") && privateNames(project).includes(name)) return void 0;
+  if (matches.length > 1) throw new Error(`Ambiguous team layer: ${name}; use its team: path.`);
+  if (!matches.length && name.startsWith("team:")) throw new Error(`Unknown team layer: ${name}`);
+  return matches[0]?.id;
+}
+function teamLayerName(project, layer) {
+  return project.layers.filter((item) => item.name === layer.name).length > 1 || privateNames(project).includes(layer.name) ? layer.id : layer.name;
+}
+function repoArtifact(project, ref) {
+  if (!ref.startsWith("repo:")) throw new Error(`Expected repo: path: ${ref}`);
+  const repoPath = ref.slice(5);
+  if (!repoPath || path20.posix.isAbsolute(repoPath) || repoPath.split("/").some((part) => !part || part === "." || part === "..")) throw new Error(`Invalid repo path: ${ref}`);
+  const data = details.get(project);
+  if (!data) throw new Error("Private project catalog unavailable");
+  let kind;
+  let entry = repoPath;
+  if (/(?:^|\/)(?:AGENTS|CLAUDE)\.md$/.test(repoPath)) kind = "instruction";
+  else if (/(?:^|\/)\.(?:opencode|claude|agents)\/skills\/[^/]+$/.test(repoPath)) {
+    kind = "skill";
+    entry += "/SKILL.md";
+  } else if (/(?:^|\/)\.cursor\/rules\/[^/]+\.mdc$/.test(repoPath)) kind = "rule";
+  else throw new Error(`Unsupported repo artifact: ${ref}`);
+  const level = kind === "instruction" ? path20.posix.dirname(repoPath) : path20.posix.dirname(path20.posix.dirname(path20.posix.dirname(repoPath)));
+  if (!data.levels.has(level)) throw new Error(`Repo artifact is outside the current ancestor catalog: ${ref}. Run from that directory or one of its descendants.`);
+  const stages = data.index.get(entry);
+  if (!stages || stages.length !== 1 || stages[0] !== 0) throw new Error(`Untracked or unmerged repo artifact: ${ref}`);
+  const target = path20.join(project.gitRoot, repoPath);
+  let sourcePath;
+  try {
+    sourcePath = fs4.realpathSync(target);
+  } catch {
+    throw new Error(`Missing repo artifact: ${ref}`);
+  }
+  if (!inside(project.gitRoot, sourcePath)) throw new Error(`Repo artifact escapes Git root: ${ref}`);
+  if (kind === "skill") {
+    let entrypoint;
+    try {
+      entrypoint = fs4.realpathSync(path20.join(target, "SKILL.md"));
+    } catch {
+      throw new Error(`Missing skill entrypoint: ${ref}`);
+    }
+    if (!inside(project.gitRoot, entrypoint) || !fs4.statSync(sourcePath).isDirectory()) throw new Error(`Invalid skill entrypoint: ${ref}`);
+  } else if (!fs4.statSync(sourcePath).isFile()) throw new Error(`Not a file: ${ref}`);
+  if (kind === "rule" && parseFrontmatter(fs4.readFileSync(sourcePath, "utf8")).frontmatter.alwaysApply !== true) throw new Error(`Cursor rule must have alwaysApply: true: ${ref}`);
+  return {
+    kind,
+    repoPath,
+    sourcePath: target
+  };
+}
+function resolvePrivateLoadouts(project, names, scope = "project") {
+  const seen = /* @__PURE__ */ new Set();
+  const global = scope === "global" ? getGlobalRoot() : null;
+  const available = scope === "global" ? global ? collectRootsWithSources(global, false, true).roots : [] : project.roots;
+  return [...new Set(names)].filter((name) => !name.startsWith("team:")).map((name) => {
+    if (!safeName(name)) throw new Error(`Invalid loadout name: ${name}`);
+    const roots = available.filter((root) => !listLoadouts(root.path).includes(name) || visibleDefinition(project, root, name));
+    const loadout = resolveLoadout(name, roots, parseRootConfig(global?.path ?? project.configPath), {
+      onlyTool: "opencode",
+      resolveRepo: (ref, tools) => {
+        const item = repoArtifact(project, ref);
+        return {
+          ...item,
+          relativePath: ref,
+          tools
+        };
+      }
+    });
+    loadout.items = loadout.items.filter((item) => {
+      if (!["instruction", "rule", "skill"].includes(item.kind)) throw new Error(`Unsupported private artifact kind ${item.kind}: ${item.relativePath}`);
+      if (!item.repoPath && inside(project.gitRoot, loadout.rootPath)) {
+        const entry = item.kind === "skill" ? path20.join(item.sourcePath, "SKILL.md") : item.sourcePath;
+        if (!trackedEntry(project, entry) || !inside(project.gitRoot, fs4.realpathSync(entry))) throw new Error(`Untracked, unmerged, or escaping artifact: ${item.relativePath}`);
+      }
+      if (item.kind === "rule" && !item.repoPath) {
+        const frontmatter = parseFrontmatter(fs4.readFileSync(item.sourcePath, "utf8")).frontmatter;
+        if (frontmatter.alwaysApply === false || sanitizeRuleFrontmatter(frontmatter).activation !== "always") throw new Error(`Private rule must be always-on: ${item.relativePath}`);
+      }
+      if (item.kind === "skill" && (!fs4.existsSync(path20.join(item.sourcePath, "SKILL.md")) || !fs4.statSync(path20.join(item.sourcePath, "SKILL.md")).isFile())) throw new Error(`Missing skill entrypoint: ${item.relativePath}`);
+      const identity2 = fs4.realpathSync(item.sourcePath);
+      if (seen.has(identity2)) return false;
+      seen.add(identity2);
+      return true;
+    });
+    return loadout;
+  });
+}
+
 // src/tui/core/actions.ts
 async function executeEffect(effect, ctx) {
   try {
     if (effect.t === "reload") return done(effect.t, true, "Reload requested");
+    if (await findPrivateProject(ctx.cwd) && (effect.t === "editFile" || effect.layer !== "session")) {
+      throw new Error("Filesystem actions are unavailable in a private project dashboard; use the CLI.");
+    }
     if (effect.t === "editFile") return done(effect.t, true, effect.path);
     if (effect.layer === "session") {
       if (!ctx.session) return done(effect.t, false, "Select a session first");
       if (effect.t === "plan") {
+        const project = await findPrivateProject(ctx.cwd);
+        if (project) {
+          const personal = effect.targetSet.filter((name) => !teamLayerId(project, name));
+          const items = resolvePrivateLoadouts(project, personal).flatMap((loadout) => loadout.items.map((item) => `+ ${item.kind} ${item.relativePath}`));
+          return done(effect.t, true, "Session selection", items);
+        }
         const compiled = await compileSession(ctx.cwd, effect.targetSet, {
           scope: effect.scope
         });
         return done(effect.t, true, "Session delta", [...compiled.bundle.components.map((item) => `+ ${item.kind} ${item.relativePath}`), ...compiled.warnings.map((warning) => `! ${warning}`)]);
       }
-      const result2 = effect.t === "clear" || effect.targetSet.length === 0 ? await ctx.session.activator.unequip(ctx.session.id) : await ctx.session.activator.equip(ctx.session.id, effect.targetSet, {
+      const result2 = effect.t === "clear" || effect.targetSet.length === 0 && !await findPrivateProject(ctx.cwd) ? await ctx.session.activator.unequip(ctx.session.id) : await ctx.session.activator.equip(ctx.session.id, effect.targetSet, {
         scope: effect.scope
       });
       return done(effect.t, true, ["Session equipment updated", ...result2.warnings].join("; "));
     }
-    const fs4 = await getContext(effect.layer, ctx.cwd);
-    if (effect.t === "plan") return done(effect.t, true, "Diff ready", await planLines(fs4, effect.targetSet));
+    const fs5 = await getContext(effect.layer, ctx.cwd);
+    if (effect.t === "plan") return done(effect.t, true, "Diff ready", await planLines(fs5, effect.targetSet));
     if (effect.t === "clear" || effect.targetSet.length === 0) {
       const {
         removed,
         warnings
-      } = await removeManaged(fs4.configPath, fs4.projectRoot, fs4.scope);
-      clearState(fs4.configPath);
+      } = await removeManaged(fs5.configPath, fs5.projectRoot, fs5.scope);
+      clearState(fs5.configPath);
       return done(effect.t, true, [`${removed.length} output(s) removed`, ...warnings].join("; "));
     }
-    const plans = await resolvePlans(fs4, effect.targetSet);
-    const mode = parseRootConfig(fs4.configPath).mode;
-    const result = await applyMultiPlan(plans, fs4.configPath, fs4.projectRoot, mode, fs4.scope);
+    const plans = await resolvePlans(fs5, effect.targetSet);
+    const mode = parseRootConfig(fs5.configPath).mode;
+    const result = await applyMultiPlan(plans, fs5.configPath, fs5.projectRoot, mode, fs5.scope);
     if (result.conflicts.length) {
       return done(effect.t, false, "AGENTS.md has local edits; edit the named source or run `loadouts sync --force`", result.conflicts.flatMap((c) => c.edits.map((e) => e.owner ? `! edited section: ${e.owner.loadout} (${e.owner.displayPath})` : "! edits outside loadouts sections")));
     }
@@ -17421,8 +17824,8 @@ function done(effect, ok, message, data) {
 }
 
 // src/tui/core/data.ts
-import * as path21 from "node:path";
-import * as os11 from "node:os";
+import * as path22 from "node:path";
+import * as os12 from "node:os";
 
 // node_modules/chalk/source/vendor/ansi-styles/index.js
 var ANSI_BACKGROUND_OFFSET = 10;
@@ -17612,7 +18015,7 @@ var ansi_styles_default = ansiStyles;
 
 // node_modules/chalk/source/vendor/supports-color/index.js
 import process2 from "node:process";
-import os10 from "node:os";
+import os11 from "node:os";
 import tty from "node:tty";
 function hasFlag(flag, argv = globalThis.Deno ? globalThis.Deno.args : process2.argv) {
   const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
@@ -17677,7 +18080,7 @@ function _supportsColor(haveStream, { streamIsTTY, sniffFlags = true } = {}) {
     return min;
   }
   if (process2.platform === "win32") {
-    const osRelease = os10.release().split(".");
+    const osRelease = os11.release().split(".");
     if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
       return Number(osRelease[2]) >= 14931 ? 3 : 2;
     }
@@ -17920,7 +18323,7 @@ var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
 var source_default = chalk;
 
 // src/lib/artifact-paths.ts
-import * as path20 from "node:path";
+import * as path21 from "node:path";
 function isProjectScope(level) {
   return level === "project";
 }
@@ -18006,6 +18409,73 @@ var DRIFT_PRIORITY = {
   broken: 5
 };
 async function loadDashboardData(cwd = process.cwd()) {
+  const project = await findPrivateProject(cwd);
+  if (project) {
+    const rows2 = [];
+    for (const name of privateNames(project)) {
+      const root = project.roots.find((entry) => listLoadouts(entry.path).includes(name));
+      const scope = "project";
+      try {
+        const resolved = resolvePrivateLoadouts(project, [name])[0];
+        const slots = sortArtifacts(resolved.items.map((item) => ({
+          kind: item.kind,
+          name: getArtifactName(item.relativePath, item.kind),
+          relativePath: item.relativePath,
+          tools: item.tools
+        })));
+        rows2.push({
+          id: `${scope}:${name}`,
+          name,
+          scope,
+          description: resolved.description,
+          status: "available",
+          equipped: [],
+          counts: countSlots(slots),
+          tools: [...new Set(slots.flatMap((slot) => slot.tools))],
+          filePath: root && loadoutDefinitionPath(root.path, name),
+          slots
+        });
+      } catch (error) {
+        rows2.push({
+          id: `${scope}:${name}`,
+          name,
+          scope,
+          status: "broken",
+          equipped: [],
+          counts: countSlots([]),
+          tools: [],
+          issue: String(error),
+          slots: []
+        });
+      }
+    }
+    for (const layer of project.layers) {
+      const slots = layer.items.map((item) => ({
+        kind: item.kind,
+        name: path22.basename(item.repoPath),
+        relativePath: `repo:${item.repoPath}`,
+        tools: ["opencode"]
+      }));
+      rows2.push({
+        id: `project:${layer.id}`,
+        name: teamLayerName(project, layer),
+        scope: "project",
+        status: "available",
+        equipped: [],
+        counts: countSlots(slots),
+        tools: ["opencode"],
+        slots
+      });
+    }
+    return {
+      rows: sortRows(rows2),
+      active: [],
+      tools: [...new Set(rows2.flatMap((row) => row.tools))],
+      issues: [],
+      warnings: [],
+      privateSelection: readPrivateSelection(project) ?? project.layers.map((layer) => layer.id)
+    };
+  }
   const {
     entries,
     warnings
@@ -18096,7 +18566,7 @@ function withSessionEquipment(data, status) {
     ...data,
     rows: data.rows.map((row) => {
       const equipped2 = row.equipped.filter((layer) => layer !== "session");
-      if (status?.scope === row.scope && status.names.includes(row.name)) equipped2.push("session");
+      if (status && (data.privateSelection || status.scope === row.scope) && (status.names.includes(row.name) || status.names.includes(row.id.replace(/^project:/, "")))) equipped2.push("session");
       return {
         ...row,
         equipped: equipped2,
@@ -18113,7 +18583,7 @@ function ownerStateMap(entries) {
     map.set(owner, {
       active: new Set(loadState(primary.root.path)?.active ?? []),
       configPath: primary.root.path,
-      projectRoot: owner === "project" ? path21.dirname(primary.root.path) : os11.homedir(),
+      projectRoot: owner === "project" ? path22.dirname(primary.root.path) : os12.homedir(),
       scope: owner
     });
   }
@@ -18143,8 +18613,8 @@ function countSlots(slots) {
   };
 }
 function loadoutDefinitionPath(root, name) {
-  const yamlPath = path21.join(root, "loadouts", `${name}.yaml`);
-  return fileExists(yamlPath) ? yamlPath : path21.join(root, "loadouts", `${name}.yml`);
+  const yamlPath = path22.join(root, "loadouts", `${name}.yaml`);
+  return fileExists(yamlPath) ? yamlPath : path22.join(root, "loadouts", `${name}.yml`);
 }
 function scopeFromRoot(root) {
   return root.level === "global" ? "global" : "project";
@@ -19300,9 +19770,16 @@ var DashboardController = class {
       const session = this.options.session;
       const status = session ? await session.activator.status(session.id) : void 0;
       if (this.disposed || version !== this.refreshVersion || this.model.busy) return;
+      const effective = status?.privateMode === "follow" && data.privateSelection ? {
+        ...status,
+        names: data.privateSelection
+      } : status ?? (session && data.privateSelection ? {
+        names: data.privateSelection,
+        scope: "project"
+      } : void 0);
       const {
         rows
-      } = withSessionEquipment(data, status);
+      } = withSessionEquipment(data, effective);
       this.model = normalizeCursor({
         ...this.model,
         rows,
@@ -19333,11 +19810,11 @@ var DashboardController = class {
     const effect = result.effect;
     let done2;
     try {
-      if (effect.t === "editFile") await this.options.edit(effect.path);
       done2 = await executeEffect(effect, {
         cwd: this.options.cwd,
         session: this.options.session
       });
+      if (effect.t === "editFile" && done2.t === "effectDone" && done2.ok) await this.options.edit(effect.path);
     } catch (error) {
       done2 = {
         t: "effectDone",

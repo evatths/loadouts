@@ -3,7 +3,7 @@ import { realpathSync } from "node:fs";
 import { OpenCode, type SessionInfo } from "@opencode/client";
 import { Service } from "@opencode/client/service";
 
-export const TESTED_OPENCODE_VERSION = "2.0.32";
+export const TESTED_OPENCODE_VERSION = "2.3.2";
 export interface Connection { client: ReturnType<typeof OpenCode.make>; version: string; warning?: string }
 
 export async function discoverClient(): Promise<Connection | undefined> {

@@ -6,6 +6,8 @@ import { registry } from "../../core/registry.js";
 import { requireScopeForName, type ScopeFlags } from "../../core/scope.js";
 import type { CommandContext, LoadoutDefinition, LoadoutInclude } from "../../core/types.js";
 import { fileExists, isDirectory, writeFile } from "../../lib/fs.js";
+import { authorName, authorRoot, authorPath } from "./private.js";
+import { repoArtifact, type PrivateProject } from "../../core/private-project.js";
 
 const LOADOUTS_DIR = "loadouts";
 
@@ -23,6 +25,7 @@ export interface LoadoutMutationTarget {
   ctx: CommandContext;
   loadoutPath: string;
   definition: LoadoutDefinition;
+  privateProject?: PrivateProject;
 }
 
 function toPosix(value: string): string {
@@ -155,6 +158,16 @@ export async function resolveLoadoutMutationTarget(
     throw new Error("Use either --local or --global, not both.");
   }
 
+  const author = await authorRoot(options, cwd);
+  if (author) {
+    authorName(name);
+    const yamlPath = authorPath(author.project, `loadouts/${name}.yaml`);
+    const ymlPath = authorPath(author.project, `loadouts/${name}.yml`);
+    const loadoutPath = fileExists(yamlPath) ? yamlPath : ymlPath;
+    if (!fileExists(loadoutPath)) throw new Error(`Personal loadout '${name}' not found at this project level.`);
+    return { ctx: { scope: "project", configPath: author.rootPath, statePath: "", projectRoot: author.project.projectRoot }, loadoutPath, definition: parseLoadoutDefinition(loadoutPath), privateProject: author.project };
+  }
+
   const scope = await requireScopeForName(name, options, cwd);
   const ctx = await getContext(scope, cwd);
   const loadoutPath = findLoadoutPath(ctx.configPath, name);
@@ -172,9 +185,15 @@ export async function resolveLoadoutMutationTarget(
 
 export function normalizeAndValidateArtifact(
   raw: string,
-  loadoutRoot: string
+  loadoutRoot: string,
+  project?: PrivateProject
 ): IncludeInput {
+  if (raw.startsWith("repo:") && project) {
+    repoArtifact(project, raw);
+    return { path: raw };
+  }
   const includePath = normalizeIncludePath(raw, loadoutRoot);
+  if (project) authorPath(project, includePath);
   const kind = registry.allKinds().find((candidate) => candidate.detect(includePath));
   if (!kind) {
     throw new Error(`Unsupported artifact path: ${includePath}`);

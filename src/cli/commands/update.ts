@@ -76,7 +76,7 @@ export const updateCommand = new Command("update")
     if (currentVersion === latestVersion) {
       log.success(`Already on latest version (${currentVersion})`);
       // Still run migration in case they skipped a version
-      await migrateGitignore();
+      if (!opts.check) await migrateGitignore();
       return;
     }
 

@@ -32,7 +32,7 @@ export async function runAddTo(
   const target = await resolveLoadoutMutationTarget(loadout, options, cwd);
   const tools = parseToolsOption(options.tools);
   const includes = artifacts.map((artifact) => ({
-    ...normalizeAndValidateArtifact(artifact, target.ctx.configPath),
+    ...normalizeAndValidateArtifact(artifact, target.ctx.configPath, target.privateProject),
     tools,
   }));
 

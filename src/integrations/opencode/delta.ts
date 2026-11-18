@@ -32,21 +32,7 @@ export async function compileSession(
   if (options.excludeOnDisk !== false) {
     // Only exclude intact outputs. A stale manifest or a shadowed/missing file
     // is not evidence that the model has these instructions.
-    const rendered = new Set<string>();
-    for (const root of await discoverLoadoutRoots(directory)) {
-      const state = loadState(root.path);
-      if (!state) continue;
-      for (const drift of detectDrift(state, path.dirname(root.path))) {
-        const target = path.resolve(path.dirname(root.path), drift.entry.targetPath);
-        const sameLiveSource = isSymlink(target) && canonical(target) === canonical(drift.entry.sourcePath);
-        // V2 natively reads AGENTS.md and skill directories. A managed rule file
-        // alone is not proof that an external rule-loader injected its content.
-        const native = drift.entry.kind === "skill" || (drift.entry.kind === "instruction" && path.basename(target) === "AGENTS.md");
-        if (native && (drift.status === "ok" || sameLiveSource) && drift.entry.tools.includes("opencode")) {
-          for (const source of entrySources(drift.entry)) rendered.add(canonical(source));
-        }
-      }
-    }
+    const rendered = await renderedSources(directory);
     for (const component of full.components) {
       const entrypoint = component.kind === "skill" && isDirectory(component.sourcePath) ? path.join(component.sourcePath, "SKILL.md") : component.sourcePath;
       if (rendered.has(canonical(component.sourcePath)) || rendered.has(canonical(entrypoint))) exclude.add(path.resolve(component.sourcePath));
@@ -74,6 +60,24 @@ export async function compileSession(
     warnings: [...sourceWarnings, ...bundle.diagnostics.map((item) => item.message + ` (${item.relativePath})`)],
     selection,
   };
+}
+
+/** Sources demonstrably loaded by OpenCode through managed on-disk outputs. */
+export async function renderedSources(directory: string): Promise<Set<string>> {
+  const rendered = new Set<string>();
+  for (const root of await discoverLoadoutRoots(directory)) {
+    const state = loadState(root.path);
+    if (!state) continue;
+    for (const drift of detectDrift(state, path.dirname(root.path))) {
+      const target = path.resolve(path.dirname(root.path), drift.entry.targetPath);
+      const sameLiveSource = isSymlink(target) && canonical(target) === canonical(drift.entry.sourcePath);
+      const native = drift.entry.kind === "skill" || (drift.entry.kind === "instruction" && path.basename(target) === "AGENTS.md");
+      if (native && (drift.status === "ok" || sameLiveSource) && drift.entry.tools.includes("opencode")) {
+        for (const source of entrySources(drift.entry)) rendered.add(canonical(source));
+      }
+    }
+  }
+  return rendered;
 }
 
 function canonical(file: string): string {

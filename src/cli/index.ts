@@ -42,6 +42,7 @@ import { doctorCommand } from "./commands/doctor.js";
 import { runtimeCommand } from "./commands/runtime.js";
 import { tuiCommand } from "./commands/tui.js";
 import { sessionCommand } from "./commands/session.js";
+import { privatePolicy } from "./commands/private.js";
 
 // ---------------------------------------------------------------------------
 // Command groups — controls help output order and section headers
@@ -102,6 +103,8 @@ export const cli = new Command()
   .name("loadouts")
   .description("Composable configuration bundles for AI coding agents")
   .version(pkg.version);
+
+privatePolicy(cli);
 
 for (const group of COMMAND_GROUPS) {
   for (const cmd of group.commands) {

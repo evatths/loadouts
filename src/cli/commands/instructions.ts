@@ -11,6 +11,7 @@ import { loadState } from "../../core/manifest.js";
 import { writeFile, readFile, fileExists, removeFile, copyFile, ensureDir } from "../../lib/fs.js";
 import { log } from "../../lib/output.js";
 import { spawn } from "node:child_process";
+import { authorName, authorRoot, authorPath } from "./private.js";
 
 const INSTRUCTIONS_DIR = "instructions";
 
@@ -41,7 +42,8 @@ instructionsCommand
   .argument("[loadout]", "Loadout name (default: active loadout or 'base')")
   .option("-f, --force", "Overwrite existing file")
   .action(async (loadoutName, options) => {
-    const nearestRoot = await findNearestLoadoutRoot(process.cwd());
+    const privateAuthor = await authorRoot();
+    const nearestRoot = privateAuthor ? { path: privateAuthor.rootPath } : await findNearestLoadoutRoot(process.cwd());
 
     if (!nearestRoot) {
       log.error("No .loadouts/ directory found. Run 'loadouts init' first.");
@@ -49,7 +51,8 @@ instructionsCommand
     }
 
     const targetLoadout = loadoutName || getActiveLoadout(nearestRoot.path);
-    const filePath = getInstructionPath(nearestRoot.path, targetLoadout);
+    if (privateAuthor) authorName(targetLoadout);
+    const filePath = privateAuthor ? authorPath(privateAuthor.project, `instructions/AGENTS.${targetLoadout}.md`) : getInstructionPath(nearestRoot.path, targetLoadout);
 
     if (fileExists(filePath) && !options.force) {
       log.warn(`Instruction file already exists: ${filePath}`);
@@ -110,7 +113,8 @@ instructionsCommand
   .description("Edit an instruction file in $EDITOR")
   .argument("[loadout]", "Loadout name (default: active loadout or 'base')")
   .action(async (loadoutName) => {
-    const nearestRoot = await findNearestLoadoutRoot(process.cwd());
+    const privateAuthor = await authorRoot();
+    const nearestRoot = privateAuthor ? { path: privateAuthor.rootPath } : await findNearestLoadoutRoot(process.cwd());
 
     if (!nearestRoot) {
       log.error("No .loadouts/ directory found.");
@@ -118,7 +122,8 @@ instructionsCommand
     }
 
     const targetLoadout = loadoutName || getActiveLoadout(nearestRoot.path);
-    const filePath = getInstructionPath(nearestRoot.path, targetLoadout);
+    if (privateAuthor) authorName(targetLoadout);
+    const filePath = privateAuthor ? authorPath(privateAuthor.project, `instructions/AGENTS.${targetLoadout}.md`) : getInstructionPath(nearestRoot.path, targetLoadout);
 
     if (!fileExists(filePath)) {
       log.error(`Instruction file not found: instructions/AGENTS.${targetLoadout}.md`);

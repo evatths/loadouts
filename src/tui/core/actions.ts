@@ -6,6 +6,7 @@ import type { CommandContext, RenderPlan, ResolvedLoadout } from "../../core/typ
 import type { HostContext } from "./host.js";
 import { getContext } from "../../core/discovery.js";
 import { compileSession } from "../../integrations/opencode/delta.js";
+import { findPrivateProject, resolvePrivateLoadouts, teamLayerId } from "../../core/private-project.js";
 import type { Effect, Intent } from "./intent.js";
 
 export interface ActionContext {
@@ -16,14 +17,23 @@ export interface ActionContext {
 export async function executeEffect(effect: Effect, ctx: ActionContext): Promise<Intent> {
   try {
     if (effect.t === "reload") return done(effect.t, true, "Reload requested");
+    if (await findPrivateProject(ctx.cwd) && (effect.t === "editFile" || effect.layer !== "session")) {
+      throw new Error("Filesystem actions are unavailable in a private project dashboard; use the CLI.");
+    }
     if (effect.t === "editFile") return done(effect.t, true, effect.path);
     if (effect.layer === "session") {
       if (!ctx.session) return done(effect.t, false, "Select a session first");
       if (effect.t === "plan") {
+        const project = await findPrivateProject(ctx.cwd);
+        if (project) {
+          const personal = effect.targetSet.filter((name) => !teamLayerId(project, name));
+          const items = resolvePrivateLoadouts(project, personal).flatMap((loadout) => loadout.items.map((item) => `+ ${item.kind} ${item.relativePath}`));
+          return done(effect.t, true, "Session selection", items);
+        }
         const compiled = await compileSession(ctx.cwd, effect.targetSet, { scope: effect.scope });
         return done(effect.t, true, "Session delta", [...compiled.bundle.components.map((item) => `+ ${item.kind} ${item.relativePath}`), ...compiled.warnings.map((warning) => `! ${warning}`)]);
       }
-      const result = effect.t === "clear" || effect.targetSet.length === 0
+      const result = effect.t === "clear" || (effect.targetSet.length === 0 && !await findPrivateProject(ctx.cwd))
         ? await ctx.session.activator.unequip(ctx.session.id)
         : await ctx.session.activator.equip(ctx.session.id, effect.targetSet, { scope: effect.scope });
       return done(effect.t, true, ["Session equipment updated", ...result.warnings].join("; "));

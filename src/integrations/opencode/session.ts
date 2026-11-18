@@ -1,7 +1,10 @@
 import { z } from "zod";
+import { existsSync } from "node:fs";
 import type { OpenCode, InstructionEntryInfo, JsonValue, PermissionRuleset, SessionInfo } from "@opencode/client";
-import { compileSession } from "./delta.js";
+import { compileSession, renderedSources } from "./delta.js";
 import type { OpenCodeSelection, Scope } from "../../core/types.js";
+import { findPrivateProject, readPrivateSelection, teamLayerId, type PrivateProject } from "../../core/private-project.js";
+import { compilePrivate } from "./private.js";
 
 export const MANIFEST_KEY = "loadouts.manifest";
 export const ENTRY_LIMIT = 256 * 1024;
@@ -20,6 +23,7 @@ const manifestSchema = z.object({
   appliedPermissions: z.array(ruleSchema),
   priorSelection: selectionSchema.optional(),
   appliedSelection: selectionSchema.optional(),
+  privateMode: z.enum(["follow", "explicit"]).optional(),
 });
 
 export type SessionStatus = z.infer<typeof manifestSchema>;
@@ -69,8 +73,14 @@ export class SessionActivator implements SessionEquipment {
 
   equip(sessionID: string, names: string[], options: EquipOptions): Promise<EquipResult> {
     return serialized(sessionID, async () => {
-      if (!names.length) throw new Error("Choose at least one loadout, or use unequip.");
       const session = await this.client.session.get({ sessionID });
+      const project = existsSync(session.location.directory) ? await findPrivateProject(session.location.directory) : null;
+      if (project) {
+        if (options.scope === "global" && names.some((name) => name.startsWith("team:"))) throw new Error("Team layers are not global loadouts.");
+        const canonicalNames = options.scope === "global" ? names : names.map((name) => teamLayerId(project, name) ?? name);
+        return this.privateUpdate(sessionID, session, project, canonicalNames, "explicit", options.scope);
+      }
+      if (!names.length) throw new Error("Choose at least one loadout, or use unequip.");
       await this.activated(session.location);
       const compiled = await this.compile(session.location.directory, [...new Set(names)], options);
       const catalog = await this.client.skill.list({ location: session.location });
@@ -107,6 +117,67 @@ export class SessionActivator implements SessionEquipment {
     });
   }
 
+  /** Refresh a following or explicitly equipped private session before its prompt. */
+  refreshPrivate(sessionID: string, virtualOwned: string[] = [], prepare?: (compiled: ReturnType<typeof compilePrivate>) => Promise<string[]>): Promise<ReturnType<typeof compilePrivate> | undefined> {
+    return serialized(sessionID, async () => {
+      const session = await this.client.session.get({ sessionID });
+      const project = existsSync(session.location.directory) ? await findPrivateProject(session.location.directory) : null;
+      if (!project) return undefined;
+      const entries = await this.client.session.instructions.entry.list({ sessionID });
+      const previous = parseSessionStatus(entries);
+      if (previous && !previous.privateMode) return undefined; // legacy explicit equipment
+      const saved = previous?.privateMode === "explicit" ? previous.names : readPrivateSelection(project);
+      // Location-wide virtual skills must not become callable in default-following sessions.
+      const names = saved ?? (virtualOwned.length ? project.layers.map((layer) => layer.id) : undefined);
+      if (names === undefined) {
+        if (previous) {
+          const permissions = session.permissions ?? [];
+          const owned = previous.appliedPermissions.slice(previous.priorPermissions.length);
+          if (owned.length && !equal(permissions.slice(-owned.length), owned)) throw new Error("Session skill permissions changed after equip; unequip before updating.");
+          const selection = { agent: session.agent, model: session.model };
+          await this.replace(sessionID, entries, previous, {}, owned.length ? permissions.slice(0, -owned.length) : permissions, permissions, restoreSelection(previous, selection), selection);
+        }
+        return undefined;
+      }
+      return (await this.privateUpdate(sessionID, session, project, names, previous?.privateMode ?? "follow", previous?.scope ?? "project", virtualOwned, prepare)).compiled;
+    });
+  }
+
+  private async privateUpdate(sessionID: string, session: SessionInfo, project: PrivateProject, names: string[], mode: "follow" | "explicit", scope: Scope, virtualOwned: string[] = [], prepare?: (compiled: ReturnType<typeof compilePrivate>) => Promise<string[]>): Promise<EquipResult & { compiled: ReturnType<typeof compilePrivate> }> {
+    const entries = await this.client.session.instructions.entry.list({ sessionID });
+    const previous = parseSessionStatus(entries);
+    const current = session.permissions ?? [];
+    let prior = current;
+    if (previous) {
+      const owned = previous.appliedPermissions.slice(previous.priorPermissions.length);
+      if (owned.length && !equal(current.slice(-owned.length), owned)) throw new Error("Session skill permissions changed after equip; unequip before updating.");
+      prior = owned.length ? current.slice(0, -owned.length) : current;
+    }
+    const rendered = await renderedSources(session.location.directory);
+    let compiled = compilePrivate(project, [...new Set(names)], (await this.client.skill.list({ location: session.location })).data, rendered, virtualOwned, scope);
+    if (prepare) {
+      virtualOwned = await prepare(compiled);
+      compiled = compilePrivate(project, [...new Set(names)], (await this.client.skill.list({ location: session.location })).data, rendered, virtualOwned, scope);
+    }
+    const selected = new Set(compiled.virtual.map((skill) => skill.id));
+    const denied = [...new Set([...compiled.deny, ...virtualOwned.filter((id) => !selected.has(id))])];
+    const applied: PermissionRuleset = [...prior, ...denied.map((resource) => ({ action: "skill", resource, effect: "deny" as const }))];
+    const selection = { agent: session.agent, model: session.model };
+    const status: SessionStatus = {
+      version: 1, names: [...new Set(names)], scope, fingerprint: compiled.fingerprint,
+      equippedAt: previous?.equippedAt ?? new Date().toISOString(), keys: Object.keys(compiled.entries),
+      skills: compiled.virtual.map((skill) => skill.id), priorPermissions: prior, appliedPermissions: applied,
+      priorSelection: previous?.priorSelection ?? selection, appliedSelection: selection, privateMode: mode,
+    };
+    const values: Record<string, JsonValue> = { ...compiled.entries, [MANIFEST_KEY]: status };
+    for (const [key, value] of Object.entries(values)) checkEntrySize(key, value);
+    for (const key of status.keys) if (entries.some((entry) => entry.key === key) && !previous?.keys.includes(key)) throw new Error(`Instruction entry ${key} is already owned by another producer.`);
+    const sameValues = Object.entries(values).every(([key, value]) => JSON.stringify(entries.find((entry) => entry.key === key)?.value) === JSON.stringify(value))
+      && (previous?.keys ?? []).every((key) => key in values);
+    if (!sameValues || !equal(current, applied)) await this.replace(sessionID, entries, previous, values, applied, current, selection, selection);
+    return { status, warnings: [], compiled };
+  }
+
   unequip(sessionID: string): Promise<{ warnings: string[] }> {
     return serialized(sessionID, async () => {
       const entries = await this.client.session.instructions.entry.list({ sessionID });
@@ -114,9 +185,11 @@ export class SessionActivator implements SessionEquipment {
       if (!previous) return { warnings: [] };
       const session = await this.client.session.get({ sessionID });
       const permissions = session.permissions ?? [];
-      const owned = equal(permissions, previous.appliedPermissions);
+      const suffix = previous.appliedPermissions.slice(previous.priorPermissions.length);
+      const owned = previous.privateMode ? !suffix.length || equal(permissions.slice(-suffix.length), suffix) : equal(permissions, previous.appliedPermissions);
+      const restored = previous.privateMode && owned ? (suffix.length ? permissions.slice(0, -suffix.length) : permissions) : previous.priorPermissions;
       const selection = { agent: session.agent, model: session.model };
-      await this.replace(sessionID, entries, previous, {}, owned ? previous.priorPermissions : permissions, permissions, restoreSelection(previous, selection), selection);
+      await this.replace(sessionID, entries, previous, {}, owned ? restored : permissions, permissions, restoreSelection(previous, selection), selection);
       return { warnings: owned ? [] : ["Session permissions were edited externally and have been preserved."] };
     });
   }

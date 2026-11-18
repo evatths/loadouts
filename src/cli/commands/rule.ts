@@ -31,6 +31,7 @@ import { openInEditor } from "../../lib/editor.js";
 import { rebuildAllGitignores } from "../../lib/gitignore.js";
 import * as os from "node:os";
 import type { Scope } from "../../core/types.js";
+import { authorName, authorRoot, authorPath } from "./private.js";
 
 const RULES_DIR = "rules";
 
@@ -91,15 +92,17 @@ ruleCommand
   .action(async (name, options) => {
     let rootPath: string;
     let scope: Scope;
+    const privateAuthor = await authorRoot(options);
+    if (privateAuthor) authorName(name);
 
     try {
-      ({ rootPath, scope } = await resolveRootPath(options));
+      ({ rootPath, scope } = privateAuthor ? { rootPath: privateAuthor.rootPath, scope: "project" } : await resolveRootPath(options));
     } catch (err) {
       log.error(err instanceof Error ? err.message : String(err));
       process.exit(1);
     }
 
-    const rulePath = path.join(rootPath, RULES_DIR, `${name}.md`);
+    const rulePath = privateAuthor ? authorPath(privateAuthor.project, `rules/${name}.md`) : path.join(rootPath, RULES_DIR, `${name}.md`);
 
     if (fileExists(rulePath)) {
       log.error(`Rule '${name}' already exists in ${scope} scope.`);
@@ -128,7 +131,7 @@ ruleCommand
 
     // Rebuild per-target .gitignore files for all existing artifacts
     const projectRoot = scope === "project" ? path.dirname(rootPath) : os.homedir();
-    rebuildAllGitignores(rootPath, projectRoot, scope);
+    if (!privateAuthor) rebuildAllGitignores(rootPath, projectRoot, scope);
 
     const scopeLabel = scope === "global" ? "global" : "project";
     log.success(`Created ${scopeLabel} rule: ${name}`);

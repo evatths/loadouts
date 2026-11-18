@@ -41,6 +41,7 @@ import {
 import type { LoadoutRoot, Scope } from "../../core/types.js";
 import chalk from "chalk";
 import { loadDashboardData } from "../../tui/core/data.js";
+import { inspectPrivate, globalInspectionCwd } from "./private.js";
 
 interface LoadoutInfo {
   name: string;
@@ -312,10 +313,11 @@ export const listCommand = new Command("list")
   .option(...SCOPE_FLAGS.all)
   .option("--json", "Output machine-readable JSON")
   .action(async (options: ListOptions) => {
+    if (await inspectPrivate("list", undefined, options)) return;
     const cwd = process.cwd();
 
     if (options.json) {
-      const payload = await getListJson(options, cwd);
+      const payload = await getListJson(options, await globalInspectionCwd(options, cwd));
       console.log(JSON.stringify(payload, null, 2));
       return;
     }

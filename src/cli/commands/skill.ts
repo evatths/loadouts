@@ -41,6 +41,7 @@ import { openInEditor } from "../../lib/editor.js";
 import { rebuildAllGitignores } from "../../lib/gitignore.js";
 import * as os from "node:os";
 import type { Scope } from "../../core/types.js";
+import { authorName, authorRoot, authorPath } from "./private.js";
 
 const SKILLS_DIR = "skills";
 
@@ -99,16 +100,19 @@ skillCommand
   .action(async (name, options) => {
     let rootPath: string;
     let scope: Scope;
+    const privateAuthor = await authorRoot(options);
+    if (privateAuthor) authorName(name);
 
     try {
-      ({ rootPath, scope } = await resolveRootPath(options));
+      ({ rootPath, scope } = privateAuthor ? { rootPath: privateAuthor.rootPath, scope: "project" } : await resolveRootPath(options));
     } catch (err) {
       log.error(err instanceof Error ? err.message : String(err));
       process.exit(1);
     }
 
-    const skillPath = path.join(rootPath, SKILLS_DIR, name);
-    const skillMdPath = path.join(skillPath, "SKILL.md");
+    const skillPath = privateAuthor ? authorPath(privateAuthor.project, `skills/${name}`) : path.join(rootPath, SKILLS_DIR, name);
+    const skillMdPath = privateAuthor ? authorPath(privateAuthor.project, `skills/${name}/SKILL.md`) : path.join(skillPath, "SKILL.md");
+    if (privateAuthor) authorPath(privateAuthor.project, `skills/${name}/references`);
 
     if (isDirectory(skillPath)) {
       log.error(`Skill '${name}' already exists in ${scope} scope.`);
@@ -148,7 +152,7 @@ Include examples if helpful.
 
     // Rebuild per-target .gitignore files for all existing artifacts
     const projectRoot = scope === "project" ? path.dirname(rootPath) : os.homedir();
-    rebuildAllGitignores(rootPath, projectRoot, scope);
+    if (!privateAuthor) rebuildAllGitignores(rootPath, projectRoot, scope);
 
     const scopeLabel = scope === "global" ? "global" : "project";
     log.success(`Created ${scopeLabel} skill: ${name}`);

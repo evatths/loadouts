@@ -16,6 +16,7 @@ import { writeFile, fileExists } from "../../lib/fs.js";
 import { log, heading } from "../../lib/output.js";
 import { openInEditor } from "../../lib/editor.js";
 import type { Scope } from "../../core/types.js";
+import { authorName, authorRoot, authorPath } from "./private.js";
 
 interface CreateOptions extends ScopeFlags {
   description?: string;
@@ -31,12 +32,17 @@ export const createCommand = new Command("create")
   .option(...SCOPE_FLAGS.global)
   .action(async (name: string, options: CreateOptions) => {
     const cwd = process.cwd();
+    const privateAuthor = await authorRoot(options, cwd);
+    if (privateAuthor) authorName(name);
 
     // Resolve scope
     let scope: Scope;
     let rootPath: string;
 
-    if (options.local) {
+    if (privateAuthor) {
+      scope = "project";
+      rootPath = privateAuthor.rootPath;
+    } else if (options.local) {
       const projectRoot = await findNearestLoadoutRoot(cwd);
       if (!projectRoot) {
         log.error("Not in a loadout project. Run 'loadout init' first.");
@@ -66,9 +72,9 @@ export const createCommand = new Command("create")
       }
     }
 
-    const loadoutPath = path.join(rootPath, "loadouts", `${name}.yaml`);
+    const loadoutPath = privateAuthor ? authorPath(privateAuthor.project, `loadouts/${name}.yaml`) : path.join(rootPath, "loadouts", `${name}.yaml`);
 
-    if (fileExists(loadoutPath)) {
+    if (fileExists(loadoutPath) || (privateAuthor && fileExists(authorPath(privateAuthor.project, `loadouts/${name}.yml`)))) {
       log.error(`Loadout '${name}' already exists in ${scope} scope.`);
       process.exit(1);
     }

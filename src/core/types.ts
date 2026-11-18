@@ -59,6 +59,7 @@ export interface ResolvedItem {
   sourcePath: string;    // Absolute path to source file/directory
   relativePath: string;  // Path relative to .loadouts/ root
   tools: Tool[];         // Active tools for this item
+  repoPath?: string;     // Git-relative provenance for an explicit repo: include
 }
 
 // Resolved loadout (after merging active loadouts)

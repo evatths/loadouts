@@ -15,6 +15,7 @@ import { getArtifactName, sortArtifacts } from "../../lib/artifact-table.js";
 import { fileExists } from "../../lib/fs.js";
 import type { EquipLayer } from "./model.js";
 import type { SessionStatus } from "../../integrations/opencode/session.js";
+import { findPrivateProject, privateNames, readPrivateSelection, resolvePrivateLoadouts, teamLayerName } from "../../core/private-project.js";
 
 export type LoadoutStatus = "active" | "available" | "drift" | "broken";
 
@@ -57,6 +58,7 @@ export interface DashboardData {
   tools: string[];
   issues: DashboardIssue[];
   warnings: string[];
+  privateSelection?: string[];
 }
 
 type OwnerState = { active: Set<string>; configPath: string; projectRoot: string; scope: Scope };
@@ -71,6 +73,28 @@ const DRIFT_PRIORITY: Record<DriftResult["status"], number> = {
 };
 
 export async function loadDashboardData(cwd: string = process.cwd()): Promise<DashboardData> {
+  const project = await findPrivateProject(cwd);
+  if (project) {
+    const rows: LoadoutRow[] = [];
+    for (const name of privateNames(project)) {
+      const root = project.roots.find((entry) => listLoadouts(entry.path).includes(name));
+      // In a private dashboard every row participates in one session selection,
+      // even when its definition is inherited from the global catalog.
+      const scope: Scope = "project";
+      try {
+        const resolved = resolvePrivateLoadouts(project, [name])[0];
+        const slots = sortArtifacts(resolved.items.map((item) => ({ kind: item.kind, name: getArtifactName(item.relativePath, item.kind), relativePath: item.relativePath, tools: item.tools })));
+        rows.push({ id: `${scope}:${name}`, name, scope, description: resolved.description, status: "available", equipped: [], counts: countSlots(slots), tools: [...new Set(slots.flatMap((slot) => slot.tools))], filePath: root && loadoutDefinitionPath(root.path, name), slots });
+      } catch (error) {
+        rows.push({ id: `${scope}:${name}`, name, scope, status: "broken", equipped: [], counts: countSlots([]), tools: [], issue: String(error), slots: [] });
+      }
+    }
+    for (const layer of project.layers) {
+      const slots = layer.items.map((item) => ({ kind: item.kind, name: path.basename(item.repoPath), relativePath: `repo:${item.repoPath}`, tools: ["opencode"] }));
+      rows.push({ id: `project:${layer.id}`, name: teamLayerName(project, layer), scope: "project", status: "available", equipped: [], counts: countSlots(slots), tools: ["opencode"], slots });
+    }
+    return { rows: sortRows(rows), active: [], tools: [...new Set(rows.flatMap((row) => row.tools))], issues: [], warnings: [], privateSelection: readPrivateSelection(project) ?? project.layers.map((layer) => layer.id) };
+  }
   const { entries, warnings } = await collectCatalogRoots(cwd);
   const ownerStates = ownerStateMap(entries);
   const seenByOwner = new Map<CatalogOwner, Set<string>>();
@@ -155,7 +179,7 @@ export function withSessionEquipment(data: DashboardData, status?: Pick<SessionS
     ...data,
     rows: data.rows.map((row) => {
       const equipped: EquipLayer[] = row.equipped.filter((layer) => layer !== "session");
-      if (status?.scope === row.scope && status.names.includes(row.name)) equipped.push("session");
+      if (status && (data.privateSelection || status.scope === row.scope) && (status.names.includes(row.name) || status.names.includes(row.id.replace(/^project:/, "")))) equipped.push("session");
       return { ...row, equipped, status: row.status === "broken" || row.status === "drift" ? row.status : equipped.length ? "active" : "available" };
     }),
   };

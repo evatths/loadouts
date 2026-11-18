@@ -21,6 +21,7 @@ import { computeDeactivateSet } from "./policy.js";
 import { applyTargetSet } from "./render-engine.js";
 import { log } from "../../lib/output.js";
 import type { Scope } from "../../core/types.js";
+import { privateSelection } from "./private.js";
 
 interface DeactivateOptions extends ScopeFlags {
   dryRun?: boolean;
@@ -35,6 +36,7 @@ export const deactivateCommand = new Command("deactivate")
   .option(...SCOPE_FLAGS.all)
   .option("--dry-run", "Preview changes without applying")
   .action(async (names: string[], options: DeactivateOptions) => {
+    if (await privateSelection("deactivate", names, options)) return;
     const cwd = process.cwd();
 
     // If --all, deactivate in both scopes
